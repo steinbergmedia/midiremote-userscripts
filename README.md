@@ -1,46 +1,136 @@
-<h1>MIDI REMOTE for BEHRINGER BCR2000</h1>
+# MIDI Remote API - User Scripts
 
-NOTE: Use Encoder Groups buttons on BCR2000 to switch between:
-- Sends
-- Focused Quick Controls
-- Track Quick Controls
-- Cues
+# About
 
-![BCR2000](https://user-images.githubusercontent.com/101831235/159006239-3dbfff71-bc56-44a7-b75c-b04e54632ca7.png)
+Welcome to the Steinberg **MIDI Remote API**.
 
-INSTALL: import using “import script” button inside midi remote section.
+This document will guide you through the steps of writing a **MIDI Remote API Script** for a specific MIDI Controller Hardware.
 
-IMPORTANT: factory preset for BCR2000 is absolute mode, and this cause stutter moving on knobs: i used relative mode. 
-BCR2000 need to be configured manually prior to use this script:
-•	all knobs need to be in “rel1” mode
-•	all buttons “toggle off” mode
-or you can load attached .bcr preset (easy done with BC MANAGER https://mountainutilities.eu/bcmanager).
+> **NOTE**: Scripts are written in the **[ES5](https://www.w3schools.com/js/js_es5.asp)** version of **JavaScript**
 
+# How to work with this repository
 
-This is the default CC assignement to match midi remote script:
-![Immagine1](https://user-images.githubusercontent.com/101831235/159006077-9ba786d6-dd70-4328-be39-a26210b7813b.png)
+1. Make a fork of steinbergmedia/midiremote-userscripts
 
- 
-Changelog:
-v 1.0 07/03/2022 first release
-v 1.1 08/03/2022
--	navigate tracks via side button.
-v 1.2 09/03/2022
--	Focused Quick Control lock added.
-V1.3 10/03/2022
--	Pre-filter eq controls added.
--	Added push button for Focused Quick Control: if focused parameter is a button now you can push the encoder to switch. 
-v.1.4.
-- 	Added Layers for encoders Group.
-v1.5 11/03/2022
-- 	Cue level control added.
-- 	Control Room Main channel level control added.
-- 	Monitor enable control added.
-- 	Read and write automation control added.
--	Foot-switches added.
+2. Rename your existing …/Driver Scripts/Local folder to something else (like Local_backup)
+
+3. Create a new empty folder Local to replace it
+
+4. Clone your forked repository inside the newly created empty Local folder
+
+5. Copy your existing scripts from within the Local_backup folder into the Local folder
+
+6. Still use the parent folder of Local, the Drive Scripts folder, as the workspace folder in Visual Studio Code
+
+7. Make commits/pushes to your forked repo
+
+8. Make pull requests to the upstream repo (steinbergmedia/midiremote-userscripts)
+
+> And don't forget to regulary do “fetch and merge” from the upstream repo (steinbergmedia/midiremote-userscripts) to stay in sync.
 
 
+# Basic Concept
+
+> The **MIDI Remote API Script** acts as a mediator between a Hardware Controller and Cubase / Nuendo
+
+<!-- ## Outer View -->
+
+<img src="_docimg/overview_big.svg" />
+
+<!-- ## Inner View
+
+<img src="./img/internal_block_diagram.svg" /> -->
+
+> The **MIDI Remote API Script** emulates the hardware surface. This improves usability and recognizability.
+
+<img src="_docimg/remote_window_real_world_device.png" />
+
+# Script Structure
+
+### The **MIDI Remote API Script** consists of three building blocks
+1. Driver Setup
+   - create driver object
+   - define driver ports to be associated with existing hardware midi ports
+   - specify all possible port namings for automatic device detection
+
+2. Surface Layout
+    - visualize the hardware's surface elements (e.g. knobs, faders, buttons)
+    - bind surface elements to midi messages
+
+3. Host Mapping
+   - create mapping pages for each user workflow (e.g. mixing, playing instruments, track navigation)
+
+<div style="height: 0.5rem">&nbsp;</div>
+
+> The following image illustrates that:
+
+<div style="height: 1rem">&nbsp;</div>
+
+<img src="_docimg/script_structure.svg" />
 
 
-Programmed by Giampaolo Gesuale
-contact: giampaologesuale@gmail.com
+# Getting Started
+
+<!-- > As IDE we recommend _Visual Studio Code_, however any IDE will do.  -->
+
+### To get started please perform these steps:
+
+1. Make sure you have [Visual Studio Code](https://code.visualstudio.com/) installed.
+
+<div class="warning">
+We highly recommend using <a href="https://code.visualstudio.com">Visual Studio Code</a> for writing <b>MIDI Remote API Scripts</b>. We provide a <a href="https://jsdoc.app">JSDoc</a> based auto-completion setup. You will not have to look up types and methods in a separate documentation. <a href="https://code.visualstudio.com">Visual Studio Code</a> will help you write scripts intuitively.
+</div>
+
+<img src="_docimg/vscode_autocompletion.png" style="width: 90%; margin: 5% !important;"/>
+
+2. Make sure the folder of the [Visual Studio Code](https://code.visualstudio.com/) executable is added to the PATH environment variable.
+
+3. Make sure you have the newest Cubase / Nuendo installed.
+
+4. Start Cubase / Nuendo.
+
+5. Create a project with audio and/or instrument tracks.
+
+6. Open the Remote tab in the lower zone.
+
+<img src="_docimg/project_window_with_overlays.png" style="width: 90%; margin: 0 5% 5% 5% !important;" />
+
+1. Open the **MIDI Remote Driver Scripts** folder.
+
+> <code class="path"><b>Mac:</b> /Users/&lt;Username&gt;/Documents/Steinberg/&lt;Cubase or Nuendo&gt;/MIDI Remote/Driver Scripts</code>
+
+> <code class="path"><b>Windows:</b> C:\Users\\&lt;Username&gt;\Documents\Steinberg\&lt;Cubase or Nuendo&gt;\MIDI Remote\Driver Scripts</code>
+
+<div style="height: 0.1rem">&nbsp;</div>
+
+1. Open a console (win: cmd, mac: terminal) and go to the **MIDI Remote Driver Scripts** folder.
+
+2. Open [Visual Studio Code](https://code.visualstudio.com/) from the command line like this:
+
+> code .
+
+<img src="_docimg/vscode_open_scripts_folder.png" />
+
+10. Create a script file.
+   
+The **MIDI Remote API Script** file follows the structure:
+<code class="path"> &lt;Driver Scripts Folder&gt;/&lt;Local or Public&gt;/&lt;vendor&gt;/&lt;device&gt;/&lt;vendor&gt;_&lt;device&gt;.js</code>
+
+<div class="warning">
+<b>WARNING:</b> Always use the folder <b>Local</b> for development, folder <b>Public</b> will be overwritten when starting Cubase / Nuendo.
+</div>
+
+Example:
+<code class="path"> &lt;Driver&nbsp;Scripts&nbsp;Folder&gt;/Local/Nektar/Impact_LX49Plus/Nektar_Impact_LX49Plus.js</code>
+
+1.   Connect your MIDI hardware controller.
+
+2.   Open script console.
+
+<img src="_docimg/open_script_console.png" style="width: 90% !important; margin: 0 5% 5% 5% !important;" />
+
+> The **Script Console** appears like this:
+
+<img src="_docimg/scripting_console.png" />
+
+> After modifying the script file press the 'Reload Scripts' button.
