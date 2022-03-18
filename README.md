@@ -8,6 +8,19 @@ This document will guide you through the steps of writing a **MIDI Remote API Sc
 
 > **NOTE**: Scripts are written in the **[ES5](https://www.w3schools.com/js/js_es5.asp)** version of **JavaScript**
 
+# How to work with this repository
+
+!v Make a fork of steinbergmedia/midiremote-userscripts
+!v Regulary do “fetch and merge” from the upstream repo (steinbergmedia/midiremote-userscripts) to stay in sync.
+!v Rename your existing …/Driver Scripts/Local folder to something else (like Local_backup)
+!v Create a new empty folder Local to replace it
+!v Clone your forked repository inside the newly created empty Local folder
+!v Copy your existing scripts from within the Local_backup folder into the Local folder
+!v Still use the parent folder of Local, the Drive Scripts folder, as the workspace folder in Visual Studio Code
+!v Make commits/pushes to your forked repo
+!v Make pull request to the upstream repo (steinbergmedia/midiremote-userscripts)
+
+
 # Basic Concept
 
 > The **MIDI Remote API Script** acts as a mediator between a Hardware Controller and Cubase / Nuendo
