@@ -1,4 +1,4 @@
-//Behringer BCR2000 v 1.5 by Giampaolo Gesuale
+//Behringer BCR2000 v 1.5.1 by Giampaolo Gesuale
 
 //-----------------------------------------------------------------------------
 // 1. DRIVER SETUP - create driver object, midi ports and detection information
@@ -18,7 +18,7 @@ deviceDriver.makeDetectionUnit().detectPortPair(midiInput, midiOutput)
 //deviceDriver.setUserGuide ('BCR2000_midi_remote.pdf') 
 
 //submit bcr preset: to be tested
-//midiOutput.sendSysexFile( , 'preset.bcr', 5)
+//midiOutput.sendSysexFile(activeDevice, 'preset.bcr', 5)
 
 //-----------------------------------------------------------------------------
 // 2. SURFACE LAYOUT - create control elements and midi bindings
@@ -126,75 +126,33 @@ for(var rb = 0; rb < nFootButtons/inArowFoot; ++rb) {
 var page = deviceDriver.mMapping.makePage('Cubase remote')
 var page_mix= page.mHostAccess.mTrackSelection.mMixerChannel
 
-//send level
-page.makeValueBinding(knobs[0].mSurfaceValue, page_mix.mSends.getByIndex(0).mLevel)
-page.makeValueBinding(knobs[1].mSurfaceValue, page_mix.mSends.getByIndex(1).mLevel)
-page.makeValueBinding(knobs[2].mSurfaceValue, page_mix.mSends.getByIndex(2).mLevel)
-page.makeValueBinding(knobs[3].mSurfaceValue, page_mix.mSends.getByIndex(3).mLevel)
-page.makeValueBinding(knobs[4].mSurfaceValue, page_mix.mSends.getByIndex(4).mLevel)
-page.makeValueBinding(knobs[5].mSurfaceValue, page_mix.mSends.getByIndex(5).mLevel)
-page.makeValueBinding(knobs[6].mSurfaceValue, page_mix.mSends.getByIndex(6).mLevel)
-page.makeValueBinding(knobs[7].mSurfaceValue, page_mix.mSends.getByIndex(7).mLevel)
+var numStrips = 8
 
-//send on/off
-page.makeValueBinding(buttons[0].mSurfaceValue, page_mix.mSends.getByIndex(0).mOn).setTypeToggle()
-page.makeValueBinding(buttons[1].mSurfaceValue, page_mix.mSends.getByIndex(1).mOn).setTypeToggle()
-page.makeValueBinding(buttons[2].mSurfaceValue, page_mix.mSends.getByIndex(2).mOn).setTypeToggle()
-page.makeValueBinding(buttons[3].mSurfaceValue, page_mix.mSends.getByIndex(3).mOn).setTypeToggle()
-page.makeValueBinding(buttons[4].mSurfaceValue, page_mix.mSends.getByIndex(4).mOn).setTypeToggle()
-page.makeValueBinding(buttons[5].mSurfaceValue, page_mix.mSends.getByIndex(5).mOn).setTypeToggle()
-page.makeValueBinding(buttons[6].mSurfaceValue, page_mix.mSends.getByIndex(6).mOn).setTypeToggle()
-page.makeValueBinding(buttons[7].mSurfaceValue, page_mix.mSends.getByIndex(7).mOn).setTypeToggle()
+for(var stripIndex = 0; stripIndex < numStrips; ++stripIndex) {
+	var knob = knobs[stripIndex]
+	var button = buttons[stripIndex]
+	var knob8 = knobs[stripIndex + 8]
+	var button8 = buttons[stripIndex + 8]
 
-// Focused quick controls
-page.makeValueBinding(knobs[8].mSurfaceValue, page.mHostAccess.mFocusedQuickControls.getByIndex(0))
-page.makeValueBinding(knobs[9].mSurfaceValue, page.mHostAccess.mFocusedQuickControls.getByIndex(1))
-page.makeValueBinding(knobs[10].mSurfaceValue, page.mHostAccess.mFocusedQuickControls.getByIndex(2))
-page.makeValueBinding(knobs[11].mSurfaceValue, page.mHostAccess.mFocusedQuickControls.getByIndex(3))
-page.makeValueBinding(knobs[12].mSurfaceValue, page.mHostAccess.mFocusedQuickControls.getByIndex(4))
-page.makeValueBinding(knobs[13].mSurfaceValue, page.mHostAccess.mFocusedQuickControls.getByIndex(5))
-page.makeValueBinding(knobs[14].mSurfaceValue, page.mHostAccess.mFocusedQuickControls.getByIndex(6))
-page.makeValueBinding(knobs[15].mSurfaceValue, page.mHostAccess.mFocusedQuickControls.getByIndex(7))
+	var knob16 = knobs[stripIndex + 16]
+	var knob24 = knobs[stripIndex + 24]
+	var button24 = buttons[stripIndex + 24]
 
-page.makeValueBinding(buttons[8].mSurfaceValue, page.mHostAccess.mFocusedQuickControls.getByIndex(0)).setTypeToggle()
-page.makeValueBinding(buttons[9].mSurfaceValue, page.mHostAccess.mFocusedQuickControls.getByIndex(1)).setTypeToggle()
-page.makeValueBinding(buttons[10].mSurfaceValue, page.mHostAccess.mFocusedQuickControls.getByIndex(2)).setTypeToggle()
-page.makeValueBinding(buttons[11].mSurfaceValue, page.mHostAccess.mFocusedQuickControls.getByIndex(3)).setTypeToggle()
-page.makeValueBinding(buttons[12].mSurfaceValue, page.mHostAccess.mFocusedQuickControls.getByIndex(4)).setTypeToggle()
-page.makeValueBinding(buttons[13].mSurfaceValue, page.mHostAccess.mFocusedQuickControls.getByIndex(5)).setTypeToggle()
-page.makeValueBinding(buttons[14].mSurfaceValue, page.mHostAccess.mFocusedQuickControls.getByIndex(6)).setTypeToggle()
-page.makeValueBinding(buttons[15].mSurfaceValue, page.mHostAccess.mFocusedQuickControls.getByIndex(7)).setTypeToggle()
+	var sendSlot = page_mix.mSends.getByIndex(stripIndex)
+	var focusQuickControl = page.mHostAccess.mFocusedQuickControls.getByIndex(stripIndex)
+	var trackQuickControl = page_mix.mQuickControls.getByIndex(stripIndex)
+	var cueSend = page_mix.mCueSends.getByIndex(stripIndex)
+
+	page.makeValueBinding(knob.mSurfaceValue, sendSlot.mLevel)
+	page.makeValueBinding(button.mSurfaceValue, sendSlot.mOn).setTypeToggle()
+	page.makeValueBinding(knob8.mSurfaceValue, focusQuickControl)
+	page.makeValueBinding(button8.mSurfaceValue, focusQuickControl).setTypeToggle()
+	page.makeValueBinding(knob16.mSurfaceValue, trackQuickControl)
+	page.makeValueBinding(knob24.mSurfaceValue, cueSend.mLevel)
+	page.makeValueBinding(button24.mSurfaceValue, cueSend.mOn).setTypeToggle()
+}
 
 page.makeValueBinding(buttons[32].mSurfaceValue, page.mHostAccess.mFocusedQuickControls.mFocusLockedValue).setTypeToggle()
-
-// Track quick controls 
-page.makeValueBinding(knobs[16].mSurfaceValue, page_mix.mQuickControls.getByIndex(0))
-page.makeValueBinding(knobs[17].mSurfaceValue, page_mix.mQuickControls.getByIndex(1))
-page.makeValueBinding(knobs[18].mSurfaceValue, page_mix.mQuickControls.getByIndex(2))
-page.makeValueBinding(knobs[19].mSurfaceValue, page_mix.mQuickControls.getByIndex(3))
-page.makeValueBinding(knobs[20].mSurfaceValue, page_mix.mQuickControls.getByIndex(4))
-page.makeValueBinding(knobs[21].mSurfaceValue, page_mix.mQuickControls.getByIndex(5))
-page.makeValueBinding(knobs[22].mSurfaceValue, page_mix.mQuickControls.getByIndex(6))
-page.makeValueBinding(knobs[23].mSurfaceValue, page_mix.mQuickControls.getByIndex(7))
-
-//cue
-page.makeValueBinding(knobs[24].mSurfaceValue, page_mix.mCueSends.getByIndex(0).mLevel)
-page.makeValueBinding(knobs[25].mSurfaceValue, page_mix.mCueSends.getByIndex(1).mLevel)
-page.makeValueBinding(knobs[26].mSurfaceValue, page_mix.mCueSends.getByIndex(2).mLevel)
-page.makeValueBinding(knobs[27].mSurfaceValue, page_mix.mCueSends.getByIndex(3).mLevel)
-page.makeValueBinding(knobs[28].mSurfaceValue, page_mix.mCueSends.getByIndex(4).mLevel)
-page.makeValueBinding(knobs[29].mSurfaceValue, page_mix.mCueSends.getByIndex(5).mLevel)
-page.makeValueBinding(knobs[30].mSurfaceValue, page_mix.mCueSends.getByIndex(6).mLevel)
-page.makeValueBinding(knobs[31].mSurfaceValue, page_mix.mCueSends.getByIndex(7).mLevel)
-
-page.makeValueBinding(buttons[24].mSurfaceValue, page_mix.mCueSends.getByIndex(0).mOn).setTypeToggle()
-page.makeValueBinding(buttons[25].mSurfaceValue, page_mix.mCueSends.getByIndex(1).mOn).setTypeToggle()
-page.makeValueBinding(buttons[26].mSurfaceValue, page_mix.mCueSends.getByIndex(2).mOn).setTypeToggle()
-page.makeValueBinding(buttons[27].mSurfaceValue, page_mix.mCueSends.getByIndex(3).mOn).setTypeToggle()
-page.makeValueBinding(buttons[28].mSurfaceValue, page_mix.mCueSends.getByIndex(4).mOn).setTypeToggle()
-page.makeValueBinding(buttons[29].mSurfaceValue, page_mix.mCueSends.getByIndex(5).mOn).setTypeToggle()
-page.makeValueBinding(buttons[30].mSurfaceValue, page_mix.mCueSends.getByIndex(6).mOn).setTypeToggle()
-page.makeValueBinding(buttons[31].mSurfaceValue, page_mix.mCueSends.getByIndex(7).mOn).setTypeToggle()
 
 //EQ
 page.makeValueBinding(knobs[32].mSurfaceValue, page_mix.mChannelEQ.mBand1.mGain)
