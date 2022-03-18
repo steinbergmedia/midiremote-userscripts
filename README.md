@@ -10,15 +10,23 @@ This document will guide you through the steps of writing a **MIDI Remote API Sc
 
 # How to work with this repository
 
-!v Make a fork of steinbergmedia/midiremote-userscripts
-!v Regulary do “fetch and merge” from the upstream repo (steinbergmedia/midiremote-userscripts) to stay in sync.
-!v Rename your existing …/Driver Scripts/Local folder to something else (like Local_backup)
-!v Create a new empty folder Local to replace it
-!v Clone your forked repository inside the newly created empty Local folder
-!v Copy your existing scripts from within the Local_backup folder into the Local folder
-!v Still use the parent folder of Local, the Drive Scripts folder, as the workspace folder in Visual Studio Code
-!v Make commits/pushes to your forked repo
-!v Make pull request to the upstream repo (steinbergmedia/midiremote-userscripts)
+1. Make a fork of steinbergmedia/midiremote-userscripts
+
+2. Rename your existing …/Driver Scripts/Local folder to something else (like Local_backup)
+
+3. Create a new empty folder Local to replace it
+
+4. Clone your forked repository inside the newly created empty Local folder
+
+5. Copy your existing scripts from within the Local_backup folder into the Local folder
+
+6. Still use the parent folder of Local, the Drive Scripts folder, as the workspace folder in Visual Studio Code
+
+7. Make commits/pushes to your forked repo
+
+8. Make pull requests to the upstream repo (steinbergmedia/midiremote-userscripts)
+
+> And don't forget to regulary do “fetch and merge” from the upstream repo (steinbergmedia/midiremote-userscripts) to stay in sync.
 
 
 # Basic Concept
