@@ -1,7 +1,12 @@
 <h1>MIDI REMOTE for BEHRINGER BCR2000</h1>
-![BCR2000](https://user-images.githubusercontent.com/101831235/159006049-1843eb0c-b5c4-4ef7-bc04-2b1d06d5f8ca.png)
 
-NOTE: Use Encoder Groups buttons on BCR2000 to switch between sends and Focused Quick Controls
+NOTE: Use Encoder Groups buttons on BCR2000 to switch between:
+- Sends
+- Focused Quick Controls
+- Track Quick Controls
+- Cues
+
+![BCR2000](https://user-images.githubusercontent.com/101831235/159006239-3dbfff71-bc56-44a7-b75c-b04e54632ca7.png)
 
 INSTALL: import using “import script” button inside midi remote section.
 
@@ -33,7 +38,6 @@ v1.5 11/03/2022
 - 	Monitor enable control added.
 - 	Read and write automation control added.
 -	Foot-switches added.
-
 
 
 
