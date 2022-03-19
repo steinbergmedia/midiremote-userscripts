@@ -15,8 +15,8 @@ var midiOutput = deviceDriver.mPorts.makeMidiOutput()
 // define all possible namings the devices MIDI ports could have
 // NOTE: Windows and MacOS handle port naming differently
 deviceDriver.makeDetectionUnit().detectPortPair(midiInput, midiOutput)
-    .expectInputNameEquals('Steinberg UR44C-1')
-    .expectOutputNameEquals('Steinberg UR44C-1')    
+    .expectInputNameEquals('VI49')
+    .expectOutputNameEquals('VI49')    
 
 //-----------------------------------------------------------------------------
 // 2. SURFACE LAYOUT - create control elements and midi bindings
