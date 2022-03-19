@@ -1,4 +1,4 @@
-//Behringer BCR2000 v 1.5.1 by Giampaolo Gesuale
+// Behringer BCR2000 v 1.6 by Giampaolo Gesuale
 
 //-----------------------------------------------------------------------------
 // 1. DRIVER SETUP - create driver object, midi ports and detection information
@@ -25,6 +25,15 @@ deviceDriver.makeDetectionUnit().detectPortPair(midiInput, midiOutput)
 //-----------------------------------------------------------------------------
 
 var surface= deviceDriver.mSurface
+var selTrackName = surface.makeLabelField(18,2,4,1)
+var pagename = surface.makeLabelField(18,12,4,0.9)
+
+var trackNames = []
+for (var i = 0; i < 8; ++i){
+    var trackName = surface.makeLabelField(i*2,15,2,0.6)
+    trackNames.push(trackName)
+}
+
 
 //layer zone
 var encoderGroups = surface.makeControlLayerZone('Encoder Groups')
@@ -124,6 +133,8 @@ for(var rb = 0; rb < nFootButtons/inArowFoot; ++rb) {
 
 // default page
 var page = deviceDriver.mMapping.makePage('Focus Control')
+page.setLabelFieldText(pagename, 'Focus Control')
+page.setLabelFieldHostObject(selTrackName, page.mHostAccess.mTrackSelection.mMixerChannel)
 var page_focus= page.mHostAccess.mTrackSelection.mMixerChannel
 
 var numStrips = 8
@@ -155,6 +166,10 @@ for(var stripIndex = 0; stripIndex < numStrips; ++stripIndex) {
 page.makeValueBinding(buttons[32].mSurfaceValue, page.mHostAccess.mFocusedQuickControls.mFocusLockedValue).setTypeToggle()
 
 //EQ
+var EqSubPageArea = page.makeSubPageArea('EQ area')
+var subPageGain = EqSubPageArea.makeSubPage('Gain')
+var subPageEqType = EqSubPageArea.makeSubPage('Eq Type')
+page.makeActionBinding(buttons[35].mSurfaceValue, EqSubPageArea.mAction.mNext)
 page.makeValueBinding(knobs[32].mSurfaceValue, page_focus.mChannelEQ.mBand1.mGain)
 page.makeValueBinding(knobs[33].mSurfaceValue, page_focus.mChannelEQ.mBand2.mGain)
 page.makeValueBinding(knobs[34].mSurfaceValue, page_focus.mChannelEQ.mBand3.mGain)
@@ -163,14 +178,19 @@ page.makeValueBinding(knobs[40].mSurfaceValue, page_focus.mChannelEQ.mBand1.mFre
 page.makeValueBinding(knobs[41].mSurfaceValue, page_focus.mChannelEQ.mBand2.mFreq)
 page.makeValueBinding(knobs[42].mSurfaceValue, page_focus.mChannelEQ.mBand3.mFreq)
 page.makeValueBinding(knobs[43].mSurfaceValue, page_focus.mChannelEQ.mBand4.mFreq)
-page.makeValueBinding(knobs[48].mSurfaceValue, page_focus.mChannelEQ.mBand1.mQ)
-page.makeValueBinding(knobs[49].mSurfaceValue, page_focus.mChannelEQ.mBand2.mQ)
-page.makeValueBinding(knobs[50].mSurfaceValue, page_focus.mChannelEQ.mBand3.mQ)
-page.makeValueBinding(knobs[51].mSurfaceValue, page_focus.mChannelEQ.mBand4.mQ)
+page.makeValueBinding(knobs[48].mSurfaceValue, page_focus.mChannelEQ.mBand1.mFilterType).setSubPage(subPageEqType)
+page.makeValueBinding(knobs[49].mSurfaceValue, page_focus.mChannelEQ.mBand2.mFilterType).setSubPage(subPageEqType)
+page.makeValueBinding(knobs[50].mSurfaceValue, page_focus.mChannelEQ.mBand3.mFilterType).setSubPage(subPageEqType)
+page.makeValueBinding(knobs[51].mSurfaceValue, page_focus.mChannelEQ.mBand4.mFilterType).setSubPage(subPageEqType)
+page.makeValueBinding(knobs[48].mSurfaceValue, page_focus.mChannelEQ.mBand1.mQ).setSubPage(subPageGain)
+page.makeValueBinding(knobs[49].mSurfaceValue, page_focus.mChannelEQ.mBand2.mQ).setSubPage(subPageGain)
+page.makeValueBinding(knobs[50].mSurfaceValue, page_focus.mChannelEQ.mBand3.mQ).setSubPage(subPageGain)
+page.makeValueBinding(knobs[51].mSurfaceValue, page_focus.mChannelEQ.mBand4.mQ).setSubPage(subPageGain)
 page.makeValueBinding(buttons[40].mSurfaceValue, page_focus.mChannelEQ.mBand1.mOn).setTypeToggle()
 page.makeValueBinding(buttons[41].mSurfaceValue, page_focus.mChannelEQ.mBand2.mOn).setTypeToggle()
 page.makeValueBinding(buttons[42].mSurfaceValue, page_focus.mChannelEQ.mBand3.mOn).setTypeToggle()
 page.makeValueBinding(buttons[43].mSurfaceValue, page_focus.mChannelEQ.mBand4.mOn).setTypeToggle()
+page.makeValueBinding(buttons[34].mSurfaceValue, page_focus.mPreFilter.mPhaseSwitch).setTypeToggle()
 page.makeValueBinding(knobs[36].mSurfaceValue, page_focus.mPreFilter.mHighCutFreq)
 page.makeValueBinding(knobs[44].mSurfaceValue, page_focus.mPreFilter.mLowCutFreq)
 page.makeValueBinding(knobs[52].mSurfaceValue, page_focus.mPreFilter.mGain)
@@ -191,6 +211,63 @@ page.makeValueBinding(buttons[46].mSurfaceValue, page_focus.mValue.mMonitorEnabl
 page.makeValueBinding(buttons[47].mSurfaceValue, page_focus.mValue.mMute).setTypeToggle()
 page.makeValueBinding(knobs[54].mSurfaceValue, page.mHostAccess.mMouseCursor.mValueUnderMouse)
 page.makeValueBinding(buttons[48].mSurfaceValue, page_focus.mValue.mEditorOpen).setTypeToggle()
-page.makeValueBinding(buttons[50].mSurfaceValue, page_focus.mValue.mInstrumentOpen).setTypeToggle()
+page.makeValueBinding(buttons[33].mSurfaceValue, page_focus.mValue.mInstrumentOpen).setTypeToggle()
 page.makeActionBinding(buttons[49].mSurfaceValue, page.mHostAccess.mTrackSelection.mAction.mPrevTrack)
 page.makeActionBinding(buttons[51].mSurfaceValue, page.mHostAccess.mTrackSelection.mAction.mNextTrack)
+
+//-----------
+//Mixing page
+//-----------
+var mixPage = deviceDriver.mMapping.makePage('Mixing')
+mixPage.setLabelFieldText(pagename, 'Mixing')
+mixPage.setLabelFieldHostObject(selTrackName, mixPage.mHostAccess.mTrackSelection.mMixerChannel)
+
+var hostMixerBankZone = mixPage.mHostAccess.mMixConsole.makeMixerBankZone()
+.excludeInputChannels()
+.excludeOutputChannels()
+
+for (var i = 0; i < 8; ++i) {
+    var channelBankItem = hostMixerBankZone.makeMixerBankChannel()
+    mixPage.makeValueBinding(knobs[i+48].mSurfaceValue, channelBankItem.mValue.mVolume)
+    mixPage.makeValueBinding(knobs[i+32].mSurfaceValue, channelBankItem.mValue.mPan)
+    //mixPage.makeValueBinding(buttons[i+32].mSurfaceValue, channelBankItem.mValue.mSolo).setTypeToggle()
+	mixPage.makeValueBinding(buttons[i+40].mSurfaceValue, channelBankItem.mValue.mMute).setTypeToggle()
+    mixPage.makeValueBinding(buttons[i+32].mSurfaceValue, channelBankItem.mValue.mSelected)
+    mixPage.setLabelFieldHostObject(trackNames[i], channelBankItem.mValue)
+}
+
+for(var e = 0; e < 8; ++e) {
+	var knob1 = knobs[e]
+	var button1 = buttons[e]
+    var knob2 = knobs[e + 8]
+	var button2 = buttons[e + 8]
+	var knob3 = knobs[e + 16]
+	var knob4 = knobs[e + 24]
+	var button4 = buttons[e + 24]
+	
+	var sendSlot = mixPage.mHostAccess.mTrackSelection.mMixerChannel.mSends.getByIndex(e)
+    var focusQuickControl = mixPage.mHostAccess.mFocusedQuickControls.getByIndex(e)
+	var trackQuickControl = mixPage.mHostAccess.mTrackSelection.mMixerChannel.mQuickControls.getByIndex(e)
+	var cueSend = page_focus.mCueSends.getByIndex(e)
+	
+	mixPage.makeValueBinding(knob1.mSurfaceValue, sendSlot.mLevel)
+	mixPage.makeValueBinding(button1.mSurfaceValue, sendSlot.mOn).setTypeToggle()
+    mixPage.makeValueBinding(knob2.mSurfaceValue, focusQuickControl)
+	mixPage.makeValueBinding(button2.mSurfaceValue, focusQuickControl).setTypeToggle()
+	mixPage.makeValueBinding(knob3.mSurfaceValue, trackQuickControl)
+	mixPage.makeValueBinding(knob4.mSurfaceValue, cueSend.mLevel)
+	mixPage.makeValueBinding(button4.mSurfaceValue, cueSend.mOn).setTypeToggle()
+}
+
+//next track
+/*
+mixPage.makeActionBinding(buttons[49].mSurfaceValue, mixPage.mHostAccess.mTrackSelection.mAction.mPrevTrack)
+mixPage.makeActionBinding(buttons[51].mSurfaceValue, mixPage.mHostAccess.mTrackSelection.mAction.mNextTrack)
+*/
+mixPage.makeValueBinding(buttons[48].mSurfaceValue, mixPage.mHostAccess.mTrackSelection.mMixerChannel.mValue.mEditorOpen).setTypeToggle()
+mixPage.makeActionBinding(buttons[49].mSurfaceValue, hostMixerBankZone.mAction.mPrevBank)
+mixPage.makeActionBinding(buttons[51].mSurfaceValue, hostMixerBankZone.mAction.mNextBank)
+
+//page select
+mixPage.makeActionBinding(buttons[50].mSurfaceValue, page.mAction.mActivate)
+page.makeActionBinding(buttons[50].mSurfaceValue, mixPage.mAction.mActivate)
