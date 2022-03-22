@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 
 var midiremote_api = require('midiremote_api_v1')
-var deviceDriver = midiremote_api.makeDeviceDriver('Behringer', 'BCR2000', 'Giampaolo Gesuale')
+var deviceDriver = midiremote_api.makeDeviceDriver('behringer', 'bcr2000', 'Giampaolo Gesuale')
 
 var midiInput = deviceDriver.mPorts.makeMidiInput()
 var midiOutput = deviceDriver.mPorts.makeMidiOutput()
