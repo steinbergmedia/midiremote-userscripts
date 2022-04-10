@@ -36,22 +36,22 @@
                 "type": "Surface",
                 "members": {
                     "SurfaceElements": [
-                        13,
-                        17,
-                        21,
-                        25,
-                        29,
-                        33,
-                        37,
-                        41,
-                        45,
-                        49,
-                        53,
-                        57,
-                        61,
-                        65,
-                        69,
-                        73
+                        10,
+                        14,
+                        18,
+                        22,
+                        26,
+                        30,
+                        34,
+                        38,
+                        42,
+                        46,
+                        50,
+                        54,
+                        58,
+                        62,
+                        66,
+                        70
                     ]
                 }
             },
@@ -101,18 +101,6 @@
             },
             {
                 "id": 10,
-                "type": "ExcludeInputChannelType"
-            },
-            {
-                "id": 11,
-                "type": "ExcludeOutputChannelType"
-            },
-            {
-                "id": 12,
-                "type": "IncludeOutputChannelType"
-            },
-            {
-                "id": 13,
                 "type": "Knob",
                 "members": {
                     "Rect": {
@@ -121,28 +109,28 @@
                         "W": 2.0,
                         "H": 2.0
                     },
-                    "SurfaceValue": 14
+                    "SurfaceValue": 11
                 }
             },
             {
-                "id": 14,
+                "id": 11,
                 "type": "SurfaceElementValue",
                 "members": {
-                    "MidiBinding": 15
+                    "MidiBinding": 12
                 }
             },
             {
-                "id": 15,
+                "id": 12,
                 "type": "SurfaceValueMidiBinding",
                 "members": {
                     "InputPort": 5,
                     "OutputPort": 6,
                     "IsConsuming": true,
-                    "MidiChannelBinding": 16
+                    "MidiChannelBinding": 13
                 }
             },
             {
-                "id": 16,
+                "id": 13,
                 "type": "MidiBindingToControlChange",
                 "members": {
                     "ChannelNumber": 0,
@@ -151,7 +139,7 @@
                 }
             },
             {
-                "id": 17,
+                "id": 14,
                 "type": "Knob",
                 "members": {
                     "Rect": {
@@ -160,28 +148,28 @@
                         "W": 2.0,
                         "H": 2.0
                     },
-                    "SurfaceValue": 18
+                    "SurfaceValue": 15
                 }
             },
             {
-                "id": 18,
+                "id": 15,
                 "type": "SurfaceElementValue",
                 "members": {
-                    "MidiBinding": 19
+                    "MidiBinding": 16
                 }
             },
             {
-                "id": 19,
+                "id": 16,
                 "type": "SurfaceValueMidiBinding",
                 "members": {
                     "InputPort": 5,
                     "OutputPort": 6,
                     "IsConsuming": true,
-                    "MidiChannelBinding": 20
+                    "MidiChannelBinding": 17
                 }
             },
             {
-                "id": 20,
+                "id": 17,
                 "type": "MidiBindingToControlChange",
                 "members": {
                     "ChannelNumber": 0,
@@ -190,7 +178,7 @@
                 }
             },
             {
-                "id": 21,
+                "id": 18,
                 "type": "Knob",
                 "members": {
                     "Rect": {
@@ -199,28 +187,28 @@
                         "W": 2.0,
                         "H": 2.0
                     },
-                    "SurfaceValue": 22
+                    "SurfaceValue": 19
                 }
             },
             {
-                "id": 22,
+                "id": 19,
                 "type": "SurfaceElementValue",
                 "members": {
-                    "MidiBinding": 23
+                    "MidiBinding": 20
                 }
             },
             {
-                "id": 23,
+                "id": 20,
                 "type": "SurfaceValueMidiBinding",
                 "members": {
                     "InputPort": 5,
                     "OutputPort": 6,
                     "IsConsuming": true,
-                    "MidiChannelBinding": 24
+                    "MidiChannelBinding": 21
                 }
             },
             {
-                "id": 24,
+                "id": 21,
                 "type": "MidiBindingToControlChange",
                 "members": {
                     "ChannelNumber": 0,
@@ -229,7 +217,7 @@
                 }
             },
             {
-                "id": 25,
+                "id": 22,
                 "type": "Knob",
                 "members": {
                     "Rect": {
@@ -238,28 +226,28 @@
                         "W": 2.0,
                         "H": 2.0
                     },
-                    "SurfaceValue": 26
+                    "SurfaceValue": 23
                 }
             },
             {
-                "id": 26,
+                "id": 23,
                 "type": "SurfaceElementValue",
                 "members": {
-                    "MidiBinding": 27
+                    "MidiBinding": 24
                 }
             },
             {
-                "id": 27,
+                "id": 24,
                 "type": "SurfaceValueMidiBinding",
                 "members": {
                     "InputPort": 5,
                     "OutputPort": 6,
                     "IsConsuming": true,
-                    "MidiChannelBinding": 28
+                    "MidiChannelBinding": 25
                 }
             },
             {
-                "id": 28,
+                "id": 25,
                 "type": "MidiBindingToControlChange",
                 "members": {
                     "ChannelNumber": 0,
@@ -268,7 +256,7 @@
                 }
             },
             {
-                "id": 29,
+                "id": 26,
                 "type": "Knob",
                 "members": {
                     "Rect": {
@@ -277,28 +265,28 @@
                         "W": 2.0,
                         "H": 2.0
                     },
-                    "SurfaceValue": 30
+                    "SurfaceValue": 27
                 }
             },
             {
-                "id": 30,
+                "id": 27,
                 "type": "SurfaceElementValue",
                 "members": {
-                    "MidiBinding": 31
+                    "MidiBinding": 28
                 }
             },
             {
-                "id": 31,
+                "id": 28,
                 "type": "SurfaceValueMidiBinding",
                 "members": {
                     "InputPort": 5,
                     "OutputPort": 6,
                     "IsConsuming": true,
-                    "MidiChannelBinding": 32
+                    "MidiChannelBinding": 29
                 }
             },
             {
-                "id": 32,
+                "id": 29,
                 "type": "MidiBindingToControlChange",
                 "members": {
                     "ChannelNumber": 0,
@@ -307,7 +295,7 @@
                 }
             },
             {
-                "id": 33,
+                "id": 30,
                 "type": "Knob",
                 "members": {
                     "Rect": {
@@ -316,28 +304,28 @@
                         "W": 2.0,
                         "H": 2.0
                     },
-                    "SurfaceValue": 34
+                    "SurfaceValue": 31
                 }
             },
             {
-                "id": 34,
+                "id": 31,
                 "type": "SurfaceElementValue",
                 "members": {
-                    "MidiBinding": 35
+                    "MidiBinding": 32
                 }
             },
             {
-                "id": 35,
+                "id": 32,
                 "type": "SurfaceValueMidiBinding",
                 "members": {
                     "InputPort": 5,
                     "OutputPort": 6,
                     "IsConsuming": true,
-                    "MidiChannelBinding": 36
+                    "MidiChannelBinding": 33
                 }
             },
             {
-                "id": 36,
+                "id": 33,
                 "type": "MidiBindingToControlChange",
                 "members": {
                     "ChannelNumber": 0,
@@ -346,7 +334,7 @@
                 }
             },
             {
-                "id": 37,
+                "id": 34,
                 "type": "Knob",
                 "members": {
                     "Rect": {
@@ -355,28 +343,28 @@
                         "W": 2.0,
                         "H": 2.0
                     },
-                    "SurfaceValue": 38
+                    "SurfaceValue": 35
                 }
             },
             {
-                "id": 38,
+                "id": 35,
                 "type": "SurfaceElementValue",
                 "members": {
-                    "MidiBinding": 39
+                    "MidiBinding": 36
                 }
             },
             {
-                "id": 39,
+                "id": 36,
                 "type": "SurfaceValueMidiBinding",
                 "members": {
                     "InputPort": 5,
                     "OutputPort": 6,
                     "IsConsuming": true,
-                    "MidiChannelBinding": 40
+                    "MidiChannelBinding": 37
                 }
             },
             {
-                "id": 40,
+                "id": 37,
                 "type": "MidiBindingToControlChange",
                 "members": {
                     "ChannelNumber": 0,
@@ -385,7 +373,7 @@
                 }
             },
             {
-                "id": 41,
+                "id": 38,
                 "type": "Knob",
                 "members": {
                     "Rect": {
@@ -394,28 +382,28 @@
                         "W": 2.0,
                         "H": 2.0
                     },
-                    "SurfaceValue": 42
+                    "SurfaceValue": 39
                 }
             },
             {
-                "id": 42,
+                "id": 39,
                 "type": "SurfaceElementValue",
                 "members": {
-                    "MidiBinding": 43
+                    "MidiBinding": 40
                 }
             },
             {
-                "id": 43,
+                "id": 40,
                 "type": "SurfaceValueMidiBinding",
                 "members": {
                     "InputPort": 5,
                     "OutputPort": 6,
                     "IsConsuming": true,
-                    "MidiChannelBinding": 44
+                    "MidiChannelBinding": 41
                 }
             },
             {
-                "id": 44,
+                "id": 41,
                 "type": "MidiBindingToControlChange",
                 "members": {
                     "ChannelNumber": 0,
@@ -424,7 +412,7 @@
                 }
             },
             {
-                "id": 45,
+                "id": 42,
                 "type": "Button",
                 "members": {
                     "Rect": {
@@ -433,30 +421,30 @@
                         "W": 2.0,
                         "H": 2.0
                     },
-                    "SurfaceValue": 46,
+                    "SurfaceValue": 43,
                     "Type": "Push",
                     "Shape": "Rectangle"
                 }
             },
             {
-                "id": 46,
+                "id": 43,
                 "type": "SurfaceElementValue",
                 "members": {
-                    "MidiBinding": 47
+                    "MidiBinding": 44
                 }
             },
             {
-                "id": 47,
+                "id": 44,
                 "type": "SurfaceValueMidiBinding",
                 "members": {
                     "InputPort": 5,
                     "OutputPort": 6,
                     "IsConsuming": true,
-                    "MidiChannelBinding": 48
+                    "MidiChannelBinding": 45
                 }
             },
             {
-                "id": 48,
+                "id": 45,
                 "type": "MidiBindingToNote",
                 "members": {
                     "ChannelNumber": 0,
@@ -464,7 +452,7 @@
                 }
             },
             {
-                "id": 49,
+                "id": 46,
                 "type": "Button",
                 "members": {
                     "Rect": {
@@ -473,30 +461,30 @@
                         "W": 2.0,
                         "H": 2.0
                     },
-                    "SurfaceValue": 50,
+                    "SurfaceValue": 47,
                     "Type": "Push",
                     "Shape": "Rectangle"
                 }
             },
             {
-                "id": 50,
+                "id": 47,
                 "type": "SurfaceElementValue",
                 "members": {
-                    "MidiBinding": 51
+                    "MidiBinding": 48
                 }
             },
             {
-                "id": 51,
+                "id": 48,
                 "type": "SurfaceValueMidiBinding",
                 "members": {
                     "InputPort": 5,
                     "OutputPort": 6,
                     "IsConsuming": true,
-                    "MidiChannelBinding": 52
+                    "MidiChannelBinding": 49
                 }
             },
             {
-                "id": 52,
+                "id": 49,
                 "type": "MidiBindingToNote",
                 "members": {
                     "ChannelNumber": 0,
@@ -504,7 +492,7 @@
                 }
             },
             {
-                "id": 53,
+                "id": 50,
                 "type": "Button",
                 "members": {
                     "Rect": {
@@ -513,30 +501,30 @@
                         "W": 2.0,
                         "H": 2.0
                     },
-                    "SurfaceValue": 54,
+                    "SurfaceValue": 51,
                     "Type": "Push",
                     "Shape": "Rectangle"
                 }
             },
             {
-                "id": 54,
+                "id": 51,
                 "type": "SurfaceElementValue",
                 "members": {
-                    "MidiBinding": 55
+                    "MidiBinding": 52
                 }
             },
             {
-                "id": 55,
+                "id": 52,
                 "type": "SurfaceValueMidiBinding",
                 "members": {
                     "InputPort": 5,
                     "OutputPort": 6,
                     "IsConsuming": true,
-                    "MidiChannelBinding": 56
+                    "MidiChannelBinding": 53
                 }
             },
             {
-                "id": 56,
+                "id": 53,
                 "type": "MidiBindingToNote",
                 "members": {
                     "ChannelNumber": 0,
@@ -544,7 +532,7 @@
                 }
             },
             {
-                "id": 57,
+                "id": 54,
                 "type": "Button",
                 "members": {
                     "Rect": {
@@ -553,30 +541,30 @@
                         "W": 2.0,
                         "H": 2.0
                     },
-                    "SurfaceValue": 58,
+                    "SurfaceValue": 55,
                     "Type": "Push",
                     "Shape": "Rectangle"
                 }
             },
             {
-                "id": 58,
+                "id": 55,
                 "type": "SurfaceElementValue",
                 "members": {
-                    "MidiBinding": 59
+                    "MidiBinding": 56
                 }
             },
             {
-                "id": 59,
+                "id": 56,
                 "type": "SurfaceValueMidiBinding",
                 "members": {
                     "InputPort": 5,
                     "OutputPort": 6,
                     "IsConsuming": true,
-                    "MidiChannelBinding": 60
+                    "MidiChannelBinding": 57
                 }
             },
             {
-                "id": 60,
+                "id": 57,
                 "type": "MidiBindingToNote",
                 "members": {
                     "ChannelNumber": 0,
@@ -584,7 +572,7 @@
                 }
             },
             {
-                "id": 61,
+                "id": 58,
                 "type": "Button",
                 "members": {
                     "Rect": {
@@ -593,30 +581,30 @@
                         "W": 2.0,
                         "H": 2.0
                     },
-                    "SurfaceValue": 62,
+                    "SurfaceValue": 59,
                     "Type": "Push",
                     "Shape": "Rectangle"
                 }
             },
             {
-                "id": 62,
+                "id": 59,
                 "type": "SurfaceElementValue",
                 "members": {
-                    "MidiBinding": 63
+                    "MidiBinding": 60
                 }
             },
             {
-                "id": 63,
+                "id": 60,
                 "type": "SurfaceValueMidiBinding",
                 "members": {
                     "InputPort": 5,
                     "OutputPort": 6,
                     "IsConsuming": true,
-                    "MidiChannelBinding": 64
+                    "MidiChannelBinding": 61
                 }
             },
             {
-                "id": 64,
+                "id": 61,
                 "type": "MidiBindingToNote",
                 "members": {
                     "ChannelNumber": 0,
@@ -624,7 +612,7 @@
                 }
             },
             {
-                "id": 65,
+                "id": 62,
                 "type": "Button",
                 "members": {
                     "Rect": {
@@ -633,30 +621,30 @@
                         "W": 2.0,
                         "H": 2.0
                     },
-                    "SurfaceValue": 66,
+                    "SurfaceValue": 63,
                     "Type": "Push",
                     "Shape": "Rectangle"
                 }
             },
             {
-                "id": 66,
+                "id": 63,
                 "type": "SurfaceElementValue",
                 "members": {
-                    "MidiBinding": 67
+                    "MidiBinding": 64
                 }
             },
             {
-                "id": 67,
+                "id": 64,
                 "type": "SurfaceValueMidiBinding",
                 "members": {
                     "InputPort": 5,
                     "OutputPort": 6,
                     "IsConsuming": true,
-                    "MidiChannelBinding": 68
+                    "MidiChannelBinding": 65
                 }
             },
             {
-                "id": 68,
+                "id": 65,
                 "type": "MidiBindingToNote",
                 "members": {
                     "ChannelNumber": 0,
@@ -664,7 +652,7 @@
                 }
             },
             {
-                "id": 69,
+                "id": 66,
                 "type": "Button",
                 "members": {
                     "Rect": {
@@ -673,30 +661,30 @@
                         "W": 2.0,
                         "H": 2.0
                     },
-                    "SurfaceValue": 70,
+                    "SurfaceValue": 67,
                     "Type": "Push",
                     "Shape": "Rectangle"
                 }
             },
             {
-                "id": 70,
+                "id": 67,
                 "type": "SurfaceElementValue",
                 "members": {
-                    "MidiBinding": 71
+                    "MidiBinding": 68
                 }
             },
             {
-                "id": 71,
+                "id": 68,
                 "type": "SurfaceValueMidiBinding",
                 "members": {
                     "InputPort": 5,
                     "OutputPort": 6,
                     "IsConsuming": true,
-                    "MidiChannelBinding": 72
+                    "MidiChannelBinding": 69
                 }
             },
             {
-                "id": 72,
+                "id": 69,
                 "type": "MidiBindingToNote",
                 "members": {
                     "ChannelNumber": 0,
@@ -704,7 +692,7 @@
                 }
             },
             {
-                "id": 73,
+                "id": 70,
                 "type": "Button",
                 "members": {
                     "Rect": {
@@ -713,35 +701,47 @@
                         "W": 2.0,
                         "H": 2.0
                     },
-                    "SurfaceValue": 74,
+                    "SurfaceValue": 71,
                     "Type": "Push",
                     "Shape": "Rectangle"
                 }
             },
             {
-                "id": 74,
+                "id": 71,
                 "type": "SurfaceElementValue",
                 "members": {
-                    "MidiBinding": 75
+                    "MidiBinding": 72
                 }
             },
             {
-                "id": 75,
+                "id": 72,
                 "type": "SurfaceValueMidiBinding",
                 "members": {
                     "InputPort": 5,
                     "OutputPort": 6,
                     "IsConsuming": true,
-                    "MidiChannelBinding": 76
+                    "MidiChannelBinding": 73
                 }
             },
             {
-                "id": 76,
+                "id": 73,
                 "type": "MidiBindingToNote",
                 "members": {
                     "ChannelNumber": 0,
                     "Pitch": 39
                 }
+            },
+            {
+                "id": 74,
+                "type": "ExcludeInputChannelType"
+            },
+            {
+                "id": 75,
+                "type": "ExcludeOutputChannelType"
+            },
+            {
+                "id": 76,
+                "type": "IncludeOutputChannelType"
             },
             {
                 "id": 77,
