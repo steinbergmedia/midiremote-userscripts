@@ -1,0 +1,97 @@
+# MIDI Remote for the Mackie C4 (Version 1.0)
+
+This script has been tested on an eLogic Mackie C4 that has version 1.02
+firmware installed, and using Cubase Professional 12.0.10 and the E-mu
+1x1 midi interface.
+
+It has not been tested on a Mackie C4-Pro but since the protocol is the
+same, then other than potential detection issues, it should work.
+
+## Installation
+
+-   Create folder structure \"mackie/c4\" inside \"../MIDI Remote/Driver
+    Scripts/Local\" folder.
+
+-   Copy the mackie_c4.js file inside c4 folder.
+
+-   Connect your device.
+
+-   Start Cubase/Nuendo.
+
+Since the midi name will likely be different for other users, the
+.expectInputNameEquals and .expectOutputNameEquals were commented out of
+the mackie_c4.js script and the user may want to uncomment them and
+change for their own interface as seen below:
+
+```
+this.deviceDriver.makeDetectionUnit().detectPortPair(this.midiInput,this.midiOutput)
+
+      .expectInputNameEquals(\'E-MU XMidi1X1\')
+
+      .expectOutputNameEquals(\'E-MU XMidi1X1\')
+```
+
+As of Cubase version 12.0.10, the script can be added via the \"+\"
+button, and MIDI ports can be assigned manually.
+
+When your unit its detected, the serial number and version of the
+firmware should print out in the MIDI Remote Script Console.
+
+## Mackie C4 Pages
+
+As of version 1.0, the following pages have been implemented:
+
+-   Equalizer Mixer Mode Page
+
+### Equalizer Mixer Mode Page
+
+This page implements the ability to control the parameters of the four
+equalizers on each of the mixer channels as pictured in Figure 1.
+
+#### Controls
+
+-   Row 1 Knobs -- Change the frequency in Hz of the selected equalizer
+    on the selected channel.
+
+-   Row 2 Knobs -- Change the gain in decibels of the selected equalizer
+    on the selected channel.
+
+-   Row 3 Knobs -- Change the Q factor of the selected equalizer on the
+    selected channel.
+
+-   Row 3 Knobs -- Change the Q filter type of the selected equalizer on
+    the selected channel.
+
+-   Row 3 Buttons -- Toggles the on/off state of the selected equalizer
+    on the selected channel.
+
+-   Bank Left -- Shift the channels left in banks of 8 channels.
+
+-   Bank Right - Shift the channels right in banks of 8 channels.
+
+-   Single Left (Channel Left) - Shift the channels left by one.
+
+-   Single Right (Channel Right) - Shift the channels right by one.
+
+-   Slot Up (Next Equalizer) -- Select the next equalizer.
+
+-   Slot Down (Previous Equalizer) -- Select the previous equalizer.
+
+![](images/media/image1.jpg)
+
+Figure - Mackie C4 Equalizer Mixer Page
+
+## Known Issues:
+
+-   When a value is changed withing Cubase, the LED updates to the
+    correct position but the display value on the Mackie C4 does not. It
+    the corresponding knob is knudged (one click to the right then left)
+    the values will sync up. A fix is being investigated.
+
+## Changelog:
+
+-   V 1.0 4/22/2022 -- Initial Release
+
+Script written by Ron Garrison
+
+Contact: <ron.garrison@gmail.com>
