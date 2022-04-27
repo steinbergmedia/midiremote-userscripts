@@ -244,8 +244,8 @@ function MackieC4(context) {
   // Because other will havev a different midi interface.  User may have 
   // to modify for their interface name.
   this.deviceDriver.makeDetectionUnit().detectPortPair(this.midiInput, this.midiOutput)
-      // .expectInputNameEquals('E-MU XMidi1X1')
-      // .expectOutputNameEquals('E-MU XMidi1X1')
+      //.expectInputNameEquals('E-MU XMidi1X1')
+      //.expectOutputNameEquals('E-MU XMidi1X1')
   
   // Setup callback to receive system exclusive messages
   // Since this is a callback, save the reference to 'this'.  
@@ -302,7 +302,7 @@ function MackieC4(context) {
   // Setup the Mackie C4 Surface
   this.surface = this.deviceDriver.mSurface;
 
-  this.pagename = this.surface.makeLabelField(62,37.5,15,2.7)
+  //this.pagename = this.surface.makeLabelField(62,37.5,15,2.7)
 
 
   // Push Encoders
@@ -323,13 +323,8 @@ function MackieC4(context) {
   this.pushEncoderLabelTop = new Array(4)
   this.pushEncoderLabelBottom = new Array(4)
   for (var r = 0; r < 4; r++) {
-    this.pushEncoderLabelTop[r] = new Array(8)
-    this.pushEncoderLabelBottom[r] = new Array(8)  
     var y = r*12.5;
-    for (var c = 0; c < 8; c++) {
-      var x = c*7.5;
-      this.pushEncoderLabelTop[r][c] = this.surface.makeLabelField(x, y, 8, 3.5);
-    }
+    this.pushEncoderLabelTop[r] = this.surface.makeLabelField(0, y, 64, 3.5);
   }
 
   // Used to mimic the LCD Displays
@@ -504,6 +499,7 @@ MackieC4.prototype.clearVPotLeds = function(context) {
     }
   }
 }
+
 // 
 // MackieC4.prototype.clearCtrlLeds = function(context) {
 // 
@@ -514,6 +510,9 @@ MackieC4.prototype.clearVPotLeds = function(context) {
 //   this.clearVPotLeds(context);
 // }
 
+MackieC4.prototype.writeEncoderLabel = function(row, col, bottom, text) {
+  
+}
 
 
 //-----------------------------------------------------------------------------
@@ -541,7 +540,7 @@ var mackieC4 = new MackieC4(deviceDriver);
 
 
 var eqMixPage = deviceDriver.mMapping.makePage('EQ Mixer Mode')
-eqMixPage.setLabelFieldText(mackieC4.pagename, 'EQ Mixer Mode')
+//eqMixPage.setLabelFieldText(mackieC4.pagename, 'EQ Mixer Mode')
 
 
 var hostMixerBankZone = eqMixPage.mHostAccess.mMixConsole.makeMixerBankZone()
@@ -589,7 +588,6 @@ for (var i = 0; i < 8; ++i) {
 
 }
 
-
 function sendFeedbackOut(context, button, ch) {
   
   // Get Track Name
@@ -635,8 +633,19 @@ function sendFeedbackOut(context, button, ch) {
        case 2: break;
        case 3: button.setVPotCenterLed(value); break;
      }
+     button.setVPotLed(newValue)
      button.sendVPotLedMidi(context);
    }
+
+  button.pushEncoder.mPushValue.mOnProcessValueChange = function (context, value) {
+    switch (button.row) {
+      case 0: break;
+      case 1: break;
+      case 2: break;
+      case 3: button.setVPotCenterLed(value); break;
+    }
+    button.sendVPotLedMidi(context);
+  }
 
   button.pushEncoder.mEncoderValue.mOnDisplayValueChange = function (context, displayText, str2) {
     var r = button.row.toString();
@@ -652,15 +661,12 @@ function sendFeedbackOut(context, button, ch) {
         break;
       case 1:
         
-        mackieC4.setLedStrip(context, 1, 0);
         text = text.replace(text.substring(0, displayText.length-2), displayText.substring(0, displayText.length-2));
         break;
       case 2:
-        mackieC4.setLedStrip(context, 2, 0);
         text = text.replace(text.substring(0, displayText.length), displayText.substring(0, displayText.length));
         break;
       case 3:
-        mackieC4.setLedStrip(context, 3, 0);
         switch (displayText) {
           case 'Parametric I':   text = "P I   |"; break;
           case 'Parametric II':  text = "P II  |"; break;
@@ -690,10 +696,12 @@ var eqNextButton = mackieC4.slotUp;
 eqMixPage.makeActionBinding(eqPrevButton.button.mSurfaceValue, EqSubPageArea.mAction.mPrev);
 eqMixPage.makeActionBinding(eqNextButton.button.mSurfaceValue, EqSubPageArea.mAction.mNext);
 
+eqMixPage.setLabelFieldText(mackieC4.pushEncoderLabelTop[0], "Equalizer Mixer Page");
+
 subPageEQ1.mOnActivate = function(activeDevice) {
-  mackieC4.setLedStripText(1, 0, 'EQ1--------------------Gain (dB)------------------------');
-  mackieC4.setLedStripText(2, 0, 'EQ1--------------------Q Factor-------------------------');
-  mackieC4.setLedStripText(3, 0, 'EQ1------------Filter Type-(Push=on/off)----------------');
+  mackieC4.pushEncoder[1][0].setLabelText(activeDevice, 0, "EQ1----");
+  mackieC4.pushEncoder[2][0].setLabelText(activeDevice, 0, "EQ1----");
+  mackieC4.pushEncoder[3][0].setLabelText(activeDevice, 0, "EQ1----");
 
   // the EQ Type sub page has been activated, turn EQ Type LED on
   console.log('EQ1 Subpage Activated');
@@ -715,9 +723,9 @@ subPageEQ1.mOnActivate = function(activeDevice) {
 }
  
 subPageEQ2.mOnActivate = function(activeDevice) {
-  mackieC4.setLedStripText(1, 0, 'EQ2--------------------Gain (dB)------------------------');
-  mackieC4.setLedStripText(2, 0, 'EQ2--------------------Q Factor-------------------------');
-  mackieC4.setLedStripText(3, 0, 'EQ2------------Filter Type-(Push=on/off)----------------');
+  mackieC4.pushEncoder[1][0].setLabelText(activeDevice, 0, "EQ2----");
+  mackieC4.pushEncoder[2][0].setLabelText(activeDevice, 0, "EQ2----");
+  mackieC4.pushEncoder[3][0].setLabelText(activeDevice, 0, "EQ2----");
   // the EQ Type sub page has been activated, turn EQ Type LED on
   console.log('EQ2 Subpage Activated');
   for (var i = 0; i < 8; i++) {
@@ -738,9 +746,9 @@ subPageEQ2.mOnActivate = function(activeDevice) {
 }
  
 subPageEQ3.mOnActivate = function(activeDevice) {
-  mackieC4.setLedStripText(1, 0, 'EQ3--------------------Gain (dB)------------------------');
-  mackieC4.setLedStripText(2, 0, 'EQ3--------------------Q Factor-------------------------');
-  mackieC4.setLedStripText(3, 0, 'EQ3------------Filter Type-(Push=on/off)----------------');
+  mackieC4.pushEncoder[1][0].setLabelText(activeDevice, 0, "EQ3----");
+  mackieC4.pushEncoder[2][0].setLabelText(activeDevice, 0, "EQ3----");
+  mackieC4.pushEncoder[3][0].setLabelText(activeDevice, 0, "EQ3----");
   // the EQ Type sub page has been activated, turn EQ Type LED on
   console.log('EQ3 Subpage Activated');
   for (var i = 0; i < 8; i++) {
@@ -761,9 +769,9 @@ subPageEQ3.mOnActivate = function(activeDevice) {
 }
  
 subPageEQ4.mOnActivate = function(activeDevice) {
-  mackieC4.setLedStripText(1, 0, 'EQ4--------------------Gain (dB)------------------------');
-  mackieC4.setLedStripText(2, 0, 'EQ4--------------------Q Factor-------------------------');
-  mackieC4.setLedStripText(3, 0, 'EQ4------------Filter Type-(Push=on/off)----------------');
+  mackieC4.pushEncoder[1][0].setLabelText(activeDevice, 0, "EQ4----");
+  mackieC4.pushEncoder[2][0].setLabelText(activeDevice, 0, "EQ4----");
+  mackieC4.pushEncoder[3][0].setLabelText(activeDevice, 0, "EQ4----");
   // the EQ Type sub page has been activated, turn EQ Type LED on
   console.log('EQ4 Subpage Activated');
   for (var i = 0; i < 8; i++) {
@@ -831,8 +839,8 @@ var shiftRight = mackieC4.singleRight;
 //  eqMixPage.makeActionBinding(shiftLeft.button.mSurfaceValue,  hostMixerBankZone.mAction.mShiftLeft);
 //  eqMixPage.makeActionBinding(shiftRight.button.mSurfaceValue,  hostMixerBankZone.mAction.mShiftRight);
 
-var prevShiftLeft = mackieC4.surface.makeCustomValueVariable('prevShiftLeft');
-var nextShiftRight = mackieC4.surface.makeCustomValueVariable('nextShiftRight');
+var prevChannel = mackieC4.surface.makeCustomValueVariable('prevChannel');
+var nextChannel = mackieC4.surface.makeCustomValueVariable('nextChannel');
 
 shiftLeft.button.mSurfaceValue.mOnProcessValueChange = function (activeDevice, value) {
   if (value == 1) {
@@ -840,7 +848,7 @@ shiftLeft.button.mSurfaceValue.mOnProcessValueChange = function (activeDevice, v
     mackieC4.clearVPotLeds(activeDevice);
 
     // Only send on press, not release
-    prevShiftLeft.setProcessValue(activeDevice, 1);
+    prevChannel.setProcessValue(activeDevice, 1);
   }
 }
 
@@ -850,16 +858,22 @@ shiftRight.button.mSurfaceValue.mOnProcessValueChange = function (activeDevice, 
     mackieC4.clearVPotLeds(activeDevice);
 
     // Only send on press, not release
-    nextShiftRight.setProcessValue(activeDevice, 1);
+    nextChannel.setProcessValue(activeDevice, 1);
   }
 }
 
 // Now bind to the custom Value Variable instead of the button
-eqMixPage.makeActionBinding(prevShiftLeft, hostMixerBankZone.mAction.mShiftLeft)
-eqMixPage.makeActionBinding(nextShiftRight, hostMixerBankZone.mAction.mShiftRight)
+eqMixPage.makeActionBinding(prevChannel, hostMixerBankZone.mAction.mShiftLeft)
+eqMixPage.makeActionBinding(nextChannel, hostMixerBankZone.mAction.mShiftRight)
 
 
 eqMixPage.mOnActivate = function(context) {
   //mackieC4.clearAll(context)
+  mackieC4.setLedStripText(1, 0, 'EQ1--------------------Gain (dB)------------------------');
+  mackieC4.setLedStripText(2, 0, 'EQ1--------------------Q Factor-------------------------');
+  mackieC4.setLedStripText(3, 0, 'EQ1------------Filter Type-(Push=on/off)----------------');
+  mackieC4.setLedStrip(context, 1, 0);
+  mackieC4.setLedStrip(context, 2, 0);
+  mackieC4.setLedStrip(context, 3, 0);    
 }
  

@@ -1,4 +1,4 @@
-# MIDI Remote for the Mackie C4 (Version 1.0)
+# MIDI Remote for the Mackie C4 (Version 1.01)
 
 This script has been tested on an eLogic Mackie C4 that has version 1.02
 firmware installed, and using Cubase Professional 12.0.10 and the E-mu
@@ -39,7 +39,7 @@ firmware should print out in the MIDI Remote Script Console.
 
 ## Mackie C4 Pages
 
-As of version 1.0, the following pages have been implemented:
+As of version 1.01, the following pages have been implemented:
 
 -   Equalizer Mixer Mode Page
 
@@ -65,17 +65,17 @@ equalizers on each of the mixer channels as pictured in Figure 1.
 -   Row 3 Buttons -- Toggles the on/off state of the selected equalizer
     on the selected channel.
 
--   Bank Left -- Shift the channels left in banks of 8 channels.
+-   Next Bank – Select the next banks of 8 channels.
 
--   Bank Right - Shift the channels right in banks of 8 channels.
+-   Previous Bank - Select the previous bank of 8 channels.
 
--   Single Left (Channel Left) - Shift the channels left by one.
+-   Next Channel (Single Right) – Shift by one to the next channel.
 
--   Single Right (Channel Right) - Shift the channels right by one.
+-   Previous Channel (Single Left) - Shift by one to the previous channel.
 
--   Slot Up (Next Equalizer) -- Select the next equalizer.
+-   Next Equalizer (Slot Up) – Select the next equalizer.
 
--   Slot Down (Previous Equalizer) -- Select the previous equalizer.
+-   Previous Equalizer (Slot Down) – Select the previous equalizer.
 
 ![](images/media/image1.jpg)
 
@@ -85,12 +85,13 @@ Figure - Mackie C4 Equalizer Mixer Page
 
 -   When a value is changed withing Cubase, the LED updates to the
     correct position but the display value on the Mackie C4 does not. It
-    the corresponding knob is knudged (one click to the right then left)
+    the corresponding knob is nudged (one click to the right then left)
     the values will sync up. A fix is being investigated.
 
 ## Changelog:
 
--   V 1.0 4/22/2022 -- Initial Release
+-   V 1.00 4/22/2022 -- Initial Release
+-   V 1.01 4/26/2022 -- Fixed issue making updates more responsive.
 
 Script written by Ron Garrison
 
