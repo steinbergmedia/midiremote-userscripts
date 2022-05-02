@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 
 var midiremote_api = require('midiremote_api_v1')
-var deviceDriver = midiremote_api.makeDeviceDriver('Behringer', 'BCR2000', 'Giampaolo Gesuale')
+var deviceDriver = midiremote_api.makeDeviceDriver('behringer', 'bcr2000', 'Giampaolo Gesuale')
 
 var midiInput = deviceDriver.mPorts.makeMidiInput()
 var midiOutput = deviceDriver.mPorts.makeMidiOutput()
@@ -248,7 +248,7 @@ for(var e = 0; e < 8; ++e) {
 	var sendSlot = mixPage.mHostAccess.mTrackSelection.mMixerChannel.mSends.getByIndex(e)
     var focusQuickControl = mixPage.mHostAccess.mFocusedQuickControls.getByIndex(e)
 	var trackQuickControl = mixPage.mHostAccess.mTrackSelection.mMixerChannel.mQuickControls.getByIndex(e)
-	var cueSend = page_focus.mCueSends.getByIndex(e)
+    var cueSend = mixPage.mHostAccess.mTrackSelection.mMixerChannel.mCueSends.getByIndex(e)
 	
 	mixPage.makeValueBinding(knob1.mSurfaceValue, sendSlot.mLevel)
 	mixPage.makeValueBinding(button1.mSurfaceValue, sendSlot.mOn).setTypeToggle()
