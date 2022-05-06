@@ -1,7 +1,7 @@
-# MIDI Remote for the Mackie C4 (Version 1.01)
+# MIDI Remote for the Mackie C4 (Version 1.02)
 
 This script has been tested on an eLogic Mackie C4 that has version 1.02
-firmware installed, and using Cubase Professional 12.0.10 and the E-mu
+firmware installed, and using Cubase Professional 12.0.20 and the E-mu
 1x1 midi interface.
 
 It has not been tested on a Mackie C4-Pro but since the protocol is the
@@ -39,14 +39,14 @@ firmware should print out in the MIDI Remote Script Console.
 
 ## Mackie C4 Pages
 
-As of version 1.01, the following pages have been implemented:
+As of version 1.02, the following pages have been implemented:
 
 -   Equalizer Mixer Mode Page
 
 ### Equalizer Mixer Mode Page
 
 This page implements the ability to control the parameters of the four
-equalizers on each of the mixer channels as pictured in Figure 1.
+equalizer bands on each of the mixer channels as pictured in Figure 1.
 
 #### Controls
 
@@ -65,7 +65,7 @@ equalizers on each of the mixer channels as pictured in Figure 1.
 -   Row 3 Buttons -- Toggles the on/off state of the selected equalizer
     on the selected channel.
 
--   Next Bank – Select the next banks of 8 channels.
+-   Next Bank – Select the next bank of 8 channels.
 
 -   Previous Bank - Select the previous bank of 8 channels.
 
@@ -73,13 +73,13 @@ equalizers on each of the mixer channels as pictured in Figure 1.
 
 -   Previous Channel (Single Left) - Shift by one to the previous channel.
 
--   Next Equalizer (Slot Up) – Select the next equalizer.
+-   Next Equalizer Band (Slot Up) – Select the next equalizer band.
 
--   Previous Equalizer (Slot Down) – Select the previous equalizer.
+-   Previous Equalizer Band (Slot Down) – Select the previous equalizer band.
 
 ![](images/media/image1.jpg)
 
-Figure - Mackie C4 Equalizer Mixer Page
+Figure 1 - Mackie C4 Equalizer Mixer Page
 
 ## Known Issues:
 
@@ -87,11 +87,14 @@ Figure - Mackie C4 Equalizer Mixer Page
     correct position but the display value on the Mackie C4 does not. It
     the corresponding knob is nudged (one click to the right then left)
     the values will sync up. A fix is being investigated.
+-   As of 12.0.20, after the script is refreshed, the first bank change will 
+    result in empty display values.  Subsequent bank changes will operate normally.
 
 ## Changelog:
 
 -   V 1.00 4/22/2022 -- Initial Release
 -   V 1.01 4/26/2022 -- Fixed issue making updates more responsive.
+-   V 1.02 5/05/2022 – Fixed startup issue introduced with Cubase 12.0.20
 
 Script written by Ron Garrison
 
