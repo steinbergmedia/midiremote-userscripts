@@ -1,18 +1,16 @@
-# MIDI Remote for the Mackie C4 (Version 1.02)
+# MIDI Remote for the Mackie C4 (Version 1.03)
 
-This script has been tested on an eLogic Mackie C4 that has version 1.02
-firmware installed, and using Cubase Professional 12.0.20 and the E-mu
-1x1 midi interface.
+This script has been tested on an eLogic Mackie C4 that has version 1.02 firmware installed, and using Cubase Professional 12.0.20 and the E-mu 1x1 midi interface.
 
-It has not been tested on a Mackie C4-Pro but since the protocol is the
-same, then other than potential detection issues, it should work.
+It has not been tested on a Mackie C4-Pro but since the protocol is the same, then other than potential detection issues, it should work. 
 
 ## Installation
 
 -   Create folder structure \"mackie/c4\" inside \"../MIDI Remote/Driver
     Scripts/Local\" folder.
 
--   Copy the mackie_c4.js file inside c4 folder.
+-   Copy the mackie_c4.js, mackie_c4_elements.js, mackie_c4_surface.js and 
+    mackie_c4_page_eqmix.js files inside c4 folder.
 
 -   Connect your device.
 
@@ -39,7 +37,7 @@ firmware should print out in the MIDI Remote Script Console.
 
 ## Mackie C4 Pages
 
-As of version 1.02, the following pages have been implemented:
+As of version 1.03, the following pages have been implemented:
 
 -   Equalizer Mixer Mode Page
 
@@ -50,10 +48,10 @@ equalizer bands on each of the mixer channels as pictured in Figure 1.
 
 #### Controls
 
--   Row 1 Knobs -- Change the frequency in Hz of the selected equalizer
+-   Row 1 Knobs -- Change the gain in decibels of the selected equalizer
     on the selected channel.
 
--   Row 2 Knobs -- Change the gain in decibels of the selected equalizer
+-   Row 2 Knobs -- Change the frequency in Hz of the selected equalizer
     on the selected channel.
 
 -   Row 3 Knobs -- Change the Q factor of the selected equalizer on the
@@ -77,7 +75,7 @@ equalizer bands on each of the mixer channels as pictured in Figure 1.
 
 -   Previous Equalizer Band (Slot Down) – Select the previous equalizer band.
 
-![](images/media/image1.jpg)
+![](images/media/mackie_c4_eqmix.jpg)
 
 Figure 1 - Mackie C4 Equalizer Mixer Page
 
@@ -90,12 +88,15 @@ Figure 1 - Mackie C4 Equalizer Mixer Page
 -   As of 12.0.20, after the script is refreshed, the first bank change will 
     result in empty display values.  Subsequent bank changes will operate normally.
 
-## Changelog:
+## Changelog (see github for detailed changes):
 
 -   V 1.00 4/22/2022 -- Initial Release
 -   V 1.01 4/26/2022 -- Fixed issue making updates more responsive.
 -   V 1.02 5/05/2022 – Fixed startup issue introduced with Cubase 12.0.20
+-	V 1.03 5/08/2022 – Swapped frequency and gain rows to align with the Cubase GUI
 
 Script written by Ron Garrison
 
 Contact: <ron.garrison@gmail.com>
+
+https://github.com/rwgarrison/midiremote-userscripts
