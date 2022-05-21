@@ -122,15 +122,15 @@ function makeTransport(x, y) {
     bindMidiNote(transport.btnJog, 0, 101)
 
     //Zoom Vertical
-    transport.zoomVertOut = surface.makeButton(x+3, y + 6, 1, 1)
+    transport.zoomVertOut = surface.makeButton(x+3, y + 6, 1, 1).setShapeCircle()
     bindMidiNote(transport.zoomVertOut, 0, 96)
-    transport.zoomVertIn = surface.makeButton(x+4, y + 6, 1, 1)
+    transport.zoomVertIn = surface.makeButton(x+4, y + 6, 1, 1).setShapeCircle()
     bindMidiNote(transport.zoomVertIn, 0, 97)
 
     //Zoom Horizontal
-    transport.zoomHorizOut = surface.makeButton(x+3, y + 7, 1, 1)
+    transport.zoomHorizOut = surface.makeButton(x+3, y + 7, 1, 1).setShapeCircle()
     bindMidiNote(transport.zoomHorizOut, 0, 98)
-    transport.zoomHorizIn = surface.makeButton(x+4, y + 7, 1, 1)
+    transport.zoomHorizIn = surface.makeButton(x+4, y + 7, 1, 1).setShapeCircle()
     bindMidiNote(transport.zoomHorizIn, 0, 99)
 
     return transport
@@ -164,3 +164,12 @@ var surfaceElements = makeSurfaceElements()
 //-----------------------------------------------------------------------------
 // 3. HOST MAPPING - create mapping pages and host bindings
 //-----------------------------------------------------------------------------
+
+var page = deviceDriver.mMapping.makePage('Default')
+
+page.makeCommandBinding(surfaceElements.transport.zoomVertIn.mSurfaceValue, 'Zoom', 'Zoom In Vertically')
+page.makeCommandBinding(surfaceElements.transport.zoomVertOut.mSurfaceValue, 'Zoom', 'Zoom Out Vertically')
+
+page.makeCommandBinding(surfaceElements.transport.zoomHorizIn.mSurfaceValue, 'Zoom', 'Zoom In')
+page.makeCommandBinding(surfaceElements.transport.zoomHorizOut.mSurfaceValue, 'Zoom', 'Zoom Out')
+
