@@ -1,4 +1,28 @@
 /**
+ * @param {MR_DeviceSurface} surface
+ * @param {String} name
+ * @param {number} note
+ * @param {Boolean} toggle
+ * @param {number} x
+ * @param {number} y
+ * @param {number} w
+ * @param {number} h
+ *
+ */
+ function makeLedButton(surface, note, x, y, w, h) {
+  var button = surface.makeButton(x, y, w, h)
+  button.mSurfaceValue.mMidiBinding.setInputPort(midiInput).bindToNote(0, note)
+  button.mSurfaceValue.mOnProcessValueChange = (function (activeDevice, value) {
+  if (value > 0)
+    this.midiOutput.sendMidi(activeDevice, [0x90, note, 127])
+  else {
+    this.midiOutput.sendMidi(activeDevice, [0x90, note, 0])
+      }
+  }).bind({ midiOutput })
+  return button
+}
+
+/**
  * @constructor
  * @param {MR_DeviceSurface} surface
  * @param {MR_DeviceMidiInput} midiInput
@@ -21,15 +45,6 @@ function channelControl(surface, midiInput, midiOutput, x, y, instance) {
   this.ident = function () {
     return ("Class channelControl");
   }
-
-  this.vPotValue = 0;
-  this.vPotPushValue = 0;
-  this.vFaderValue = 0;
-  this.vFaderTouched = 0;
-  this.vSelLedOn = 0;
-  this.vMuteLedOn = 0;
-  this.vSoloLedOn = 0;
-  this.vRecLedOn = 0;
 
   // Pot encoder
   this.pushEncoder = this.surface.makePushEncoder(this.x, y, 2, 2)
@@ -56,37 +71,15 @@ function channelControl(surface, midiInput, midiOutput, x, y, instance) {
     .setInputPort(midiInput)
     .bindToNote(0, 104 + this.instance)
 
-  // Channel Buittons
-  this.sel_button = surface.makeButton(fader_x + 1, fader_y + 4, 1, 1)
-  this.sel_button.mSurfaceValue.mMidiBinding
-    .setInputPort(midiInput)
-    .setOutputPort(midiOutput)
-    .bindToNote(0, 24 + this.instance)
+  // Channel Buttons
+  this.sel_button = makeLedButton(surface, 24 + this.instance, fader_x + 1, fader_y + 4, 1, 1)
+  this.mute_button = makeLedButton(surface, 16 + this.instance, fader_x + 1, fader_y + 5, 1, 1)
+  this.solo_button = makeLedButton(surface, 8 + this.instance, fader_x + 1, fader_y + 6, 1, 1)
+  this.sel_button = makeLedButton(surface, 0 + this.instance, fader_x + 1, fader_y + 7, 1, 1)
 
-  this.mute_button = surface.makeButton(fader_x + 1, fader_y + 5, 1, 1)
-  this.mute_button.mSurfaceValue.mMidiBinding
-    .setInputPort(midiInput)
-    .bindToNote(0, 16 + this.instance)
-
-  this.solo_button = surface.makeButton(fader_x + 1, fader_y + 6, 1, 1)
-  this.solo_button.mSurfaceValue.mMidiBinding
-    .setInputPort(midiInput)
-    .bindToNote(0, 8 + this.instance)
-
-  this.rec_button = surface.makeButton(fader_x + 1, fader_y + 7, 1, 1)
-  this.rec_button.mSurfaceValue.mMidiBinding
-    .setInputPort(midiInput)
-    .bindToNote(0, 0 + this.instance)
 }
 
-// channelControl.prototype.setSelLedOn = function (value) {
-//   this.vSelLedOn = value;
-// }
-
-// channelControl.prototype.sendSelLed = function (context) {
-//   this.midiOutput.sendMidi(context, [0x90, this.instance + 24, this.vSelLedOn]);
-// }
-
 module.exports = {
-  channelControl
+  channelControl,
+  makeLedButton
 }

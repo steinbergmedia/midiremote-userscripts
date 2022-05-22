@@ -8,6 +8,7 @@ var sw_rev = '0.0.0'
 
 var iconElements = require('./icon_elements.js');
 var channelControl = iconElements.channelControl;
+var makeLedButton = iconElements.makeLedButton;
 
 //-----------------------------------------------------------------------------
 // 1. DRIVER SETUP - create driver object, midi ports and detection information
@@ -35,6 +36,25 @@ var surface = deviceDriver.mSurface
 // 2. SURFACE LAYOUT - create control elements and midi bindings
 //-----------------------------------------------------------------------------
 
+/**
+ * @param {MR_PushEncoder} pushEncoder
+ * @param {MR_SurfaceCustomValueVariable} commandIncrease
+ * @param {MR_SurfaceCustomValueVariable} commandDecrease
+ */
+function createCommandKnob(pushEncoder, commandIncrease, commandDecrease) {
+    // console.log('from script: createCommandKnob')
+    pushEncoder.mEncoderValue.mOnProcessValueChange = function (activeDevice, value) {
+        console.log('value changed: ' + value)
+        if (value < 0.5) {
+            var jump_rate = Math.floor(value * 127)
+            repeatCommand(activeDevice, commandIncrease, jump_rate)
+        } else if (value > 0.5) {
+            var jump_rate = Math.floor((value - 0.5) * 127)
+            repeatCommand(activeDevice, commandDecrease, jump_rate)
+        }
+    }
+}
+
 function makeTransport(x, y) {
     var transport = {}
     var w = 1
@@ -44,37 +64,25 @@ function makeTransport(x, y) {
         button.mSurfaceValue.mMidiBinding.setInputPort(midiInput).bindToNote(chn, num)
     }
 
-    transport.prevChn = surface.makeButton(x, y, w, h)
-    bindMidiNote(transport.prevChn, 0, 48)
-    transport.nextChn = surface.makeButton(x + 1, y, w, h)
-    bindMidiNote(transport.nextChn, 0, 49)
+    transport.prevChn = makeLedButton(surface, 48,  x, y, w, h)
+    transport.nextChn = makeLedButton(surface, 49,  x + 1, y, w, h)
 
-    transport.prevBnk = surface.makeButton(x, y + 1, w, h)
-    bindMidiNote(transport.prevBnk, 0, 46)
-    transport.nextBnk = surface.makeButton(x + 1, y + 1, w, h)
-    bindMidiNote(transport.nextBnk, 0, 47)
+    // TODO Not implemented yet - not sure what to use them for
+    transport.prevBnk = makeLedButton(surface, 46, x, y + 1, w, h)
+    // TODO Not implemented yet - not sure what to use them for
+    transport.nextBnk = makeLedButton(surface, 47, x + 1, y + 1, w, h)
 
-    transport.btnRewind = surface.makeButton(x, y + 2, w, h)
-    bindMidiNote(transport.btnRewind, 0, 91)
-    transport.btnForward = surface.makeButton(x + 1, y + 2, w, h)
-    bindMidiNote(transport.btnForward, 0, 92)
+    transport.btnRewind = makeLedButton(surface, 91, x, y + 2, w, h)
+    transport.btnForward = makeLedButton(surface, 92, x + 1, y + 2, w, h)
 
-    transport.btnStart = surface.makeButton(x, y + 3, w, h)
-    // bindMidiNote(transport.btnStart, 0, 94)
-    transport.start_state = deviceDriver.mSurface.makeCustomValueVariable('start_state')
-    transport.start_state.mMidiBinding.setInputPort(midiInput).bindToNote(0, 94)
+    transport.btnStart = makeLedButton(surface, 94, x, y + 3, w, h)
+    transport.btnStop = makeLedButton(surface, 93, x + 1, y + 3, w, h)
 
-    transport.btnStop = surface.makeButton(x + 1, y + 3, w, h)
-    bindMidiNote(transport.btnStop, 0, 93)
+    transport.btnRecord = makeLedButton(surface, 95, x, y + 4, w, h)
+    transport.btnCycle = makeLedButton(surface, 86, x + 1, y + 4, w, h)
 
-    transport.btnRecord = surface.makeButton(x, y + 4, w, h)
-    bindMidiNote(transport.btnRecord, 0, 95)
-    transport.btnCycle = surface.makeButton(x + 1, y + 4, w, h)
-    bindMidiNote(transport.btnCycle, 0, 86)
-
-    // ! The Note on/off events for the special functioans are timestamped at the same time
-    // ! cubase midi remote doesn't show anything on screen though a note is sent
-
+    // The Note on/off events for the special functioans are timestamped at the same time
+    // cubase midi remote doesn't show anything on screen though a note is sent
     // Flip - Simultaneous press of Pre Chn+Pre Bank
     transport.btnFlip = surface.makeButton(x + 3, y + 4, 1, 1)
     bindMidiNote(transport.btnFlip, 0, 50)
@@ -139,13 +147,6 @@ function makeSurfaceElements() {
 
 var surfaceElements = makeSurfaceElements()
 
-function makeTransportDisplayFeedback(button, ledID) {
-    button.mSurfaceValue.mOnProcessValueChange = function (context, newValue) {
-        midiOutput.sendMidi(context, [0x90, ledID, newValue])
-    }
-}
-makeTransportDisplayFeedback(surfaceElements.transport.btnStart, 94)
-
 //-----------------------------------------------------------------------------
 // 3. HOST MAPPING - create mapping defaultPages and host bindings
 //-----------------------------------------------------------------------------
@@ -158,18 +159,15 @@ defaultPage.makeCommandBinding(surfaceElements.transport.zoomVertOut.mSurfaceVal
 defaultPage.makeCommandBinding(surfaceElements.transport.zoomHorizIn.mSurfaceValue, 'Zoom', 'Zoom In')
 defaultPage.makeCommandBinding(surfaceElements.transport.zoomHorizOut.mSurfaceValue, 'Zoom', 'Zoom Out')
 
-// Start button
-// var startStatus = deviceDriver.mSurface.makeCustomValueVariable('startStatus')
-
+// Transport controls
+defaultPage.makeActionBinding(surfaceElements.transport.prevChn.mSurfaceValue, defaultPage.mHostAccess.mTrackSelection.mAction.mPrevTrack)
+defaultPage.makeActionBinding(surfaceElements.transport.nextChn.mSurfaceValue, defaultPage.mHostAccess.mTrackSelection.mAction.mNextTrack)
+defaultPage.makeValueBinding(surfaceElements.transport.btnForward.mSurfaceValue, defaultPage.mHostAccess.mTransport.mValue.mForward)
+defaultPage.makeValueBinding(surfaceElements.transport.btnRewind.mSurfaceValue, defaultPage.mHostAccess.mTransport.mValue.mRewind)
 defaultPage.makeValueBinding(surfaceElements.transport.btnStart.mSurfaceValue, defaultPage.mHostAccess.mTransport.mValue.mStart).setTypeToggle()
-
-surfaceElements.transport.start_state.mOnProcessValueChange = function (activeDevice, value) {
-    // Only send on press - process value change will be received for both press (1)and release (0)
-    if (value == 1) {
-        // console.log('Start pressed')
-        surfaceElements.transport.btnStart.mSurfaceValue.setProcessValue(activeDevice, value)
-    }
-}
+defaultPage.makeValueBinding(surfaceElements.transport.btnStop.mSurfaceValue, defaultPage.mHostAccess.mTransport.mValue.mStop).setTypeToggle()
+defaultPage.makeValueBinding(surfaceElements.transport.btnRecord.mSurfaceValue, defaultPage.mHostAccess.mTransport.mValue.mRecord).setTypeToggle()
+defaultPage.makeValueBinding(surfaceElements.transport.btnCycle.mSurfaceValue, defaultPage.mHostAccess.mTransport.mValue.mCycleActive).setTypeToggle()
 
 // Jog Knob
 var jogLeftVariable = deviceDriver.mSurface.makeCustomValueVariable('jogLeft')
@@ -186,21 +184,3 @@ function repeatCommand(activeDevice, command, repeats) {
     }
 }
 
-/**
- * @param {MR_PushEncoder} pushEncoder
- * @param {MR_SurfaceCustomValueVariable} commandIncrease
- * @param {MR_SurfaceCustomValueVariable} commandDecrease
- */
-function createCommandKnob(pushEncoder, commandIncrease, commandDecrease) {
-    // console.log('from script: createCommandKnob')
-    pushEncoder.mEncoderValue.mOnProcessValueChange = function (activeDevice, value) {
-        console.log('value changed: ' + value)
-        if (value < 0.5) {
-            var jump_rate = Math.floor(value * 127)
-            repeatCommand(activeDevice, commandIncrease, jump_rate)
-        } else if (value > 0.5) {
-            var jump_rate = Math.floor((value - 0.5) * 127)
-            repeatCommand(activeDevice, commandDecrease, jump_rate)
-        }
-    }
-}
