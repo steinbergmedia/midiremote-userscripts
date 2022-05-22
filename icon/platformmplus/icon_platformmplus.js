@@ -118,7 +118,9 @@ function makeTransport(x, y) {
     // In this case it pays to use the Absolute binding type as the Platform M+ produces a rate based
     // CC value - turn clockwise slowly -> 1, turn it rapidly -> 7 (counter clockwise values are offset by 50, turn CCW slowly -> 51)
     // In the Jog (or more correctly Nudge Cursor) mapping we use this to "tap the key severel times" - giving the impact of fine grain control if turned slowly
-    // or large nudges if turned quickly
+    // or large nudges if turned quickly.
+    // ? One weird side effect of this is the Knob displayed in Cubase will show its "value" in a weird way.
+    // todo I wonder if there is a way to change that behaviour?
 
     transport.jog_wheel = surface.makePushEncoder(x, y + 6, 2, 2)
     transport.jog_wheel.mEncoderValue.mMidiBinding.setInputPort(midiInput).bindToControlChange(0, 60).setTypeAbsolute()
