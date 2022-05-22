@@ -110,16 +110,19 @@ function makeTransport(x, y) {
     transport.btnZoomOnOff= surface.makeButton(x+4, y+4, 1, 1)
     bindMidiNote(transport.btnZoomOnOff, 0, 100)
 
-
     // The Jog wheel will change CC/Note based on which of thte Zoom buttons have been activated
     // None - CC 60
     // Vertical - Note Clockwise  97, CounterClockwise 96
     // Horizontal - Note Clockwise  99, CounterClockwise 98
-    //jog wheel
-    transport.jog_wheel = surface.makeKnob(x, y + 6, 2, 2)
-    transport.jog_wheel.mSurfaceValue.mMidiBinding.setInputPort(midiInput).bindToControlChange(0, 60).setTypeRelativeSignedBit()
-    transport.btnJog = surface.makeButton(x,y+8,2,1)
-    bindMidiNote(transport.btnJog, 0, 101)
+    // The Jog wheel is an endless encoder but the surface Push Encoder is control value 0-127
+    // In this case it pays to use the Absolute binding type as the Platform M+ produces a rate based
+    // CC value - turn clockwise slowly -> 1, turn it rapidly -> 7 (counter clockwise values are offset by 50, turn CCW slowly -> 51)
+    // In the Jog (or more correctly Nudge Cursor) mapping we use this to "tap the key severel times" - giving the impact of fine grain control if turned slowly
+    // or large nudges if turned quickly
+
+    transport.jog_wheel = surface.makePushEncoder(x, y + 6, 2, 2)
+    transport.jog_wheel.mEncoderValue.mMidiBinding.setInputPort(midiInput).bindToControlChange(0, 60).setTypeAbsolute()
+    transport.jog_wheel.mPushValue.mMidiBinding.setInputPort(midiInput).bindToNote(0, 101)
 
     //Zoom Vertical
     transport.zoomVertOut = surface.makeButton(x+3, y + 6, 1, 1).setShapeCircle()
@@ -173,3 +176,37 @@ page.makeCommandBinding(surfaceElements.transport.zoomVertOut.mSurfaceValue, 'Zo
 page.makeCommandBinding(surfaceElements.transport.zoomHorizIn.mSurfaceValue, 'Zoom', 'Zoom In')
 page.makeCommandBinding(surfaceElements.transport.zoomHorizOut.mSurfaceValue, 'Zoom', 'Zoom Out')
 
+// Jog Knob
+var jogLeftVariable = deviceDriver.mSurface.makeCustomValueVariable('jogLeft')
+var jogRightVariable = deviceDriver.mSurface.makeCustomValueVariable('jogRight')
+
+page.makeCommandBinding(jogLeftVariable, 'Transport', 'Nudge Cursor Left')
+page.makeCommandBinding(jogRightVariable, 'Transport', 'Nudge Cursor Right')
+
+createCommandKnob(surfaceElements.transport.jog_wheel, jogRightVariable, jogLeftVariable);
+
+
+function repeatCommand(activeDevice, command, repeats) {
+    for(var i = 0; i < repeats; i++) {
+        command.setProcessValue(activeDevice, 1)
+    }
+}
+
+/**
+ * @param {MR_PushEncoder} pushEncoder
+ * @param {MR_SurfaceCustomValueVariable} commandIncrease
+ * @param {MR_SurfaceCustomValueVariable} commandDecrease
+ */
+function createCommandKnob(pushEncoder, commandIncrease, commandDecrease) {
+    // console.log('from script: createCommandKnob')
+    pushEncoder.mEncoderValue.mOnProcessValueChange = function(activeDevice, value) {
+      console.log('value changed: ' + value)
+      if(value < 0.5 ) {
+        var jump_rate = Math.floor(value*127)
+        repeatCommand(activeDevice, commandIncrease, jump_rate)
+      } else if (value > 0.5) {
+        var jump_rate = Math.floor((value-0.5)*127)
+        repeatCommand(activeDevice, commandDecrease, jump_rate)
+      }
+    }
+  }
