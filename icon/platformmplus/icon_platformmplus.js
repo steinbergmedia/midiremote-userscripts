@@ -8,6 +8,7 @@ var sw_rev = '0.0.0'
 
 var iconElements = require('./icon_elements.js');
 var channelControl = iconElements.channelControl;
+var masterControl = iconElements.masterControl;
 var makeLedButton = iconElements.makeLedButton;
 
 //-----------------------------------------------------------------------------
@@ -68,6 +69,7 @@ function makeTransport(x, y) {
     transport.nextChn = makeLedButton(surface, 49,  x + 1, y, w, h)
 
     // TODO Not implemented yet - not sure what to use them for
+    // TODO Perhaps Change the Page in the midi remote??
     transport.prevBnk = makeLedButton(surface, 46, x, y + 1, w, h)
     // TODO Not implemented yet - not sure what to use them for
     transport.nextBnk = makeLedButton(surface, 47, x + 1, y + 1, w, h)
@@ -107,8 +109,13 @@ function makeTransport(x, y) {
     // todo I wonder if there is a way to change that behaviour?
 
     transport.jog_wheel = surface.makePushEncoder(x, y + 6, 2, 2)
-    transport.jog_wheel.mEncoderValue.mMidiBinding.setInputPort(midiInput).bindToControlChange(0, 60).setTypeAbsolute()
-    transport.jog_wheel.mPushValue.mMidiBinding.setInputPort(midiInput).bindToNote(0, 101)
+    transport.jog_wheel.mEncoderValue.mMidiBinding
+        .setInputPort(midiInput)
+        .bindToControlChange(0, 60)
+        .setTypeAbsolute()
+    transport.jog_wheel.mPushValue.mMidiBinding
+        .setInputPort(midiInput)
+        .bindToNote(0, 101)
 
     //Zoom Vertical
     transport.zoomVertOut = surface.makeButton(x + 3, y + 6, 1, 1).setShapeCircle()
@@ -139,7 +146,7 @@ function makeSurfaceElements() {
         surfaceElements.channelControls[i] = new channelControl(surface, midiInput, midiOutput, xKnobStrip, yKnobStrip, i)
     }
 
-    // surfaceElements.faderMaster = makeFaderStrip(surfaceElements.numStrips, xKnobStrip+1, yKnobStrip+3)
+    surfaceElements.faderMaster = new masterControl(surface, midiInput, midiOutput, xKnobStrip+1, yKnobStrip, surfaceElements.numStrips)
     surfaceElements.transport = makeTransport(xKnobStrip + 20, yKnobStrip + 3)
 
     return surfaceElements
@@ -170,6 +177,7 @@ defaultPage.makeValueBinding(surfaceElements.transport.btnRecord.mSurfaceValue, 
 defaultPage.makeValueBinding(surfaceElements.transport.btnCycle.mSurfaceValue, defaultPage.mHostAccess.mTransport.mValue.mCycleActive).setTypeToggle()
 
 // Jog Knob
+// TODO This is still passing midi events through. It's unclear how to stop the midi CC messages passing through?
 var jogLeftVariable = deviceDriver.mSurface.makeCustomValueVariable('jogLeft')
 var jogRightVariable = deviceDriver.mSurface.makeCustomValueVariable('jogRight')
 
@@ -184,3 +192,25 @@ function repeatCommand(activeDevice, command, repeats) {
     }
 }
 
+// Mixer
+var hostMixerBankZone = defaultPage.mHostAccess.mMixConsole.makeMixerBankZone()
+    .excludeOutputChannels()
+    .excludeInputChannels()
+
+for(var channelIndex = 0; channelIndex < 8; ++channelIndex) {
+    var hostMixerBankChannel = hostMixerBankZone.makeMixerBankChannel()
+
+    var knobSurfaceValue = surfaceElements.channelControls[channelIndex].pushEncoder.mEncoderValue;
+    var faderSurfaceValue = surfaceElements.channelControls[channelIndex].fader.mSurfaceValue;
+    var sel_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].sel_button.mSurfaceValue;
+    var mute_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].mute_button.mSurfaceValue;
+    var solo_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].solo_button.mSurfaceValue;
+    var rec_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].rec_button.mSurfaceValue;
+
+    defaultPage.makeValueBinding(knobSurfaceValue, hostMixerBankChannel.mValue.mPan)
+    defaultPage.makeValueBinding(faderSurfaceValue, hostMixerBankChannel.mValue.mVolume)
+    defaultPage.makeValueBinding(sel_buttonSurfaceValue, hostMixerBankChannel.mValue.mSelected)
+    defaultPage.makeValueBinding(mute_buttonSurfaceValue, hostMixerBankChannel.mValue.mMute).setTypeToggle()
+    defaultPage.makeValueBinding(solo_buttonSurfaceValue, hostMixerBankChannel.mValue.mSolo).setTypeToggle()
+    defaultPage.makeValueBinding(rec_buttonSurfaceValue, hostMixerBankChannel.mValue.mRecordEnable).setTypeToggle()
+}
