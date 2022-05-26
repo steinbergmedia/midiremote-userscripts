@@ -30,7 +30,7 @@ var midiOutput = deviceDriver.mPorts.makeMidiOutput()
 deviceDriver.makeDetectionUnit().detectPortPair(midiInput, midiOutput)
     .expectInputNameEquals('Platform M+ V2.15') // Platform M+ v2.15 PlatformMonOut
     .expectOutputNameEquals('Platform M+ V2.15') // Platform M+ v2.15 PlatformMonIn
-
+.
 var surface = deviceDriver.mSurface
 
 //-----------------------------------------------------------------------------
@@ -167,8 +167,10 @@ defaultPage.makeCommandBinding(surfaceElements.transport.zoomHorizIn.mSurfaceVal
 defaultPage.makeCommandBinding(surfaceElements.transport.zoomHorizOut.mSurfaceValue, 'Zoom', 'Zoom Out')
 
 // Transport controls
-defaultPage.makeActionBinding(surfaceElements.transport.prevChn.mSurfaceValue, defaultPage.mHostAccess.mTrackSelection.mAction.mPrevTrack)
-defaultPage.makeActionBinding(surfaceElements.transport.nextChn.mSurfaceValue, defaultPage.mHostAccess.mTrackSelection.mAction.mNextTrack)
+defaultPage.makeCommandBinding(surfaceElements.transport.prevChn.mSurfaceValue, 'Transport', 'Locate Previous Marker')
+defaultPage.makeCommandBinding(surfaceElements.transport.nextChn.mSurfaceValue, 'Transport', 'Locate Next Marker')
+defaultPage.makeCommandBinding(surfaceElements.transport.prevBnk.mSurfaceValue, 'Transport', 'Set Punch In Position')
+defaultPage.makeCommandBinding(surfaceElements.transport.nextBnk.mSurfaceValue, 'Transport', 'Set Punch Out Position')
 defaultPage.makeValueBinding(surfaceElements.transport.btnForward.mSurfaceValue, defaultPage.mHostAccess.mTransport.mValue.mForward)
 defaultPage.makeValueBinding(surfaceElements.transport.btnRewind.mSurfaceValue, defaultPage.mHostAccess.mTransport.mValue.mRewind)
 defaultPage.makeValueBinding(surfaceElements.transport.btnStart.mSurfaceValue, defaultPage.mHostAccess.mTransport.mValue.mStart).setTypeToggle()
@@ -201,6 +203,7 @@ for(var channelIndex = 0; channelIndex < 8; ++channelIndex) {
     var hostMixerBankChannel = hostMixerBankZone.makeMixerBankChannel()
 
     var knobSurfaceValue = surfaceElements.channelControls[channelIndex].pushEncoder.mEncoderValue;
+    var knobPushValue = surfaceElements.channelControls[channelIndex].pushEncoder.mPushValue;
     var faderSurfaceValue = surfaceElements.channelControls[channelIndex].fader.mSurfaceValue;
     var sel_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].sel_button.mSurfaceValue;
     var mute_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].mute_button.mSurfaceValue;
@@ -208,9 +211,24 @@ for(var channelIndex = 0; channelIndex < 8; ++channelIndex) {
     var rec_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].rec_button.mSurfaceValue;
 
     defaultPage.makeValueBinding(knobSurfaceValue, hostMixerBankChannel.mValue.mPan)
+    defaultPage.makeValueBinding(knobPushValue, hostMixerBankChannel.mValue.mInstrumentOpen).setTypeToggle()
     defaultPage.makeValueBinding(faderSurfaceValue, hostMixerBankChannel.mValue.mVolume)
     defaultPage.makeValueBinding(sel_buttonSurfaceValue, hostMixerBankChannel.mValue.mSelected)
     defaultPage.makeValueBinding(mute_buttonSurfaceValue, hostMixerBankChannel.mValue.mMute).setTypeToggle()
     defaultPage.makeValueBinding(solo_buttonSurfaceValue, hostMixerBankChannel.mValue.mSolo).setTypeToggle()
     defaultPage.makeValueBinding(rec_buttonSurfaceValue, hostMixerBankChannel.mValue.mRecordEnable).setTypeToggle()
 }
+
+// Master Fader
+// If there is only One output it will be Main
+// ? If there is more than one then this will be the first one
+var ouputMixerBanks = defaultPage.mHostAccess.mMixConsole.makeMixerBankZone().includeOutputChannels()
+var outputMixerBankChannels  = ouputMixerBanks.makeMixerBankChannel()
+defaultPage.makeValueBinding( surfaceElements.faderMaster.fader.mSurfaceValue, outputMixerBankChannels.mValue.mVolume)
+// ? Or connect to headphones
+// defaultPage.makeValueBinding( surfaceElements.faderMaster.fader.mSurfaceValue, defaultPage.mHostAccess.mControlRoom.getPhonesChannelByIndex(0).mLevelValue)
+
+// ? Would be nice to use the read and write buttons as read and write automation for selected track - but haven't figured out how to code that yet
+defaultPage.makeValueBinding( surfaceElements.faderMaster.mixer_button.mSurfaceValue, defaultPage.mHostAccess.mTransport.mValue.mMetronomeActive).setTypeToggle()
+defaultPage.makeValueBinding( surfaceElements.faderMaster.read_button.mSurfaceValue,  defaultPage.mHostAccess.mControlRoom.mMainChannel.mDimActiveValue).setTypeToggle()
+defaultPage.makeValueBinding( surfaceElements.faderMaster.write_button.mSurfaceValue, defaultPage.mHostAccess.mControlRoom.mMainChannel.mReferenceLevelEnabledValue).setTypeToggle()
