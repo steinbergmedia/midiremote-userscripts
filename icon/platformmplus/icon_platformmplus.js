@@ -4,7 +4,7 @@
 // Portions of this implementation where inspired by other midi remote creates to whom I wish to say thank you!
 // - Mackie C4 by Ron Garrison <ron.garrison@gmail.com> https://github.com/rwgarrison/midiremote-userscripts
 
-var sw_rev = '0.0.0'
+var sw_rev = '0.0.1'
 
 var iconElements = require('./icon_elements.js');
 var channelControl = iconElements.channelControl;
@@ -28,9 +28,9 @@ var midiOutput = deviceDriver.mPorts.makeMidiOutput()
 // define all possible namings the devices MIDI ports could have
 // NOTE: Windows and MacOS handle port naming differently
 deviceDriver.makeDetectionUnit().detectPortPair(midiInput, midiOutput)
-    .expectInputNameEquals('Platform M+ V2.15') // Platform M+ v2.15 PlatformMonOut
-    .expectOutputNameEquals('Platform M+ V2.15') // Platform M+ v2.15 PlatformMonIn
-.
+    .expectInputNameEquals('Platform M+ V2.15') // Platform M+ v2.15
+    .expectOutputNameEquals('Platform M+ V2.15') // Platform M+ v2.15
+
 var surface = deviceDriver.mSurface
 
 //-----------------------------------------------------------------------------
