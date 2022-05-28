@@ -128,24 +128,35 @@ function makePageWithDefaults(name) {
     // Switch between Nudge and Scrub by tapping knob
     page.makeActionBinding(surfaceElements.transport.jog_wheel.mPushValue, jogSubPageArea.mAction.mNext)
 
+    var MasterFaderSubPageArea = page.makeSubPageArea('MasterFader')
+    var subPageMasterFaderMain = makeSubPage(MasterFaderSubPageArea, 'MF_MainOut')
+    var subPageMasterFaderHeadphone = makeSubPage(MasterFaderSubPageArea, 'MF_HeadphoneOut')
+    var subPageMasterCMain = makeSubPage(MasterFaderSubPageArea, 'MF_CMain')
+    var subPageMasterFaderValue = makeSubPage(MasterFaderSubPageArea, 'MF_ValueUnderCursor')
+
+    // Master Fader
+    // If there is only One output it will be Main
+    // If there is more than one out then this will be the first one - there doesn't appear to be a way to verify this
+    var outputMixerBanks = page.mHostAccess.mMixConsole.makeMixerBankZone().includeOutputChannels()
+    var outputMixerBankChannels = outputMixerBanks.makeMixerBankChannel()
+    page.makeValueBinding(surfaceElements.faderMaster.fader.mSurfaceValue, outputMixerBankChannels.mValue.mVolume).setValueTakeOverModeJump().setSubPage(subPageMasterFaderMain)
+    page.makeValueBinding(surfaceElements.faderMaster.fader.mSurfaceValue, page.mHostAccess.mMouseCursor.mValueUnderMouse).setValueTakeOverModeJump().setSubPage(subPageMasterFaderValue)
+    page.makeValueBinding(surfaceElements.faderMaster.fader.mSurfaceValue, page.mHostAccess.mControlRoom.getPhonesChannelByIndex(0).mLevelValue).setValueTakeOverModeJump().setSubPage(subPageMasterFaderHeadphone)
+    page.makeValueBinding(surfaceElements.faderMaster.fader.mSurfaceValue, page.mHostAccess.mControlRoom.mMainChannel.mLevelValue).setValueTakeOverModeJump().setSubPage(subPageMasterCMain)
+    // Switch Master Fader to Main Out->Headphone->Value Under Cursor (AI)
+    page.makeActionBinding(surfaceElements.faderMaster.mixer_button.mSurfaceValue, MasterFaderSubPageArea.mAction.mNext)
+
     return page
 }
 
 function makePageMixer() {
     var page = makePageWithDefaults('Mixer')
 
-
     var FaderSubPageArea = page.makeSubPageArea('FadersKnobs')
-    var ButtonSubPageArea = page.makeSubPageArea('Buttons')
-    var MasterFaderSubPageArea = page.makeSubPageArea('MasterFader')
-
     var subPageFaderVolume = makeSubPage(FaderSubPageArea, 'Volume')
 
+    var ButtonSubPageArea = page.makeSubPageArea('Buttons')
     var subPageButtonDefaultSet = makeSubPage(ButtonSubPageArea, 'DefaultSet')
-    var subPageMasterFaderMain = makeSubPage(MasterFaderSubPageArea, 'MF_MainOut')
-    var subPageMasterFaderHeadphone = makeSubPage(MasterFaderSubPageArea, 'MF_HeadphoneOut')
-    var subPageMasterCMain = makeSubPage(MasterFaderSubPageArea, 'MF_CMain')
-    var subPageMasterFaderValue = makeSubPage(MasterFaderSubPageArea, 'MF_ValueUnderCursor')
 
     var hostMixerBankZone = page.mHostAccess.mMixConsole.makeMixerBankZone()
         .excludeOutputChannels()
@@ -176,20 +187,6 @@ function makePageMixer() {
     page.makeCommandBinding(surfaceElements.faderMaster.read_button.mSurfaceValue, 'Automation', 'Toggle Read Enable Selected Tracks')
     page.makeCommandBinding(surfaceElements.faderMaster.write_button.mSurfaceValue, 'Automation', 'Toggle Write Enable Selected Tracks')
 
-    // Master Fader
-    // If there is only One output it will be Main
-    // If there is more than one out then this will be the first one - there doesn't appear to be a way to verify this
-    var outputMixerBanks = page.mHostAccess.mMixConsole.makeMixerBankZone().includeOutputChannels()
-    var outputMixerBankChannels = outputMixerBanks.makeMixerBankChannel()
-    page.makeValueBinding(surfaceElements.faderMaster.fader.mSurfaceValue, outputMixerBankChannels.mValue.mVolume).setValueTakeOverModeJump().setSubPage(subPageMasterFaderMain)
-    page.makeValueBinding(surfaceElements.faderMaster.fader.mSurfaceValue, page.mHostAccess.mMouseCursor.mValueUnderMouse).setValueTakeOverModeJump().setSubPage(subPageMasterFaderValue)
-    page.makeValueBinding(surfaceElements.faderMaster.fader.mSurfaceValue, page.mHostAccess.mControlRoom.getPhonesChannelByIndex(0).mLevelValue).setValueTakeOverModeJump().setSubPage(subPageMasterFaderHeadphone)
-    page.makeValueBinding(surfaceElements.faderMaster.fader.mSurfaceValue, page.mHostAccess.mControlRoom.mMainChannel.mLevelValue).setValueTakeOverModeJump().setSubPage(subPageMasterCMain)
-
-
-    // Switch Master Fader to Main Out->Headphone->Value Under Cursor (AI)
-    page.makeActionBinding(surfaceElements.faderMaster.mixer_button.mSurfaceValue, MasterFaderSubPageArea.mAction.mNext)
-
     return page
 }
 
@@ -212,10 +209,19 @@ function makePageSelectedTrack() {
         var rec_buttonSurfaceValue = surfaceElements.channelControls[idx].rec_button.mSurfaceValue;
 
         page.makeValueBinding(knobSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mLevel)
-        page.makeValueBinding(sel_buttonSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mOn).setTypeToggle()
-        page.makeValueBinding(mute_buttonSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mPrePost).setTypeToggle()
-        page.makeValueBinding(faderSurfaceValue, selectedTrackChannel.mQuickControls.getByIndex(idx)).setValueTakeOverModeJump()
+        page.makeValueBinding(knobPushValue, selectedTrackChannel.mSends.getByIndex(idx).mOn).setTypeToggle()
+        page.makeValueBinding(faderSurfaceValue, page.mHostAccess.mFocusedQuickControls.getByIndex(idx)).setValueTakeOverModeJump()
     }
+
+    page.makeValueBinding(surfaceElements.channelControls[6].sel_button.mSurfaceValue, selectedTrackChannel.mValue.mEditorOpen).setTypeToggle()
+    page.makeValueBinding(surfaceElements.channelControls[6].mute_button.mSurfaceValue, selectedTrackChannel.mValue.mInstrumentOpen).setTypeToggle()
+    page.makeCommandBinding(surfaceElements.channelControls[6].solo_button.mSurfaceValue, 'Automation', 'Show Used Automation (Selected Tracks)')
+    page.makeCommandBinding(surfaceElements.channelControls[6].rec_button.mSurfaceValue, 'Automation', 'Hide Automation')
+
+    page.makeValueBinding(surfaceElements.channelControls[7].sel_button.mSurfaceValue, selectedTrackChannel.mValue.mMonitorEnable).setTypeToggle()
+    page.makeValueBinding(surfaceElements.channelControls[7].mute_button.mSurfaceValue, selectedTrackChannel.mValue.mMute).setTypeToggle()
+    page.makeValueBinding(surfaceElements.channelControls[7].solo_button.mSurfaceValue, selectedTrackChannel.mValue.mSolo).setTypeToggle()
+    page.makeValueBinding(surfaceElements.channelControls[7].rec_button.mSurfaceValue, selectedTrackChannel.mValue.mRecordEnable).setTypeToggle()
 
     return page
 }
