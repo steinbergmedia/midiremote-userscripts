@@ -4,12 +4,11 @@
 // Portions of this implementation where inspired by other midi remote creates to whom I wish to say thank you!
 // - Mackie C4 by Ron Garrison <ron.garrison@gmail.com> https://github.com/rwgarrison/midiremote-userscripts
 
-var sw_rev = '0.0.1'
-
-var iconElements = require('./icon_elements.js');
-var channelControl = iconElements.channelControl;
-var masterControl = iconElements.masterControl;
-var makeLedButton = iconElements.makeLedButton;
+var iconElements = require('./icon_elements.js')
+var channelControl = iconElements.channelControl
+var masterControl = iconElements.masterControl
+var makeTransport = iconElements.makeTransport
+var bindCommandKnob = iconElements.bindCommandKnob
 
 //-----------------------------------------------------------------------------
 // 1. DRIVER SETUP - create driver object, midi ports and detection information
@@ -27,111 +26,20 @@ var midiOutput = deviceDriver.mPorts.makeMidiOutput()
 
 // define all possible namings the devices MIDI ports could have
 // NOTE: Windows and MacOS handle port naming differently
+// deviceDriver.makeDetectionUnit().detectPortPair(midiInput, midiOutput)
+//     .expectInputNameEquals('Platform M+ V2.15') // Platform M+ v2.15
+//     .expectOutputNameEquals('Platform M+ V2.15') // Platform M+ v2.15
 deviceDriver.makeDetectionUnit().detectPortPair(midiInput, midiOutput)
-    .expectInputNameEquals('Platform M+ V2.15') // Platform M+ v2.15
-    .expectOutputNameEquals('Platform M+ V2.15') // Platform M+ v2.15
+    .expectInputNameContains('Platform M+')
+    .expectOutputNameContains('Platform M+')
+// ? I wonder if this can be figured out?
+// .expectSysexIdentityResponse(/*vendor id (1 or 3 bytes, here: 3 bytes)*/'00n1n2', /*device family*/'n1n2', /*model number*/'n1n2')
 
 var surface = deviceDriver.mSurface
 
 //-----------------------------------------------------------------------------
 // 2. SURFACE LAYOUT - create control elements and midi bindings
 //-----------------------------------------------------------------------------
-
-/**
- * @param {MR_PushEncoder} pushEncoder
- * @param {MR_SurfaceCustomValueVariable} commandIncrease
- * @param {MR_SurfaceCustomValueVariable} commandDecrease
- */
-function createCommandKnob(pushEncoder, commandIncrease, commandDecrease) {
-    // console.log('from script: createCommandKnob')
-    pushEncoder.mEncoderValue.mOnProcessValueChange = function (activeDevice, value) {
-        console.log('value changed: ' + value)
-        if (value < 0.5) {
-            var jump_rate = Math.floor(value * 127)
-            repeatCommand(activeDevice, commandIncrease, jump_rate)
-        } else if (value > 0.5) {
-            var jump_rate = Math.floor((value - 0.5) * 127)
-            repeatCommand(activeDevice, commandDecrease, jump_rate)
-        }
-    }
-}
-
-function makeTransport(x, y) {
-    var transport = {}
-    var w = 1
-    var h = 1
-
-    function bindMidiNote(button, chn, num) {
-        button.mSurfaceValue.mMidiBinding.setInputPort(midiInput).bindToNote(chn, num)
-    }
-
-    transport.prevChn = makeLedButton(surface, 48,  x, y, w, h)
-    transport.nextChn = makeLedButton(surface, 49,  x + 1, y, w, h)
-
-    // TODO Not implemented yet - not sure what to use them for
-    // TODO Perhaps Change the Page in the midi remote??
-    transport.prevBnk = makeLedButton(surface, 46, x, y + 1, w, h)
-    // TODO Not implemented yet - not sure what to use them for
-    transport.nextBnk = makeLedButton(surface, 47, x + 1, y + 1, w, h)
-
-    transport.btnRewind = makeLedButton(surface, 91, x, y + 2, w, h)
-    transport.btnForward = makeLedButton(surface, 92, x + 1, y + 2, w, h)
-
-    transport.btnStart = makeLedButton(surface, 94, x, y + 3, w, h)
-    transport.btnStop = makeLedButton(surface, 93, x + 1, y + 3, w, h)
-
-    transport.btnRecord = makeLedButton(surface, 95, x, y + 4, w, h)
-    transport.btnCycle = makeLedButton(surface, 86, x + 1, y + 4, w, h)
-
-    // The Note on/off events for the special functioans are timestamped at the same time
-    // cubase midi remote doesn't show anything on screen though a note is sent
-    // Flip - Simultaneous press of Pre Chn+Pre Bank
-    transport.btnFlip = surface.makeButton(x + 3, y + 4, 1, 1)
-    bindMidiNote(transport.btnFlip, 0, 50)
-
-    // Pressing the Zoom keys simultaneously will toggle on and off a note event. If on
-    // either zoom button will send a Note 100 when zoom is activated or deactivated by either button
-    // If zoom is active and you simply press then other button the event will not be sent
-    //
-    transport.btnZoomOnOff = surface.makeButton(x + 4, y + 4, 1, 1)
-    bindMidiNote(transport.btnZoomOnOff, 0, 100)
-
-    // The Jog wheel will change CC/Note based on which of thte Zoom buttons have been activated
-    // None - CC 60
-    // Vertical - Note Clockwise  97, CounterClockwise 96
-    // Horizontal - Note Clockwise  99, CounterClockwise 98
-    // The Jog wheel is an endless encoder but the surface Push Encoder is control value 0-127
-    // In this case it pays to use the Absolute binding type as the Platform M+ produces a rate based
-    // CC value - turn clockwise slowly -> 1, turn it rapidly -> 7 (counter clockwise values are offset by 50, turn CCW slowly -> 51)
-    // In the Jog (or more correctly Nudge Cursor) mapping we use this to "tap the key severel times" - giving the impact of fine grain control if turned slowly
-    // or large nudges if turned quickly.
-    // ? One weird side effect of this is the Knob displayed in Cubase will show its "value" in a weird way.
-    // todo I wonder if there is a way to change that behaviour?
-
-    transport.jog_wheel = surface.makePushEncoder(x, y + 6, 2, 2)
-    transport.jog_wheel.mEncoderValue.mMidiBinding
-        .setInputPort(midiInput)
-        .bindToControlChange(0, 60)
-        .setTypeAbsolute()
-    transport.jog_wheel.mPushValue.mMidiBinding
-        .setInputPort(midiInput)
-        .bindToNote(0, 101)
-
-    //Zoom Vertical
-    transport.zoomVertOut = surface.makeButton(x + 3, y + 6, 1, 1).setShapeCircle()
-    bindMidiNote(transport.zoomVertOut, 0, 96)
-    transport.zoomVertIn = surface.makeButton(x + 4, y + 6, 1, 1).setShapeCircle()
-    bindMidiNote(transport.zoomVertIn, 0, 97)
-
-    //Zoom Horizontal
-    transport.zoomHorizOut = surface.makeButton(x + 3, y + 7, 1, 1).setShapeCircle()
-    bindMidiNote(transport.zoomHorizOut, 0, 98)
-    transport.zoomHorizIn = surface.makeButton(x + 4, y + 7, 1, 1).setShapeCircle()
-    bindMidiNote(transport.zoomHorizIn, 0, 99)
-
-    return transport
-}
-
 function makeSurfaceElements() {
     var surfaceElements = {}
 
@@ -146,8 +54,8 @@ function makeSurfaceElements() {
         surfaceElements.channelControls[i] = new channelControl(surface, midiInput, midiOutput, xKnobStrip, yKnobStrip, i)
     }
 
-    surfaceElements.faderMaster = new masterControl(surface, midiInput, midiOutput, xKnobStrip+1, yKnobStrip, surfaceElements.numStrips)
-    surfaceElements.transport = makeTransport(xKnobStrip + 20, yKnobStrip + 3)
+    surfaceElements.faderMaster = new masterControl(surface, midiInput, midiOutput, xKnobStrip + 1, yKnobStrip, surfaceElements.numStrips)
+    surfaceElements.transport = makeTransport(surface, xKnobStrip + 20, yKnobStrip + 3)
 
     return surfaceElements
 }
@@ -155,80 +63,171 @@ function makeSurfaceElements() {
 var surfaceElements = makeSurfaceElements()
 
 //-----------------------------------------------------------------------------
-// 3. HOST MAPPING - create mapping defaultPages and host bindings
+// 3. HOST MAPPING - create mapping mixerPages and host bindings
 //-----------------------------------------------------------------------------
 
-var defaultPage = deviceDriver.mMapping.makePage('Default')
-
-defaultPage.makeCommandBinding(surfaceElements.transport.zoomVertIn.mSurfaceValue, 'Zoom', 'Zoom In Vertically')
-defaultPage.makeCommandBinding(surfaceElements.transport.zoomVertOut.mSurfaceValue, 'Zoom', 'Zoom Out Vertically')
-
-defaultPage.makeCommandBinding(surfaceElements.transport.zoomHorizIn.mSurfaceValue, 'Zoom', 'Zoom In')
-defaultPage.makeCommandBinding(surfaceElements.transport.zoomHorizOut.mSurfaceValue, 'Zoom', 'Zoom Out')
-
-// Transport controls
-defaultPage.makeCommandBinding(surfaceElements.transport.prevChn.mSurfaceValue, 'Transport', 'Locate Previous Marker')
-defaultPage.makeCommandBinding(surfaceElements.transport.nextChn.mSurfaceValue, 'Transport', 'Locate Next Marker')
-defaultPage.makeCommandBinding(surfaceElements.transport.prevBnk.mSurfaceValue, 'Transport', 'Set Punch In Position')
-defaultPage.makeCommandBinding(surfaceElements.transport.nextBnk.mSurfaceValue, 'Transport', 'Set Punch Out Position')
-defaultPage.makeValueBinding(surfaceElements.transport.btnForward.mSurfaceValue, defaultPage.mHostAccess.mTransport.mValue.mForward)
-defaultPage.makeValueBinding(surfaceElements.transport.btnRewind.mSurfaceValue, defaultPage.mHostAccess.mTransport.mValue.mRewind)
-defaultPage.makeValueBinding(surfaceElements.transport.btnStart.mSurfaceValue, defaultPage.mHostAccess.mTransport.mValue.mStart).setTypeToggle()
-defaultPage.makeValueBinding(surfaceElements.transport.btnStop.mSurfaceValue, defaultPage.mHostAccess.mTransport.mValue.mStop).setTypeToggle()
-defaultPage.makeValueBinding(surfaceElements.transport.btnRecord.mSurfaceValue, defaultPage.mHostAccess.mTransport.mValue.mRecord).setTypeToggle()
-defaultPage.makeValueBinding(surfaceElements.transport.btnCycle.mSurfaceValue, defaultPage.mHostAccess.mTransport.mValue.mCycleActive).setTypeToggle()
-
-// Jog Knob
-// TODO This is still passing midi events through. It's unclear how to stop the midi CC messages passing through?
-var jogLeftVariable = deviceDriver.mSurface.makeCustomValueVariable('jogLeft')
-var jogRightVariable = deviceDriver.mSurface.makeCustomValueVariable('jogRight')
-
-defaultPage.makeCommandBinding(jogLeftVariable, 'Transport', 'Nudge Cursor Left')
-defaultPage.makeCommandBinding(jogRightVariable, 'Transport', 'Nudge Cursor Right')
-
-createCommandKnob(surfaceElements.transport.jog_wheel, jogRightVariable, jogLeftVariable);
-
-function repeatCommand(activeDevice, command, repeats) {
-    for (var i = 0; i < repeats; i++) {
-        command.setProcessValue(activeDevice, 1)
+// Helper functions
+function makeSubPage(subPageArea, name) {
+    var subPage = subPageArea.makeSubPage(name)
+    var msgText = 'sub page ' + name + ' activated'
+    subPage.mOnActivate = function (activeDevice) {
+        console.log(msgText)
     }
+    return subPage
+}
+/**
+ * @param {string} name
+*/
+// Mappings for the default areas - transport, zoom, knob
+function makePageWithDefaults(name) {
+    var page = deviceDriver.mMapping.makePage(name)
+    var jogSubPageArea = page.makeSubPageArea('Jog')
+    var zoomSubPageArea = page.makeSubPageArea('Zoom')
+    var subPageJogNudge = makeSubPage(jogSubPageArea, 'Nudge')
+    var subPageJogScrub = makeSubPage(jogSubPageArea, 'Srcub')
+    var subPageJogZoom = makeSubPage(zoomSubPageArea, 'Zoom')
+    var subPageJobNav = makeSubPage(zoomSubPageArea, 'Nav')
+
+    // Transport controls
+    page.makeActionBinding(surfaceElements.transport.prevChn.mSurfaceValue, deviceDriver.mAction.mPrevPage)
+    page.makeActionBinding(surfaceElements.transport.nextChn.mSurfaceValue, deviceDriver.mAction.mNextPage)
+    page.makeCommandBinding(surfaceElements.transport.prevBnk.mSurfaceValue, 'Transport', 'Locate Previous Marker')
+    page.makeCommandBinding(surfaceElements.transport.nextBnk.mSurfaceValue, 'Transport', 'Locate Next Marker')
+    page.makeValueBinding(surfaceElements.transport.btnForward.mSurfaceValue, page.mHostAccess.mTransport.mValue.mForward)
+    page.makeValueBinding(surfaceElements.transport.btnRewind.mSurfaceValue, page.mHostAccess.mTransport.mValue.mRewind)
+    page.makeValueBinding(surfaceElements.transport.btnStart.mSurfaceValue, page.mHostAccess.mTransport.mValue.mStart).setTypeToggle()
+    page.makeValueBinding(surfaceElements.transport.btnStop.mSurfaceValue, page.mHostAccess.mTransport.mValue.mStop).setTypeToggle()
+    page.makeValueBinding(surfaceElements.transport.btnRecord.mSurfaceValue, page.mHostAccess.mTransport.mValue.mRecord).setTypeToggle()
+    page.makeValueBinding(surfaceElements.transport.btnCycle.mSurfaceValue, page.mHostAccess.mTransport.mValue.mCycleActive).setTypeToggle()
+
+    // Zoom Pages - when either Zoom light is on
+    page.makeCommandBinding(surfaceElements.transport.zoomVertIn.mSurfaceValue, 'Zoom', 'Zoom In Vertically').setSubPage(subPageJogZoom)
+    page.makeCommandBinding(surfaceElements.transport.zoomVertOut.mSurfaceValue, 'Zoom', 'Zoom Out Vertically').setSubPage(subPageJogZoom)
+    page.makeCommandBinding(surfaceElements.transport.zoomHorizIn.mSurfaceValue, 'Zoom', 'Zoom In').setSubPage(subPageJogZoom)
+    page.makeCommandBinding(surfaceElements.transport.zoomHorizOut.mSurfaceValue, 'Zoom', 'Zoom Out').setSubPage(subPageJogZoom)
+    // Nav Pages
+    page.makeActionBinding(surfaceElements.transport.zoomVertIn.mSurfaceValue, page.mHostAccess.mTrackSelection.mAction.mNextTrack).setSubPage(subPageJobNav)
+    page.makeActionBinding(surfaceElements.transport.zoomVertOut.mSurfaceValue, page.mHostAccess.mTrackSelection.mAction.mPrevTrack).setSubPage(subPageJobNav)
+    page.makeCommandBinding(surfaceElements.transport.zoomHorizIn.mSurfaceValue, 'Transport', 'Locate Next Event').setSubPage(subPageJobNav)
+    page.makeCommandBinding(surfaceElements.transport.zoomHorizOut.mSurfaceValue, 'Transport', 'Locate Previous Event').setSubPage(subPageJobNav)
+    // Switch Zoom and Nav via simultaneous press of Zoom buttons
+    page.makeActionBinding(surfaceElements.transport.btnZoomOnOff.mSurfaceValue, zoomSubPageArea.mAction.mNext)
+
+    // Jog Pages - when Zoom lights are off
+    // ? This is still passing midi events through. It's unclear how to stop the midi CC messages passing through other then removing the MIDI port from All In
+    var jogLeftVariable = deviceDriver.mSurface.makeCustomValueVariable('jogLeft')
+    var jogRightVariable = deviceDriver.mSurface.makeCustomValueVariable('jogRight')
+
+    bindCommandKnob(surfaceElements.transport.jog_wheel, jogRightVariable, jogLeftVariable);
+    // Nuge
+    page.makeCommandBinding(jogLeftVariable, 'Transport', 'Nudge Cursor Left').setSubPage(subPageJogNudge)
+    page.makeCommandBinding(jogRightVariable, 'Transport', 'Nudge Cursor Right').setSubPage(subPageJogNudge)
+    // Scrub (Jog in Cubase)
+    page.makeCommandBinding(jogLeftVariable, 'Transport', 'Jog Left').setSubPage(subPageJogScrub)
+    page.makeCommandBinding(jogRightVariable, 'Transport', 'Jog Right').setSubPage(subPageJogScrub)
+    // Switch between Nudge and Scrub by tapping knob
+    page.makeActionBinding(surfaceElements.transport.jog_wheel.mPushValue, jogSubPageArea.mAction.mNext)
+
+    return page
 }
 
-// Mixer
-var hostMixerBankZone = defaultPage.mHostAccess.mMixConsole.makeMixerBankZone()
-    .excludeOutputChannels()
-    .excludeInputChannels()
+function makePageMixer() {
+    var page = makePageWithDefaults('Mixer')
 
-for(var channelIndex = 0; channelIndex < 8; ++channelIndex) {
-    var hostMixerBankChannel = hostMixerBankZone.makeMixerBankChannel()
 
-    var knobSurfaceValue = surfaceElements.channelControls[channelIndex].pushEncoder.mEncoderValue;
-    var knobPushValue = surfaceElements.channelControls[channelIndex].pushEncoder.mPushValue;
-    var faderSurfaceValue = surfaceElements.channelControls[channelIndex].fader.mSurfaceValue;
-    var sel_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].sel_button.mSurfaceValue;
-    var mute_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].mute_button.mSurfaceValue;
-    var solo_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].solo_button.mSurfaceValue;
-    var rec_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].rec_button.mSurfaceValue;
+    var FaderSubPageArea = page.makeSubPageArea('FadersKnobs')
+    var ButtonSubPageArea = page.makeSubPageArea('Buttons')
+    var MasterFaderSubPageArea = page.makeSubPageArea('MasterFader')
 
-    defaultPage.makeValueBinding(knobSurfaceValue, hostMixerBankChannel.mValue.mPan)
-    defaultPage.makeValueBinding(knobPushValue, hostMixerBankChannel.mValue.mInstrumentOpen).setTypeToggle()
-    defaultPage.makeValueBinding(faderSurfaceValue, hostMixerBankChannel.mValue.mVolume)
-    defaultPage.makeValueBinding(sel_buttonSurfaceValue, hostMixerBankChannel.mValue.mSelected)
-    defaultPage.makeValueBinding(mute_buttonSurfaceValue, hostMixerBankChannel.mValue.mMute).setTypeToggle()
-    defaultPage.makeValueBinding(solo_buttonSurfaceValue, hostMixerBankChannel.mValue.mSolo).setTypeToggle()
-    defaultPage.makeValueBinding(rec_buttonSurfaceValue, hostMixerBankChannel.mValue.mRecordEnable).setTypeToggle()
+    var subPageFaderVolume = makeSubPage(FaderSubPageArea, 'Volume')
+
+    var subPageButtonDefaultSet = makeSubPage(ButtonSubPageArea, 'DefaultSet')
+    var subPageMasterFaderMain = makeSubPage(MasterFaderSubPageArea, 'MF_MainOut')
+    var subPageMasterFaderHeadphone = makeSubPage(MasterFaderSubPageArea, 'MF_HeadphoneOut')
+    var subPageMasterCMain = makeSubPage(MasterFaderSubPageArea, 'MF_CMain')
+    var subPageMasterFaderValue = makeSubPage(MasterFaderSubPageArea, 'MF_ValueUnderCursor')
+
+    var hostMixerBankZone = page.mHostAccess.mMixConsole.makeMixerBankZone()
+        .excludeOutputChannels()
+        .excludeInputChannels()
+
+    for (var channelIndex = 0; channelIndex < 8; ++channelIndex) {
+        var hostMixerBankChannel = hostMixerBankZone.makeMixerBankChannel()
+
+        var knobSurfaceValue = surfaceElements.channelControls[channelIndex].pushEncoder.mEncoderValue;
+        var knobPushValue = surfaceElements.channelControls[channelIndex].pushEncoder.mPushValue;
+        var faderSurfaceValue = surfaceElements.channelControls[channelIndex].fader.mSurfaceValue;
+        var sel_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].sel_button.mSurfaceValue;
+        var mute_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].mute_button.mSurfaceValue;
+        var solo_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].solo_button.mSurfaceValue;
+        var rec_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].rec_button.mSurfaceValue;
+
+        // FaderKnobs - Volume, Pan, Editor Open
+        page.makeValueBinding(knobSurfaceValue, hostMixerBankChannel.mValue.mPan).setSubPage(subPageFaderVolume)
+        page.makeValueBinding(knobPushValue, hostMixerBankChannel.mValue.mEditorOpen).setTypeToggle().setSubPage(subPageFaderVolume)
+        page.makeValueBinding(faderSurfaceValue, hostMixerBankChannel.mValue.mVolume).setValueTakeOverModeJump().setSubPage(subPageFaderVolume)
+        page.makeValueBinding(sel_buttonSurfaceValue, hostMixerBankChannel.mValue.mSelected).setTypeToggle().setValueTakeOverModeJump().setSubPage(subPageButtonDefaultSet)
+
+        page.makeValueBinding(mute_buttonSurfaceValue, hostMixerBankChannel.mValue.mMute).setTypeToggle().setSubPage(subPageButtonDefaultSet)
+        page.makeValueBinding(solo_buttonSurfaceValue, hostMixerBankChannel.mValue.mSolo).setTypeToggle().setSubPage(subPageButtonDefaultSet)
+        page.makeValueBinding(rec_buttonSurfaceValue, hostMixerBankChannel.mValue.mRecordEnable).setTypeToggle().setSubPage(subPageButtonDefaultSet)
+    }
+    // Automation for selected tracks
+    page.makeCommandBinding(surfaceElements.faderMaster.read_button.mSurfaceValue, 'Automation', 'Toggle Read Enable Selected Tracks')
+    page.makeCommandBinding(surfaceElements.faderMaster.write_button.mSurfaceValue, 'Automation', 'Toggle Write Enable Selected Tracks')
+
+    // Master Fader
+    // If there is only One output it will be Main
+    // If there is more than one out then this will be the first one - there doesn't appear to be a way to verify this
+    var outputMixerBanks = page.mHostAccess.mMixConsole.makeMixerBankZone().includeOutputChannels()
+    var outputMixerBankChannels = outputMixerBanks.makeMixerBankChannel()
+    page.makeValueBinding(surfaceElements.faderMaster.fader.mSurfaceValue, outputMixerBankChannels.mValue.mVolume).setValueTakeOverModeJump().setSubPage(subPageMasterFaderMain)
+    page.makeValueBinding(surfaceElements.faderMaster.fader.mSurfaceValue, page.mHostAccess.mMouseCursor.mValueUnderMouse).setValueTakeOverModeJump().setSubPage(subPageMasterFaderValue)
+    page.makeValueBinding(surfaceElements.faderMaster.fader.mSurfaceValue, page.mHostAccess.mControlRoom.getPhonesChannelByIndex(0).mLevelValue).setValueTakeOverModeJump().setSubPage(subPageMasterFaderHeadphone)
+    page.makeValueBinding(surfaceElements.faderMaster.fader.mSurfaceValue, page.mHostAccess.mControlRoom.mMainChannel.mLevelValue).setValueTakeOverModeJump().setSubPage(subPageMasterCMain)
+
+
+    // Switch Master Fader to Main Out->Headphone->Value Under Cursor (AI)
+    page.makeActionBinding(surfaceElements.faderMaster.mixer_button.mSurfaceValue, MasterFaderSubPageArea.mAction.mNext)
+
+    return page
 }
 
-// Master Fader
-// If there is only One output it will be Main
-// ? If there is more than one then this will be the first one
-var ouputMixerBanks = defaultPage.mHostAccess.mMixConsole.makeMixerBankZone().includeOutputChannels()
-var outputMixerBankChannels  = ouputMixerBanks.makeMixerBankChannel()
-defaultPage.makeValueBinding( surfaceElements.faderMaster.fader.mSurfaceValue, outputMixerBankChannels.mValue.mVolume)
-// ? Or connect to headphones
-// defaultPage.makeValueBinding( surfaceElements.faderMaster.fader.mSurfaceValue, defaultPage.mHostAccess.mControlRoom.getPhonesChannelByIndex(0).mLevelValue)
+function makePageSelectedTrack() {
+    var page = makePageWithDefaults('Selected Track')
 
-// ? Would be nice to use the read and write buttons as read and write automation for selected track - but haven't figured out how to code that yet
-defaultPage.makeValueBinding( surfaceElements.faderMaster.mixer_button.mSurfaceValue, defaultPage.mHostAccess.mTransport.mValue.mMetronomeActive).setTypeToggle()
-defaultPage.makeValueBinding( surfaceElements.faderMaster.read_button.mSurfaceValue,  defaultPage.mHostAccess.mControlRoom.mMainChannel.mDimActiveValue).setTypeToggle()
-defaultPage.makeValueBinding( surfaceElements.faderMaster.write_button.mSurfaceValue, defaultPage.mHostAccess.mControlRoom.mMainChannel.mReferenceLevelEnabledValue).setTypeToggle()
+    var selectedTrackChannel = page.mHostAccess.mTrackSelection.mMixerChannel
+
+    // Automation for selected tracks
+    page.makeValueBinding(surfaceElements.faderMaster.read_button.mSurfaceValue, selectedTrackChannel.mValue.mAutomationRead).setTypeToggle()
+    page.makeValueBinding(surfaceElements.faderMaster.write_button.mSurfaceValue, selectedTrackChannel.mValue.mAutomationWrite).setTypeToggle()
+
+    for (var idx = 0; idx < 8; ++idx) {
+        var knobSurfaceValue = surfaceElements.channelControls[idx].pushEncoder.mEncoderValue;
+        var knobPushValue = surfaceElements.channelControls[idx].pushEncoder.mPushValue;
+        var faderSurfaceValue = surfaceElements.channelControls[idx].fader.mSurfaceValue;
+        var sel_buttonSurfaceValue = surfaceElements.channelControls[idx].sel_button.mSurfaceValue;
+        var mute_buttonSurfaceValue = surfaceElements.channelControls[idx].mute_button.mSurfaceValue;
+        var solo_buttonSurfaceValue = surfaceElements.channelControls[idx].solo_button.mSurfaceValue;
+        var rec_buttonSurfaceValue = surfaceElements.channelControls[idx].rec_button.mSurfaceValue;
+
+        page.makeValueBinding(knobSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mLevel)
+        page.makeValueBinding(sel_buttonSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mOn).setTypeToggle()
+        page.makeValueBinding(mute_buttonSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mPrePost).setTypeToggle()
+        page.makeValueBinding(faderSurfaceValue, selectedTrackChannel.mQuickControls.getByIndex(idx)).setValueTakeOverModeJump()
+    }
+
+    return page
+}
+
+var mixerPage = makePageMixer()
+var selectedTrackPage = makePageSelectedTrack()
+// var quadPage = makePageQuad()
+
+mixerPage.mOnActivate = function (device) {
+    console.log('from script: Platform M+ page "Mixer" activated')
+}
+
+selectedTrackPage.mOnActivate = function (device) {
+    console.log('from script: Platform M+ page "Selected Track" activated')
+}
