@@ -9,16 +9,16 @@
  * @param {number} h
  *
  */
- function makeLedButton(surface, note, x, y, w, h) {
+function makeLedButton(surface, midiInput, midiOutput, note, x, y, w, h) {
   var button = surface.makeButton(x, y, w, h)
   button.mSurfaceValue.mMidiBinding.setInputPort(midiInput).bindToNote(0, note)
-  button.mSurfaceValue.mOnProcessValueChange = (function (activeDevice, value) {
-  if (value > 0)
-    this.midiOutput.sendMidi(activeDevice, [0x90, note, 127])
-  else {
-    this.midiOutput.sendMidi(activeDevice, [0x90, note, 0])
-      }
-  }).bind({ midiOutput })
+  button.mSurfaceValue.mOnProcessValueChange = function (activeDevice) {
+    if (button.mSurfaceValue.getProcessValue(activeDevice) > 0)
+      midiOutput.sendMidi(activeDevice, [0x90, note, 127])
+    else {
+      midiOutput.sendMidi(activeDevice, [0x90, note, 0])
+    }
+  }
   return button
 }
 
@@ -44,7 +44,7 @@ function makeTouchFader(surface, midiInput, midiOutput, channel, x, y, w, h) {
     .setInputPort(midiInput)
     .bindToNote(0, 104 + channel)
 
-  return [fader,fader_touch]
+  return [fader, fader_touch]
 }
 
 /**
@@ -91,10 +91,10 @@ function channelControl(surface, midiInput, midiOutput, x, y, instance) {
   this.fader_touch = tf[1]
 
   // Channel Buttons
-  this.sel_button = makeLedButton(surface, 24 + this.instance, fader_x + 1, fader_y + 4, 1, 1)
-  this.mute_button = makeLedButton(surface, 16 + this.instance, fader_x + 1, fader_y + 5, 1, 1)
-  this.solo_button = makeLedButton(surface, 8 + this.instance, fader_x + 1, fader_y + 6, 1, 1)
-  this.rec_button = makeLedButton(surface, 0 + this.instance, fader_x + 1, fader_y + 7, 1, 1)
+  this.sel_button = makeLedButton(surface, midiInput, midiOutput, 24 + this.instance, fader_x + 1, fader_y + 4, 1, 1)
+  this.mute_button = makeLedButton(surface, midiInput, midiOutput, 16 + this.instance, fader_x + 1, fader_y + 5, 1, 1)
+  this.solo_button = makeLedButton(surface, midiInput, midiOutput, 8 + this.instance, fader_x + 1, fader_y + 6, 1, 1)
+  this.rec_button = makeLedButton(surface, midiInput, midiOutput, 0 + this.instance, fader_x + 1, fader_y + 7, 1, 1)
 
 }
 
@@ -108,7 +108,7 @@ function channelControl(surface, midiInput, midiOutput, x, y, instance) {
  * @param {Number} h           - height of the push encoder.
  * @param {Number} instance    - instance of the push encoder.
  */
- function masterControl(surface, midiInput, midiOutput, x, y, instance) {
+function masterControl(surface, midiInput, midiOutput, x, y, instance) {
   // Position on GUI
   this.surface = surface;
   this.midiInput = midiInput;
@@ -129,15 +129,18 @@ function channelControl(surface, midiInput, midiOutput, x, y, instance) {
   this.fader_touch = tf[1]
 
   // Channel Buttons
-  this.mixer_button = makeLedButton(surface, 84, fader_x + 1, fader_y + 4, 1, 1)
-  this.read_button = makeLedButton(surface, 74, fader_x + 1, fader_y + 5, 1, 1)
-  this.write_button = makeLedButton(surface, 75, fader_x + 1, fader_y + 6, 1, 1)
+  // this.mixer_button = makeLedButton(surface, midiInput, midiOutput, 84, fader_x + 1, fader_y + 4, 1, 1)
+  var mixer_button = surface.makeButton(fader_x + 1, fader_y + 4, 1, 1)
+  this.mixer_button = mixer_button
+  mixer_button.mSurfaceValue.mMidiBinding.setInputPort(midiInput).bindToNote(0, 84)
+  this.read_button = makeLedButton(surface, midiInput, midiOutput, 74, fader_x + 1, fader_y + 5, 1, 1)
+  this.write_button = makeLedButton(surface, midiInput, midiOutput, 75, fader_x + 1, fader_y + 6, 1, 1)
 
 }
 
 function repeatCommand(activeDevice, command, repeats) {
   for (var i = 0; i < repeats; i++) {
-      command.setProcessValue(activeDevice, 1)
+    command.setProcessValue(activeDevice, 1)
   }
 }
 /**
@@ -145,17 +148,17 @@ function repeatCommand(activeDevice, command, repeats) {
  * @param {MR_SurfaceCustomValueVariable} commandIncrease
  * @param {MR_SurfaceCustomValueVariable} commandDecrease
  */
- function bindCommandKnob(pushEncoder, commandIncrease, commandDecrease) {
+function bindCommandKnob(pushEncoder, commandIncrease, commandDecrease) {
   // console.log('from script: createCommandKnob')
   pushEncoder.mOnProcessValueChange = function (activeDevice, value) {
-      console.log('value changed: ' + value)
-      if (value < 0.5) {
-          var jump_rate = Math.floor(value * 127)
-          repeatCommand(activeDevice, commandIncrease, jump_rate)
-      } else if (value > 0.5) {
-          var jump_rate = Math.floor((value - 0.5) * 127)
-          repeatCommand(activeDevice, commandDecrease, jump_rate)
-      }
+    console.log('value changed: ' + value)
+    if (value < 0.5) {
+      var jump_rate = Math.floor(value * 127)
+      repeatCommand(activeDevice, commandIncrease, jump_rate)
+    } else if (value > 0.5) {
+      var jump_rate = Math.floor((value - 0.5) * 127)
+      repeatCommand(activeDevice, commandDecrease, jump_rate)
+    }
   }
 }
 
@@ -174,26 +177,26 @@ function Transport(surface, midiInput, midiOutput, x, y) {
   }
 
   function bindMidiNote(button, chn, num) {
-      button.mSurfaceValue.mMidiBinding.setInputPort(midiInput).bindToNote(chn, num)
+    button.mSurfaceValue.mMidiBinding.setInputPort(midiInput).bindToNote(chn, num)
   }
 
-  this.prevChn = makeLedButton(surface, 48,  x, y, w, h)
-  this.nextChn = makeLedButton(surface, 49,  x + 1, y, w, h)
+  this.prevChn = makeLedButton(surface, midiInput, midiOutput, 48, x, y, w, h)
+  this.nextChn = makeLedButton(surface, midiInput, midiOutput, 49, x + 1, y, w, h)
 
   // TODO Not implemented yet - not sure what to use them for
   // TODO Perhaps Change the Page in the midi remote??
-  this.prevBnk = makeLedButton(surface, 46, x, y + 1, w, h)
+  this.prevBnk = makeLedButton(surface, midiInput, midiOutput, 46, x, y + 1, w, h)
   // TODO Not implemented yet - not sure what to use them for
-  this.nextBnk = makeLedButton(surface, 47, x + 1, y + 1, w, h)
+  this.nextBnk = makeLedButton(surface, midiInput, midiOutput, 47, x + 1, y + 1, w, h)
 
-  this.btnRewind = makeLedButton(surface, 91, x, y + 2, w, h)
-  this.btnForward = makeLedButton(surface, 92, x + 1, y + 2, w, h)
+  this.btnRewind = makeLedButton(surface, midiInput, midiOutput, 91, x, y + 2, w, h)
+  this.btnForward = makeLedButton(surface, midiInput, midiOutput, 92, x + 1, y + 2, w, h)
 
-  this.btnStart = makeLedButton(surface, 94, x, y + 3, w, h)
-  this.btnStop = makeLedButton(surface, 93, x + 1, y + 3, w, h)
+  this.btnStart = makeLedButton(surface, midiInput, midiOutput, 94, x, y + 3, w, h)
+  this.btnStop = makeLedButton(surface, midiInput, midiOutput, 93, x + 1, y + 3, w, h)
 
-  this.btnRecord = makeLedButton(surface, 95, x, y + 4, w, h)
-  this.btnCycle = makeLedButton(surface, 86, x + 1, y + 4, w, h)
+  this.btnRecord = makeLedButton(surface, midiInput, midiOutput, 95, x, y + 4, w, h)
+  this.btnCycle = makeLedButton(surface, midiInput, midiOutput, 86, x + 1, y + 4, w, h)
 
   // The Note on/off events for the special functioans are timestamped at the same time
   // cubase midi remote doesn't show anything on screen though a note is sent
@@ -222,17 +225,17 @@ function Transport(surface, midiInput, midiOutput, x, y) {
 
   this.jog_wheel = surface.makePushEncoder(x, y + 6, 2, 2)
   this.jog_wheel.mEncoderValue.mMidiBinding
-      .setInputPort(midiInput)
-      .bindToControlChange(0, 60)
-      .setTypeAbsolute()
+    .setInputPort(midiInput)
+    .bindToControlChange(0, 60)
+    .setTypeAbsolute()
   this.jog_wheel.mPushValue.mMidiBinding
-      .setInputPort(midiInput)
-      .bindToNote(0, 101)
-   // ? This is still passing midi events through. It's unclear how to stop the midi CC messages passing through other then removing the MIDI port from All In
-   this.jogLeftVariable = surface.makeCustomValueVariable('jogLeft')
-   this.jogRightVariable = surface.makeCustomValueVariable('jogRight')
+    .setInputPort(midiInput)
+    .bindToNote(0, 101)
+  // ? This is still passing midi events through. It's unclear how to stop the midi CC messages passing through other then removing the MIDI port from All In
+  this.jogLeftVariable = surface.makeCustomValueVariable('jogLeft')
+  this.jogRightVariable = surface.makeCustomValueVariable('jogRight')
 
-   bindCommandKnob(this.jog_wheel.mEncoderValue, this.jogRightVariable, this.jogLeftVariable);
+  bindCommandKnob(this.jog_wheel.mEncoderValue, this.jogRightVariable, this.jogLeftVariable);
 
   //Zoom Vertical
   this.zoomVertOut = surface.makeButton(x + 3, y + 6, 1, 1).setShapeCircle()

@@ -8,7 +8,6 @@ var iconElements = require('./icon_elements.js')
 var channelControl = iconElements.channelControl
 var masterControl = iconElements.masterControl
 var Transport = iconElements.Transport
-var bindCommandKnob = iconElements.bindCommandKnob
 
 //-----------------------------------------------------------------------------
 // 1. DRIVER SETUP - create driver object, midi ports and detection information
@@ -23,6 +22,10 @@ var deviceDriver = midiremote_api.makeDeviceDriver('Icon', 'Platform Mplus', 'Bi
 // create objects representing the hardware's MIDI ports
 var midiInput = deviceDriver.mPorts.makeMidiInput()
 var midiOutput = deviceDriver.mPorts.makeMidiOutput()
+
+deviceDriver.mOnActivate = function (activeDevice) {
+    console.log('Icon Platform M+ Initialized');
+};
 
 // define all possible namings the devices MIDI ports could have
 // NOTE: Windows and MacOS handle port naming differently
@@ -164,7 +167,7 @@ function makePageMixer() {
         .excludeOutputChannels()
         .excludeInputChannels()
 
-    for (var channelIndex = 0; channelIndex < 8; ++channelIndex) {
+    for (var channelIndex = 0; channelIndex < surfaceElements.numStrips; ++channelIndex) {
         var hostMixerBankChannel = hostMixerBankZone.makeMixerBankChannel()
 
         var knobSurfaceValue = surfaceElements.channelControls[channelIndex].pushEncoder.mEncoderValue;
@@ -179,7 +182,7 @@ function makePageMixer() {
         page.makeValueBinding(knobSurfaceValue, hostMixerBankChannel.mValue.mPan).setSubPage(subPageFaderVolume)
         page.makeValueBinding(knobPushValue, hostMixerBankChannel.mValue.mEditorOpen).setTypeToggle().setSubPage(subPageFaderVolume)
         page.makeValueBinding(faderSurfaceValue, hostMixerBankChannel.mValue.mVolume).setValueTakeOverModeJump().setSubPage(subPageFaderVolume)
-        page.makeValueBinding(sel_buttonSurfaceValue, hostMixerBankChannel.mValue.mSelected).setTypeToggle().setValueTakeOverModeJump().setSubPage(subPageButtonDefaultSet)
+        page.makeValueBinding(sel_buttonSurfaceValue, hostMixerBankChannel.mValue.mSelected).setTypeToggle().setSubPage(subPageButtonDefaultSet)
         page.makeValueBinding(mute_buttonSurfaceValue, hostMixerBankChannel.mValue.mMute).setTypeToggle().setSubPage(subPageButtonDefaultSet)
         page.makeValueBinding(solo_buttonSurfaceValue, hostMixerBankChannel.mValue.mSolo).setTypeToggle().setSubPage(subPageButtonDefaultSet)
         page.makeValueBinding(rec_buttonSurfaceValue, hostMixerBankChannel.mValue.mRecordEnable).setTypeToggle().setSubPage(subPageButtonDefaultSet)
@@ -194,14 +197,10 @@ function makePageSelectedTrack() {
     var selectedTrackChannel = page.mHostAccess.mTrackSelection.mMixerChannel
 
 
-    for (var idx = 0; idx < 8; ++idx) {
+    for (var idx = 0; idx < surfaceElements.numStrips; ++idx) {
         var knobSurfaceValue = surfaceElements.channelControls[idx].pushEncoder.mEncoderValue;
         var knobPushValue = surfaceElements.channelControls[idx].pushEncoder.mPushValue;
         var faderSurfaceValue = surfaceElements.channelControls[idx].fader.mSurfaceValue;
-        var sel_buttonSurfaceValue = surfaceElements.channelControls[idx].sel_button.mSurfaceValue;
-        var mute_buttonSurfaceValue = surfaceElements.channelControls[idx].mute_button.mSurfaceValue;
-        var solo_buttonSurfaceValue = surfaceElements.channelControls[idx].solo_button.mSurfaceValue;
-        var rec_buttonSurfaceValue = surfaceElements.channelControls[idx].rec_button.mSurfaceValue;
 
         page.makeValueBinding(knobSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mLevel)
         page.makeValueBinding(knobPushValue, selectedTrackChannel.mSends.getByIndex(idx).mOn).setTypeToggle()
