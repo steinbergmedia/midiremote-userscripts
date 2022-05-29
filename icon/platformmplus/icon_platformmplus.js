@@ -164,8 +164,8 @@ function makePageMixer() {
     var subPageButtonDefaultSet = makeSubPage(ButtonSubPageArea, 'DefaultSet')
 
     var hostMixerBankZone = page.mHostAccess.mMixConsole.makeMixerBankZone()
-        .excludeOutputChannels()
-        .excludeInputChannels()
+        .includeAudioChannels()
+        .includeInstrumentChannels()
 
     for (var channelIndex = 0; channelIndex < surfaceElements.numStrips; ++channelIndex) {
         var hostMixerBankChannel = hostMixerBankZone.makeMixerBankChannel()
@@ -173,6 +173,7 @@ function makePageMixer() {
         var knobSurfaceValue = surfaceElements.channelControls[channelIndex].pushEncoder.mEncoderValue;
         var knobPushValue = surfaceElements.channelControls[channelIndex].pushEncoder.mPushValue;
         var faderSurfaceValue = surfaceElements.channelControls[channelIndex].fader.mSurfaceValue;
+        var faderTouchSurfaceValue = surfaceElements.channelControls[channelIndex].fader_touch.mSurfaceValue;
         var sel_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].sel_button.mSurfaceValue;
         var mute_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].mute_button.mSurfaceValue;
         var solo_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].solo_button.mSurfaceValue;
@@ -182,7 +183,8 @@ function makePageMixer() {
         page.makeValueBinding(knobSurfaceValue, hostMixerBankChannel.mValue.mPan).setSubPage(subPageFaderVolume)
         page.makeValueBinding(knobPushValue, hostMixerBankChannel.mValue.mEditorOpen).setTypeToggle().setSubPage(subPageFaderVolume)
         page.makeValueBinding(faderSurfaceValue, hostMixerBankChannel.mValue.mVolume).setValueTakeOverModeJump().setSubPage(subPageFaderVolume)
-        page.makeValueBinding(sel_buttonSurfaceValue, hostMixerBankChannel.mValue.mSelected).setTypeToggle().setSubPage(subPageButtonDefaultSet)
+        page.makeValueBinding(faderTouchSurfaceValue, hostMixerBankChannel.mValue.mSelected).setValueTakeOverModeJump().setSubPage(subPageFaderVolume)
+        page.makeValueBinding(sel_buttonSurfaceValue, hostMixerBankChannel.mValue.mMonitorEnable).setTypeToggle().setTypeToggle().setSubPage(subPageButtonDefaultSet)
         page.makeValueBinding(mute_buttonSurfaceValue, hostMixerBankChannel.mValue.mMute).setTypeToggle().setSubPage(subPageButtonDefaultSet)
         page.makeValueBinding(solo_buttonSurfaceValue, hostMixerBankChannel.mValue.mSolo).setTypeToggle().setSubPage(subPageButtonDefaultSet)
         page.makeValueBinding(rec_buttonSurfaceValue, hostMixerBankChannel.mValue.mRecordEnable).setTypeToggle().setSubPage(subPageButtonDefaultSet)
