@@ -141,13 +141,13 @@ function repeatCommand(activeDevice, command, repeats) {
   }
 }
 /**
- * @param {MR_PushEncoder} pushEncoder
+ * @param {MR_SurfaceElementValue} pushEncoder
  * @param {MR_SurfaceCustomValueVariable} commandIncrease
  * @param {MR_SurfaceCustomValueVariable} commandDecrease
  */
  function bindCommandKnob(pushEncoder, commandIncrease, commandDecrease) {
   // console.log('from script: createCommandKnob')
-  pushEncoder.mEncoderValue.mOnProcessValueChange = function (activeDevice, value) {
+  pushEncoder.mOnProcessValueChange = function (activeDevice, value) {
       console.log('value changed: ' + value)
       if (value < 0.5) {
           var jump_rate = Math.floor(value * 127)
@@ -159,45 +159,54 @@ function repeatCommand(activeDevice, command, repeats) {
   }
 }
 
-function makeTransport(surface, x, y) {
-  var transport = {}
+function Transport(surface, midiInput, midiOutput, x, y) {
+  this.surface = surface;
+  this.midiInput = midiInput;
+  this.midiOutput = midiOutput;
+  this.x = x;
+  this.y = y;
+
   var w = 1
   var h = 1
+
+  this.ident = function () {
+    return ("Class Transport");
+  }
 
   function bindMidiNote(button, chn, num) {
       button.mSurfaceValue.mMidiBinding.setInputPort(midiInput).bindToNote(chn, num)
   }
 
-  transport.prevChn = makeLedButton(surface, 48,  x, y, w, h)
-  transport.nextChn = makeLedButton(surface, 49,  x + 1, y, w, h)
+  this.prevChn = makeLedButton(surface, 48,  x, y, w, h)
+  this.nextChn = makeLedButton(surface, 49,  x + 1, y, w, h)
 
   // TODO Not implemented yet - not sure what to use them for
   // TODO Perhaps Change the Page in the midi remote??
-  transport.prevBnk = makeLedButton(surface, 46, x, y + 1, w, h)
+  this.prevBnk = makeLedButton(surface, 46, x, y + 1, w, h)
   // TODO Not implemented yet - not sure what to use them for
-  transport.nextBnk = makeLedButton(surface, 47, x + 1, y + 1, w, h)
+  this.nextBnk = makeLedButton(surface, 47, x + 1, y + 1, w, h)
 
-  transport.btnRewind = makeLedButton(surface, 91, x, y + 2, w, h)
-  transport.btnForward = makeLedButton(surface, 92, x + 1, y + 2, w, h)
+  this.btnRewind = makeLedButton(surface, 91, x, y + 2, w, h)
+  this.btnForward = makeLedButton(surface, 92, x + 1, y + 2, w, h)
 
-  transport.btnStart = makeLedButton(surface, 94, x, y + 3, w, h)
-  transport.btnStop = makeLedButton(surface, 93, x + 1, y + 3, w, h)
+  this.btnStart = makeLedButton(surface, 94, x, y + 3, w, h)
+  this.btnStop = makeLedButton(surface, 93, x + 1, y + 3, w, h)
 
-  transport.btnRecord = makeLedButton(surface, 95, x, y + 4, w, h)
-  transport.btnCycle = makeLedButton(surface, 86, x + 1, y + 4, w, h)
+  this.btnRecord = makeLedButton(surface, 95, x, y + 4, w, h)
+  this.btnCycle = makeLedButton(surface, 86, x + 1, y + 4, w, h)
 
   // The Note on/off events for the special functioans are timestamped at the same time
   // cubase midi remote doesn't show anything on screen though a note is sent
   // Flip - Simultaneous press of Pre Chn+Pre Bank
-  transport.btnFlip = surface.makeButton(x + 3, y + 4, 1, 1)
-  bindMidiNote(transport.btnFlip, 0, 50)
+  this.btnFlip = surface.makeButton(x + 3, y + 4, 1, 1)
+  bindMidiNote(this.btnFlip, 0, 50)
 
   // Pressing the Zoom keys simultaneously will toggle on and off a note event. If on
   // either zoom button will send a Note 100 when zoom is activated or deactivated by either button
   // If zoom is active and you simply press then other button the event will not be sent
   //
-  transport.btnZoomOnOff = surface.makeButton(x + 4, y + 4, 1, 1)
-  bindMidiNote(transport.btnZoomOnOff, 0, 100)
+  this.btnZoomOnOff = surface.makeButton(x + 4, y + 4, 1, 1)
+  bindMidiNote(this.btnZoomOnOff, 0, 100)
 
   // The Jog wheel will change CC/Note based on which of thte Zoom buttons have been activated
   // None - CC 60
@@ -211,28 +220,31 @@ function makeTransport(surface, x, y) {
   // ? One weird side effect of this is the Knob displayed in Cubase will show its "value" in a weird way.
   // todo I wonder if there is a way to change that behaviour?
 
-  transport.jog_wheel = surface.makePushEncoder(x, y + 6, 2, 2)
-  transport.jog_wheel.mEncoderValue.mMidiBinding
+  this.jog_wheel = surface.makePushEncoder(x, y + 6, 2, 2)
+  this.jog_wheel.mEncoderValue.mMidiBinding
       .setInputPort(midiInput)
       .bindToControlChange(0, 60)
       .setTypeAbsolute()
-  transport.jog_wheel.mPushValue.mMidiBinding
+  this.jog_wheel.mPushValue.mMidiBinding
       .setInputPort(midiInput)
       .bindToNote(0, 101)
+   // ? This is still passing midi events through. It's unclear how to stop the midi CC messages passing through other then removing the MIDI port from All In
+   this.jogLeftVariable = surface.makeCustomValueVariable('jogLeft')
+   this.jogRightVariable = surface.makeCustomValueVariable('jogRight')
+
+   bindCommandKnob(this.jog_wheel.mEncoderValue, this.jogRightVariable, this.jogLeftVariable);
 
   //Zoom Vertical
-  transport.zoomVertOut = surface.makeButton(x + 3, y + 6, 1, 1).setShapeCircle()
-  bindMidiNote(transport.zoomVertOut, 0, 96)
-  transport.zoomVertIn = surface.makeButton(x + 4, y + 6, 1, 1).setShapeCircle()
-  bindMidiNote(transport.zoomVertIn, 0, 97)
+  this.zoomVertOut = surface.makeButton(x + 3, y + 6, 1, 1).setShapeCircle()
+  bindMidiNote(this.zoomVertOut, 0, 96)
+  this.zoomVertIn = surface.makeButton(x + 4, y + 6, 1, 1).setShapeCircle()
+  bindMidiNote(this.zoomVertIn, 0, 97)
 
   //Zoom Horizontal
-  transport.zoomHorizOut = surface.makeButton(x + 3, y + 7, 1, 1).setShapeCircle()
-  bindMidiNote(transport.zoomHorizOut, 0, 98)
-  transport.zoomHorizIn = surface.makeButton(x + 4, y + 7, 1, 1).setShapeCircle()
-  bindMidiNote(transport.zoomHorizIn, 0, 99)
-
-  return transport
+  this.zoomHorizOut = surface.makeButton(x + 3, y + 7, 1, 1).setShapeCircle()
+  bindMidiNote(this.zoomHorizOut, 0, 98)
+  this.zoomHorizIn = surface.makeButton(x + 4, y + 7, 1, 1).setShapeCircle()
+  bindMidiNote(this.zoomHorizIn, 0, 99)
 }
 
 module.exports = {
@@ -240,6 +252,6 @@ module.exports = {
   masterControl,
   makeLedButton,
   makeTouchFader,
-  makeTransport,
+  Transport,
   bindCommandKnob
 }

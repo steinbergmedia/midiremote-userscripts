@@ -7,7 +7,7 @@
 var iconElements = require('./icon_elements.js')
 var channelControl = iconElements.channelControl
 var masterControl = iconElements.masterControl
-var makeTransport = iconElements.makeTransport
+var Transport = iconElements.Transport
 var bindCommandKnob = iconElements.bindCommandKnob
 
 //-----------------------------------------------------------------------------
@@ -55,7 +55,7 @@ function makeSurfaceElements() {
     }
 
     surfaceElements.faderMaster = new masterControl(surface, midiInput, midiOutput, xKnobStrip + 1, yKnobStrip, surfaceElements.numStrips)
-    surfaceElements.transport = makeTransport(surface, xKnobStrip + 20, yKnobStrip + 3)
+    surfaceElements.transport = new Transport(surface, midiInput, midiOutput, xKnobStrip + 20, yKnobStrip + 3)
 
     return surfaceElements
 }
@@ -114,17 +114,12 @@ function makePageWithDefaults(name) {
     page.makeActionBinding(surfaceElements.transport.btnZoomOnOff.mSurfaceValue, zoomSubPageArea.mAction.mNext)
 
     // Jog Pages - when Zoom lights are off
-    // ? This is still passing midi events through. It's unclear how to stop the midi CC messages passing through other then removing the MIDI port from All In
-    var jogLeftVariable = deviceDriver.mSurface.makeCustomValueVariable('jogLeft')
-    var jogRightVariable = deviceDriver.mSurface.makeCustomValueVariable('jogRight')
-
-    bindCommandKnob(surfaceElements.transport.jog_wheel, jogRightVariable, jogLeftVariable);
-    // Nuge
-    page.makeCommandBinding(jogLeftVariable, 'Transport', 'Nudge Cursor Left').setSubPage(subPageJogNudge)
-    page.makeCommandBinding(jogRightVariable, 'Transport', 'Nudge Cursor Right').setSubPage(subPageJogNudge)
+     // Nuge
+    page.makeCommandBinding(surfaceElements.transport.jogLeftVariable, 'Transport', 'Nudge Cursor Left').setSubPage(subPageJogNudge)
+    page.makeCommandBinding(surfaceElements.transport.jogRightVariable, 'Transport', 'Nudge Cursor Right').setSubPage(subPageJogNudge)
     // Scrub (Jog in Cubase)
-    page.makeCommandBinding(jogLeftVariable, 'Transport', 'Jog Left').setSubPage(subPageJogScrub)
-    page.makeCommandBinding(jogRightVariable, 'Transport', 'Jog Right').setSubPage(subPageJogScrub)
+    page.makeCommandBinding(surfaceElements.transport.jogLeftVariable, 'Transport', 'Jog Left').setSubPage(subPageJogScrub)
+    page.makeCommandBinding(surfaceElements.transport.jogRightVariable, 'Transport', 'Jog Right').setSubPage(subPageJogScrub)
     // Switch between Nudge and Scrub by tapping knob
     page.makeActionBinding(surfaceElements.transport.jog_wheel.mPushValue, jogSubPageArea.mAction.mNext)
 
@@ -145,6 +140,13 @@ function makePageWithDefaults(name) {
     page.makeValueBinding(surfaceElements.faderMaster.fader.mSurfaceValue, page.mHostAccess.mControlRoom.mMainChannel.mLevelValue).setValueTakeOverModeJump().setSubPage(subPageMasterCMain)
     // Switch Master Fader to Main Out->Headphone->Value Under Cursor (AI)
     page.makeActionBinding(surfaceElements.faderMaster.mixer_button.mSurfaceValue, MasterFaderSubPageArea.mAction.mNext)
+
+    // Automation for selected tracks
+    var selectedTrackChannel = page.mHostAccess.mTrackSelection.mMixerChannel
+
+    // Automation for selected tracks
+    page.makeValueBinding(surfaceElements.faderMaster.read_button.mSurfaceValue, selectedTrackChannel.mValue.mAutomationRead).setTypeToggle()
+    page.makeValueBinding(surfaceElements.faderMaster.write_button.mSurfaceValue, selectedTrackChannel.mValue.mAutomationWrite).setTypeToggle()
 
     return page
 }
@@ -177,15 +179,11 @@ function makePageMixer() {
         page.makeValueBinding(knobSurfaceValue, hostMixerBankChannel.mValue.mPan).setSubPage(subPageFaderVolume)
         page.makeValueBinding(knobPushValue, hostMixerBankChannel.mValue.mEditorOpen).setTypeToggle().setSubPage(subPageFaderVolume)
         page.makeValueBinding(faderSurfaceValue, hostMixerBankChannel.mValue.mVolume).setValueTakeOverModeJump().setSubPage(subPageFaderVolume)
-        page.makeValueBinding(sel_buttonSurfaceValue, hostMixerBankChannel.mValue.mMonitorEnable).setTypeToggle().setValueTakeOverModeJump().setSubPage(subPageButtonDefaultSet)
-
+        page.makeValueBinding(sel_buttonSurfaceValue, hostMixerBankChannel.mValue.mSelected).setTypeToggle().setValueTakeOverModeJump().setSubPage(subPageButtonDefaultSet)
         page.makeValueBinding(mute_buttonSurfaceValue, hostMixerBankChannel.mValue.mMute).setTypeToggle().setSubPage(subPageButtonDefaultSet)
         page.makeValueBinding(solo_buttonSurfaceValue, hostMixerBankChannel.mValue.mSolo).setTypeToggle().setSubPage(subPageButtonDefaultSet)
         page.makeValueBinding(rec_buttonSurfaceValue, hostMixerBankChannel.mValue.mRecordEnable).setTypeToggle().setSubPage(subPageButtonDefaultSet)
     }
-    // Automation for selected tracks
-    page.makeCommandBinding(surfaceElements.faderMaster.read_button.mSurfaceValue, 'Automation', 'Toggle Read Enable Selected Tracks')
-    page.makeCommandBinding(surfaceElements.faderMaster.write_button.mSurfaceValue, 'Automation', 'Toggle Write Enable Selected Tracks')
 
     return page
 }
@@ -195,9 +193,6 @@ function makePageSelectedTrack() {
 
     var selectedTrackChannel = page.mHostAccess.mTrackSelection.mMixerChannel
 
-    // Automation for selected tracks
-    page.makeValueBinding(surfaceElements.faderMaster.read_button.mSurfaceValue, selectedTrackChannel.mValue.mAutomationRead).setTypeToggle()
-    page.makeValueBinding(surfaceElements.faderMaster.write_button.mSurfaceValue, selectedTrackChannel.mValue.mAutomationWrite).setTypeToggle()
 
     for (var idx = 0; idx < 8; ++idx) {
         var knobSurfaceValue = surfaceElements.channelControls[idx].pushEncoder.mEncoderValue;
