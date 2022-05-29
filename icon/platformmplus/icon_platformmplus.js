@@ -5,9 +5,9 @@
 // - Mackie C4 by Ron Garrison <ron.garrison@gmail.com> https://github.com/rwgarrison/midiremote-userscripts
 
 var iconElements = require('./icon_elements.js')
-var channelControl = iconElements.channelControl
-var masterControl = iconElements.masterControl
-var Transport = iconElements.Transport
+var makeChannelControl = iconElements.makeChannelControl
+var makeMasterControl = iconElements.makeMasterControl
+var makeTransport = iconElements.makeTransport
 
 //-----------------------------------------------------------------------------
 // 1. DRIVER SETUP - create driver object, midi ports and detection information
@@ -54,11 +54,11 @@ function makeSurfaceElements() {
     var yKnobStrip = 0
 
     for (var i = 0; i < surfaceElements.numStrips; ++i) {
-        surfaceElements.channelControls[i] = new channelControl(surface, midiInput, midiOutput, xKnobStrip, yKnobStrip, i)
+        surfaceElements.channelControls[i] = makeChannelControl(surface, midiInput, midiOutput, xKnobStrip, yKnobStrip, i)
     }
 
-    surfaceElements.faderMaster = new masterControl(surface, midiInput, midiOutput, xKnobStrip + 1, yKnobStrip, surfaceElements.numStrips)
-    surfaceElements.transport = new Transport(surface, midiInput, midiOutput, xKnobStrip + 20, yKnobStrip + 3)
+    surfaceElements.faderMaster = makeMasterControl(surface, midiInput, midiOutput, xKnobStrip + 1, yKnobStrip, surfaceElements.numStrips)
+    surfaceElements.transport = makeTransport(surface, midiInput, midiOutput, xKnobStrip + 20, yKnobStrip + 3)
 
     return surfaceElements
 }
@@ -181,10 +181,9 @@ function makePageMixer() {
 
         // FaderKnobs - Volume, Pan, Editor Open
         page.makeValueBinding(knobSurfaceValue, hostMixerBankChannel.mValue.mPan).setSubPage(subPageFaderVolume)
-        page.makeValueBinding(knobPushValue, hostMixerBankChannel.mValue.mEditorOpen).setTypeToggle().setSubPage(subPageFaderVolume)
+        page.makeValueBinding(knobPushValue, hostMixerBankChannel.mValue.mMonitorEnable).setTypeToggle().setSubPage(subPageFaderVolume)
         page.makeValueBinding(faderSurfaceValue, hostMixerBankChannel.mValue.mVolume).setValueTakeOverModeJump().setSubPage(subPageFaderVolume)
-        page.makeValueBinding(faderTouchSurfaceValue, hostMixerBankChannel.mValue.mSelected).setValueTakeOverModeJump().setSubPage(subPageFaderVolume)
-        page.makeValueBinding(sel_buttonSurfaceValue, hostMixerBankChannel.mValue.mMonitorEnable).setTypeToggle().setTypeToggle().setSubPage(subPageButtonDefaultSet)
+        // page.makeValueBinding(sel_buttonSurfaceValue, hostMixerBankChannel.mValue.mSelected).setTypeToggle().setTypeToggle().setSubPage(subPageButtonDefaultSet)
         page.makeValueBinding(mute_buttonSurfaceValue, hostMixerBankChannel.mValue.mMute).setTypeToggle().setSubPage(subPageButtonDefaultSet)
         page.makeValueBinding(solo_buttonSurfaceValue, hostMixerBankChannel.mValue.mSolo).setTypeToggle().setSubPage(subPageButtonDefaultSet)
         page.makeValueBinding(rec_buttonSurfaceValue, hostMixerBankChannel.mValue.mRecordEnable).setTypeToggle().setSubPage(subPageButtonDefaultSet)
@@ -197,7 +196,6 @@ function makePageSelectedTrack() {
     var page = makePageWithDefaults('Selected Track')
 
     var selectedTrackChannel = page.mHostAccess.mTrackSelection.mMixerChannel
-
 
     for (var idx = 0; idx < surfaceElements.numStrips; ++idx) {
         var knobSurfaceValue = surfaceElements.channelControls[idx].pushEncoder.mEncoderValue;
