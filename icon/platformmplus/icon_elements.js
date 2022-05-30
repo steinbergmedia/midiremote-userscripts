@@ -73,7 +73,6 @@ function bindCommandKnob(pushEncoder, commandIncrease, commandDecrease) {
 }
 
 /**
- * @constructor
  * @param {MR_DeviceSurface} surface
  * @param {MR_DeviceMidiInput} midiInput
  * @param {MR_DeviceMidiOutput} midiOutput
@@ -96,12 +95,12 @@ function bindCommandKnob(pushEncoder, commandIncrease, commandDecrease) {
   channelControl.pushEncoder = channelControl.surface.makePushEncoder(channelControl.x, y, 2, 2)
 
   channelControl.pushEncoder.mEncoderValue.mMidiBinding
-    .setInputPort(midiInput)
+    .setInputPort(midiInput).setOutputPort(midiOutput)
     .bindToControlChange(0, 16 + channelControl.instance)
-    .setTypeRelativeSignedBit();
+    .setTypeRelativeSignedBit()
 
   channelControl.pushEncoder.mPushValue.mMidiBinding
-    .setInputPort(midiInput)
+    .setInputPort(midiInput).setOutputPort(midiOutput)
     .bindToNote(0, 32 + channelControl.instance);
 
   // Fader + Fader Touch
@@ -152,10 +151,7 @@ function makeMasterControl(surface, midiInput, midiOutput, x, y, instance) {
   masterControl.fader_touch = tf[1]
 
   // Channel Buttons
-  // masterControl.mixer_button = makeLedButton(surface, midiInput, midiOutput, 84, fader_x + 1, fader_y + 4, 1, 1)
-  var mixer_button = surface.makeButton(fader_x + 1, fader_y + 4, 1, 1)
-  masterControl.mixer_button = mixer_button
-  mixer_button.mSurfaceValue.mMidiBinding.setInputPort(midiInput).bindToNote(0, 84)
+  masterControl.mixer_button = makeLedButton(surface, midiInput, midiOutput, 84, fader_x + 1, fader_y + 4, 1, 1)
   masterControl.read_button = makeLedButton(surface, midiInput, midiOutput, 74, fader_x + 1, fader_y + 5, 1, 1)
   masterControl.write_button = makeLedButton(surface, midiInput, midiOutput, 75, fader_x + 1, fader_y + 6, 1, 1)
 
@@ -184,10 +180,7 @@ function makeTransport(surface, midiInput, midiOutput, x, y) {
   transport.prevChn = makeLedButton(surface, midiInput, midiOutput, 48, x, y, w, h)
   transport.nextChn = makeLedButton(surface, midiInput, midiOutput, 49, x + 1, y, w, h)
 
-  // TODO Not implemented yet - not sure what to use them for
-  // TODO Perhaps Change the Page in the midi remote??
   transport.prevBnk = makeLedButton(surface, midiInput, midiOutput, 46, x, y + 1, w, h)
-  // TODO Not implemented yet - not sure what to use them for
   transport.nextBnk = makeLedButton(surface, midiInput, midiOutput, 47, x + 1, y + 1, w, h)
 
   transport.btnRewind = makeLedButton(surface, midiInput, midiOutput, 91, x, y + 2, w, h)

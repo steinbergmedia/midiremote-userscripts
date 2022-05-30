@@ -183,7 +183,7 @@ function makePageMixer() {
         page.makeValueBinding(knobSurfaceValue, hostMixerBankChannel.mValue.mPan).setSubPage(subPageFaderVolume)
         page.makeValueBinding(knobPushValue, hostMixerBankChannel.mValue.mMonitorEnable).setTypeToggle().setSubPage(subPageFaderVolume)
         page.makeValueBinding(faderSurfaceValue, hostMixerBankChannel.mValue.mVolume).setValueTakeOverModeJump().setSubPage(subPageFaderVolume)
-        // page.makeValueBinding(sel_buttonSurfaceValue, hostMixerBankChannel.mValue.mSelected).setTypeToggle().setTypeToggle().setSubPage(subPageButtonDefaultSet)
+        page.makeValueBinding(sel_buttonSurfaceValue, hostMixerBankChannel.mValue.mSelected).setTypeToggle().setTypeToggle().setSubPage(subPageButtonDefaultSet)
         page.makeValueBinding(mute_buttonSurfaceValue, hostMixerBankChannel.mValue.mMute).setTypeToggle().setSubPage(subPageButtonDefaultSet)
         page.makeValueBinding(solo_buttonSurfaceValue, hostMixerBankChannel.mValue.mSolo).setTypeToggle().setSubPage(subPageButtonDefaultSet)
         page.makeValueBinding(rec_buttonSurfaceValue, hostMixerBankChannel.mValue.mRecordEnable).setTypeToggle().setSubPage(subPageButtonDefaultSet)
@@ -193,7 +193,7 @@ function makePageMixer() {
 }
 
 function makePageSelectedTrack() {
-    var page = makePageWithDefaults('Selected Track')
+    var page = makePageWithDefaults('Selected Channel')
 
     var selectedTrackChannel = page.mHostAccess.mTrackSelection.mMixerChannel
 
