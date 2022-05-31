@@ -95,12 +95,12 @@ function bindCommandKnob(pushEncoder, commandIncrease, commandDecrease) {
   channelControl.pushEncoder = channelControl.surface.makePushEncoder(channelControl.x, y, 2, 2)
 
   channelControl.pushEncoder.mEncoderValue.mMidiBinding
-    .setInputPort(midiInput).setOutputPort(midiOutput)
+    .setInputPort(midiInput)
     .bindToControlChange(0, 16 + channelControl.instance)
     .setTypeRelativeSignedBit()
 
   channelControl.pushEncoder.mPushValue.mMidiBinding
-    .setInputPort(midiInput).setOutputPort(midiOutput)
+    .setInputPort(midiInput)
     .bindToNote(0, 32 + channelControl.instance);
 
   // Fader + Fader Touch
@@ -186,8 +186,8 @@ function makeTransport(surface, midiInput, midiOutput, x, y) {
   transport.btnRewind = makeLedButton(surface, midiInput, midiOutput, 91, x, y + 2, w, h)
   transport.btnForward = makeLedButton(surface, midiInput, midiOutput, 92, x + 1, y + 2, w, h)
 
-  transport.btnStart = makeLedButton(surface, midiInput, midiOutput, 94, x, y + 3, w, h)
   transport.btnStop = makeLedButton(surface, midiInput, midiOutput, 93, x + 1, y + 3, w, h)
+  transport.btnStart = makeLedButton(surface, midiInput, midiOutput, 94, x, y + 3, w, h)
 
   transport.btnRecord = makeLedButton(surface, midiInput, midiOutput, 95, x, y + 4, w, h)
   transport.btnCycle = makeLedButton(surface, midiInput, midiOutput, 86, x + 1, y + 4, w, h)
@@ -220,6 +220,7 @@ function makeTransport(surface, midiInput, midiOutput, x, y) {
   transport.jog_wheel = surface.makePushEncoder(x, y + 6, 2, 2)
   transport.jog_wheel.mEncoderValue.mMidiBinding
     .setInputPort(midiInput)
+    .setIsConsuming(true)
     .bindToControlChange(0, 60)
     .setTypeAbsolute()
   transport.jog_wheel.mPushValue.mMidiBinding
