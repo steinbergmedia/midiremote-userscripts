@@ -7,11 +7,14 @@
  * @param {number} y
  * @param {number} w
  * @param {number} h
- *
+ * @param {boolean} circle
  */
-function makeLedButton(surface, midiInput, midiOutput, note, x, y, w, h) {
+function makeLedButton(surface, midiInput, midiOutput, note, x, y, w, h, circle) {
   var button = surface.makeButton(x, y, w, h)
   button.mSurfaceValue.mMidiBinding.setInputPort(midiInput).bindToNote(0, note)
+  if (circle) {
+    button.setShapeCircle()
+  }
   button.mSurfaceValue.mOnProcessValueChange = function (activeDevice) {
     if (button.mSurfaceValue.getProcessValue(activeDevice) > 0)
       midiOutput.sendMidi(activeDevice, [0x90, note, 127])
@@ -111,10 +114,10 @@ function bindCommandKnob(pushEncoder, commandIncrease, commandDecrease) {
   channelControl.fader_touch = tf[1]
 
   // Channel Buttons
-  channelControl.sel_button = makeLedButton(surface, midiInput, midiOutput, 24 + channelControl.instance, fader_x + 1, fader_y + 4, 1, 1)
-  channelControl.mute_button = makeLedButton(surface, midiInput, midiOutput, 16 + channelControl.instance, fader_x + 1, fader_y + 5, 1, 1)
-  channelControl.solo_button = makeLedButton(surface, midiInput, midiOutput, 8 + channelControl.instance, fader_x + 1, fader_y + 6, 1, 1)
-  channelControl.rec_button = makeLedButton(surface, midiInput, midiOutput, 0 + channelControl.instance, fader_x + 1, fader_y + 7, 1, 1)
+  channelControl.sel_button = makeLedButton(surface, midiInput, midiOutput, 24 + channelControl.instance, fader_x + 1, fader_y + 4, 1, 1, false)
+  channelControl.mute_button = makeLedButton(surface, midiInput, midiOutput, 16 + channelControl.instance, fader_x + 1, fader_y + 5, 1, 1, false)
+  channelControl.solo_button = makeLedButton(surface, midiInput, midiOutput, 8 + channelControl.instance, fader_x + 1, fader_y + 6, 1, 1, false)
+  channelControl.rec_button = makeLedButton(surface, midiInput, midiOutput, 0 + channelControl.instance, fader_x + 1, fader_y + 7, 1, 1, true)
 
   return channelControl
 
@@ -151,9 +154,9 @@ function makeMasterControl(surface, midiInput, midiOutput, x, y, instance) {
   masterControl.fader_touch = tf[1]
 
   // Channel Buttons
-  masterControl.mixer_button = makeLedButton(surface, midiInput, midiOutput, 84, fader_x + 1, fader_y + 4, 1, 1)
-  masterControl.read_button = makeLedButton(surface, midiInput, midiOutput, 74, fader_x + 1, fader_y + 5, 1, 1)
-  masterControl.write_button = makeLedButton(surface, midiInput, midiOutput, 75, fader_x + 1, fader_y + 6, 1, 1)
+  masterControl.mixer_button = makeLedButton(surface, midiInput, midiOutput, 84, fader_x + 1, fader_y + 4, 1, 1, false)
+  masterControl.read_button = makeLedButton(surface, midiInput, midiOutput, 74, fader_x + 1, fader_y + 5, 1, 1, false)
+  masterControl.write_button = makeLedButton(surface, midiInput, midiOutput, 75, fader_x + 1, fader_y + 6, 1, 1, false)
 
   return masterControl
 }
@@ -177,20 +180,20 @@ function makeTransport(surface, midiInput, midiOutput, x, y) {
     button.mSurfaceValue.mMidiBinding.setInputPort(midiInput).bindToNote(chn, num)
   }
 
-  transport.prevChn = makeLedButton(surface, midiInput, midiOutput, 48, x, y, w, h)
-  transport.nextChn = makeLedButton(surface, midiInput, midiOutput, 49, x + 1, y, w, h)
+  transport.prevChn = makeLedButton(surface, midiInput, midiOutput, 48, x, y, w, h, false)
+  transport.nextChn = makeLedButton(surface, midiInput, midiOutput, 49, x + 1, y, w, h, false)
 
-  transport.prevBnk = makeLedButton(surface, midiInput, midiOutput, 46, x, y + 1, w, h)
-  transport.nextBnk = makeLedButton(surface, midiInput, midiOutput, 47, x + 1, y + 1, w, h)
+  transport.prevBnk = makeLedButton(surface, midiInput, midiOutput, 46, x, y + 1, w, h, false)
+  transport.nextBnk = makeLedButton(surface, midiInput, midiOutput, 47, x + 1, y + 1, w, h, false)
 
-  transport.btnRewind = makeLedButton(surface, midiInput, midiOutput, 91, x, y + 2, w, h)
-  transport.btnForward = makeLedButton(surface, midiInput, midiOutput, 92, x + 1, y + 2, w, h)
+  transport.btnRewind = makeLedButton(surface, midiInput, midiOutput, 91, x, y + 2, w, h, false)
+  transport.btnForward = makeLedButton(surface, midiInput, midiOutput, 92, x + 1, y + 2, w, h, false)
 
-  transport.btnStop = makeLedButton(surface, midiInput, midiOutput, 93, x + 1, y + 3, w, h)
-  transport.btnStart = makeLedButton(surface, midiInput, midiOutput, 94, x, y + 3, w, h)
+  transport.btnStop = makeLedButton(surface, midiInput, midiOutput, 93, x + 1, y + 3, w, h, false)
+  transport.btnStart = makeLedButton(surface, midiInput, midiOutput, 94, x, y + 3, w, h, false)
 
-  transport.btnRecord = makeLedButton(surface, midiInput, midiOutput, 95, x, y + 4, w, h)
-  transport.btnCycle = makeLedButton(surface, midiInput, midiOutput, 86, x + 1, y + 4, w, h)
+  transport.btnRecord = makeLedButton(surface, midiInput, midiOutput, 95, x, y + 4, w, h, false)
+  transport.btnCycle = makeLedButton(surface, midiInput, midiOutput, 86, x + 1, y + 4, w, h, false)
 
   // The Note on/off events for the special functioans are timestamped at the same time
   // cubase midi remote doesn't show anything on screen though a note is sent
