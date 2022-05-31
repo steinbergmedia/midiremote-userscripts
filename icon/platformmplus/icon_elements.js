@@ -25,6 +25,33 @@ function makeLedButton(surface, midiInput, midiOutput, note, x, y, w, h, circle)
   return button
 }
 
+function clearAllLeds(activeDevice, midiOutput) {
+  console.log('Clear All Leds')
+  // Mixer buttons
+  for (var i = 0; i < 8; ++i) {
+    midiOutput.sendMidi(activeDevice, [0x90, 24 + i, 0])
+    midiOutput.sendMidi(activeDevice, [0x90, 16 + i, 0])
+    midiOutput.sendMidi(activeDevice, [0x90, 8 + i, 0])
+    midiOutput.sendMidi(activeDevice, [0x90, 0 + i, 0])
+  }
+  // Master Fader buttons
+  midiOutput.sendMidi(activeDevice, [0x90, 84, 0])
+  midiOutput.sendMidi(activeDevice, [0x90, 74, 0])
+  midiOutput.sendMidi(activeDevice, [0x90, 75, 0])
+
+  // Transport Buttons
+  midiOutput.sendMidi(activeDevice, [0x90, 48, 0])
+  midiOutput.sendMidi(activeDevice, [0x90, 49, 0])
+  midiOutput.sendMidi(activeDevice, [0x90, 46, 0])
+  midiOutput.sendMidi(activeDevice, [0x90, 47, 0])
+  midiOutput.sendMidi(activeDevice, [0x90, 91, 0])
+  midiOutput.sendMidi(activeDevice, [0x90, 92, 0])
+  midiOutput.sendMidi(activeDevice, [0x90, 93, 0])
+  midiOutput.sendMidi(activeDevice, [0x90, 94, 0])
+  midiOutput.sendMidi(activeDevice, [0x90, 95, 0])
+  midiOutput.sendMidi(activeDevice, [0x90, 86, 0])
+}
+
 /**
  * @param {MR_DeviceSurface} surface
  * @param {MR_DeviceMidiInput} midiInput
@@ -256,5 +283,6 @@ module.exports = {
   makeTransport,
   makeLedButton,
   makeTouchFader,
-  bindCommandKnob
+  bindCommandKnob,
+  clearAllLeds
 }

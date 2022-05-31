@@ -8,6 +8,7 @@ var iconElements = require('./icon_elements.js')
 var makeChannelControl = iconElements.makeChannelControl
 var makeMasterControl = iconElements.makeMasterControl
 var makeTransport = iconElements.makeTransport
+var clearAllLeds = iconElements.clearAllLeds
 
 //-----------------------------------------------------------------------------
 // 1. DRIVER SETUP - create driver object, midi ports and detection information
@@ -24,7 +25,8 @@ var midiInput = deviceDriver.mPorts.makeMidiInput()
 var midiOutput = deviceDriver.mPorts.makeMidiOutput()
 
 deviceDriver.mOnActivate = function (activeDevice) {
-    console.log('Icon Platform M+ Initialized');
+    console.log('Icon Platform M+ Activated');
+    clearAllLeds(activeDevice, midiOutput)
 };
 
 // define all possible namings the devices MIDI ports could have
@@ -227,8 +229,10 @@ var selectedTrackPage = makePageSelectedTrack()
 
 mixerPage.mOnActivate = function (device) {
     console.log('from script: Platform M+ page "Mixer" activated')
+    clearAllLeds(device, midiOutput)
 }
 
 selectedTrackPage.mOnActivate = function (device) {
     console.log('from script: Platform M+ page "Selected Track" activated')
+    clearAllLeds(device, midiOutput)
 }
