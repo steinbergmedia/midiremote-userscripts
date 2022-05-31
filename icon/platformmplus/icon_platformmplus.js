@@ -208,16 +208,26 @@ function makePageSelectedTrack() {
         page.makeValueBinding(knobSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mLevel)
         page.makeValueBinding(knobPushValue, selectedTrackChannel.mSends.getByIndex(idx).mOn).setTypeToggle()
         page.makeValueBinding(faderSurfaceValue, page.mHostAccess.mFocusedQuickControls.getByIndex(idx)).setValueTakeOverModeJump()
+
+        //page.makeValueBinding(surfaceElements.channelControls[idx].sel_button.mSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mOn).setTypeToggle()
+        page.makeValueBinding(surfaceElements.channelControls[idx].mute_button.mSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mPrePost).setTypeToggle()
+        //page.makeValueBinding(surfaceElements.channelControls[idx].solo_button.mSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mOn).setTypeToggle()
     }
 
-    page.makeValueBinding(surfaceElements.channelControls[6].sel_button.mSurfaceValue, selectedTrackChannel.mValue.mEditorOpen).setTypeToggle()
-    page.makeValueBinding(surfaceElements.channelControls[6].mute_button.mSurfaceValue, selectedTrackChannel.mValue.mInstrumentOpen).setTypeToggle()
-    page.makeCommandBinding(surfaceElements.channelControls[6].solo_button.mSurfaceValue, 'Automation', 'Show Used Automation (Selected Tracks)')
-    page.makeCommandBinding(surfaceElements.channelControls[6].rec_button.mSurfaceValue, 'Automation', 'Hide Automation')
+    page.makeValueBinding(surfaceElements.channelControls[0].solo_button.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand1.mOn).setTypeToggle()
+    page.makeValueBinding(surfaceElements.channelControls[1].solo_button.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand2.mOn).setTypeToggle()
+    page.makeValueBinding(surfaceElements.channelControls[2].solo_button.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand3.mOn).setTypeToggle()
+    page.makeValueBinding(surfaceElements.channelControls[3].solo_button.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand4.mOn).setTypeToggle()
 
-    page.makeValueBinding(surfaceElements.channelControls[7].sel_button.mSurfaceValue, selectedTrackChannel.mValue.mMonitorEnable).setTypeToggle()
-    page.makeValueBinding(surfaceElements.channelControls[7].mute_button.mSurfaceValue, selectedTrackChannel.mValue.mMute).setTypeToggle()
-    page.makeValueBinding(surfaceElements.channelControls[7].solo_button.mSurfaceValue, selectedTrackChannel.mValue.mSolo).setTypeToggle()
+
+    page.makeCommandBinding(surfaceElements.channelControls[4].solo_button.mSurfaceValue, 'Automation', 'Show Used Automation (Selected Tracks)')
+    page.makeCommandBinding(surfaceElements.channelControls[5].solo_button.mSurfaceValue, 'Automation', 'Hide Automation')
+    page.makeValueBinding(surfaceElements.channelControls[6].solo_button.mSurfaceValue, selectedTrackChannel.mValue.mEditorOpen).setTypeToggle()
+    page.makeValueBinding(surfaceElements.channelControls[7].solo_button.mSurfaceValue, selectedTrackChannel.mValue.mInstrumentOpen).setTypeToggle()
+
+    page.makeValueBinding(surfaceElements.channelControls[4].rec_button.mSurfaceValue, selectedTrackChannel.mValue.mMonitorEnable).setTypeToggle()
+    page.makeValueBinding(surfaceElements.channelControls[5].rec_button.mSurfaceValue, selectedTrackChannel.mValue.mMute).setTypeToggle()
+    page.makeValueBinding(surfaceElements.channelControls[6].rec_button.mSurfaceValue, selectedTrackChannel.mValue.mSolo).setTypeToggle()
     page.makeValueBinding(surfaceElements.channelControls[7].rec_button.mSurfaceValue, selectedTrackChannel.mValue.mRecordEnable).setTypeToggle()
 
     return page
