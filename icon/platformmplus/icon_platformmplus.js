@@ -89,7 +89,7 @@ function makePageWithDefaults(name) {
     var jogSubPageArea = page.makeSubPageArea('Jog')
     var zoomSubPageArea = page.makeSubPageArea('Zoom')
     var subPageJogNudge = makeSubPage(jogSubPageArea, 'Nudge')
-    var subPageJogScrub = makeSubPage(jogSubPageArea, 'Srcub')
+    var subPageJogScrub = makeSubPage(jogSubPageArea, 'Scrub')
     var subPageJogZoom = makeSubPage(zoomSubPageArea, 'Zoom')
     var subPageJobNav = makeSubPage(zoomSubPageArea, 'Nav')
 
@@ -119,7 +119,7 @@ function makePageWithDefaults(name) {
     page.makeActionBinding(surfaceElements.transport.btnZoomOnOff.mSurfaceValue, zoomSubPageArea.mAction.mNext)
 
     // Jog Pages - when Zoom lights are off
-     // Nuge
+    // Nudge
     page.makeCommandBinding(surfaceElements.transport.jogLeftVariable, 'Transport', 'Nudge Cursor Left').setSubPage(subPageJogNudge)
     page.makeCommandBinding(surfaceElements.transport.jogRightVariable, 'Transport', 'Nudge Cursor Right').setSubPage(subPageJogNudge)
     // Scrub (Jog in Cubase)
@@ -198,37 +198,118 @@ function makePageMixer() {
 function makePageSelectedTrack() {
     var page = makePageWithDefaults('Selected Channel')
 
+    var faderSubPageArea = page.makeSubPageArea('Faders')
+    var subPageSendsQC = makeSubPage(faderSubPageArea, 'SendsQC')
+    var subPageEQ = makeSubPage(faderSubPageArea, 'EQ')
+    var subPageCueSends = makeSubPage(faderSubPageArea, 'CueSends')
+    var subPagePreFilter = makeSubPage(faderSubPageArea, 'PreFilter')
+
     var selectedTrackChannel = page.mHostAccess.mTrackSelection.mMixerChannel
 
+    /// SendsQC subPage
+    // Sends on PushEncodes and mute button for pre/post
+    // Focus QC on Faders
+    // Fader
     for (var idx = 0; idx < surfaceElements.numStrips; ++idx) {
         var knobSurfaceValue = surfaceElements.channelControls[idx].pushEncoder.mEncoderValue;
         var knobPushValue = surfaceElements.channelControls[idx].pushEncoder.mPushValue;
         var faderSurfaceValue = surfaceElements.channelControls[idx].fader.mSurfaceValue;
 
-        page.makeValueBinding(knobSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mLevel)
-        page.makeValueBinding(knobPushValue, selectedTrackChannel.mSends.getByIndex(idx).mOn).setTypeToggle()
-        page.makeValueBinding(faderSurfaceValue, page.mHostAccess.mFocusedQuickControls.getByIndex(idx)).setValueTakeOverModeJump()
+        page.makeValueBinding(knobSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mLevel).setSubPage(subPageSendsQC)
+        page.makeValueBinding(knobPushValue, selectedTrackChannel.mSends.getByIndex(idx).mOn).setTypeToggle().setSubPage(subPageSendsQC)
+        page.makeValueBinding(faderSurfaceValue, page.mHostAccess.mFocusedQuickControls.getByIndex(idx)).setValueTakeOverModeJump().setSubPage(subPageSendsQC)
 
-        //page.makeValueBinding(surfaceElements.channelControls[idx].sel_button.mSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mOn).setTypeToggle()
-        page.makeValueBinding(surfaceElements.channelControls[idx].mute_button.mSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mPrePost).setTypeToggle()
-        //page.makeValueBinding(surfaceElements.channelControls[idx].solo_button.mSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mOn).setTypeToggle()
+        page.makeValueBinding(surfaceElements.channelControls[idx].sel_button.mSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mOn).setTypeToggle().setSubPage(subPageSendsQC)
+        page.makeValueBinding(surfaceElements.channelControls[idx].mute_button.mSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mPrePost).setTypeToggle().setSubPage(subPageSendsQC)
     }
 
-    page.makeValueBinding(surfaceElements.channelControls[0].solo_button.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand1.mOn).setTypeToggle()
-    page.makeValueBinding(surfaceElements.channelControls[1].solo_button.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand2.mOn).setTypeToggle()
-    page.makeValueBinding(surfaceElements.channelControls[2].solo_button.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand3.mOn).setTypeToggle()
-    page.makeValueBinding(surfaceElements.channelControls[3].solo_button.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand4.mOn).setTypeToggle()
+    // Handy controls for easy access
+    page.makeCommandBinding(surfaceElements.channelControls[4].solo_button.mSurfaceValue, 'Automation', 'Show Used Automation (Selected Tracks)').setSubPage(subPageSendsQC)
+    page.makeCommandBinding(surfaceElements.channelControls[5].solo_button.mSurfaceValue, 'Automation', 'Hide Automation').setSubPage(subPageSendsQC)
+    page.makeValueBinding(surfaceElements.channelControls[6].solo_button.mSurfaceValue, selectedTrackChannel.mValue.mEditorOpen).setTypeToggle().setSubPage(subPageSendsQC)
+    page.makeValueBinding(surfaceElements.channelControls[7].solo_button.mSurfaceValue, selectedTrackChannel.mValue.mInstrumentOpen).setTypeToggle().setSubPage(subPageSendsQC)
 
+    page.makeValueBinding(surfaceElements.channelControls[4].rec_button.mSurfaceValue, selectedTrackChannel.mValue.mMonitorEnable).setTypeToggle().setSubPage(subPageSendsQC)
+    page.makeValueBinding(surfaceElements.channelControls[5].rec_button.mSurfaceValue, selectedTrackChannel.mValue.mMute).setTypeToggle().setSubPage(subPageSendsQC)
+    page.makeValueBinding(surfaceElements.channelControls[6].rec_button.mSurfaceValue, selectedTrackChannel.mValue.mSolo).setTypeToggle().setSubPage(subPageSendsQC)
+    page.makeValueBinding(surfaceElements.channelControls[7].rec_button.mSurfaceValue, selectedTrackChannel.mValue.mRecordEnable).setTypeToggle().setSubPage(subPageSendsQC)
 
-    page.makeCommandBinding(surfaceElements.channelControls[4].solo_button.mSurfaceValue, 'Automation', 'Show Used Automation (Selected Tracks)')
-    page.makeCommandBinding(surfaceElements.channelControls[5].solo_button.mSurfaceValue, 'Automation', 'Hide Automation')
-    page.makeValueBinding(surfaceElements.channelControls[6].solo_button.mSurfaceValue, selectedTrackChannel.mValue.mEditorOpen).setTypeToggle()
-    page.makeValueBinding(surfaceElements.channelControls[7].solo_button.mSurfaceValue, selectedTrackChannel.mValue.mInstrumentOpen).setTypeToggle()
+    // EQ Related but on Sends page so you know have EQ activated...not sure the best option but hey, more buttons and lights is cool!
+    page.makeValueBinding(surfaceElements.channelControls[0].solo_button.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand1.mOn).setTypeToggle().setSubPage(subPageSendsQC)
+    page.makeValueBinding(surfaceElements.channelControls[1].solo_button.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand2.mOn).setTypeToggle().setSubPage(subPageSendsQC)
+    page.makeValueBinding(surfaceElements.channelControls[2].solo_button.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand3.mOn).setTypeToggle().setSubPage(subPageSendsQC)
+    page.makeValueBinding(surfaceElements.channelControls[3].solo_button.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand4.mOn).setTypeToggle().setSubPage(subPageSendsQC)
 
-    page.makeValueBinding(surfaceElements.channelControls[4].rec_button.mSurfaceValue, selectedTrackChannel.mValue.mMonitorEnable).setTypeToggle()
-    page.makeValueBinding(surfaceElements.channelControls[5].rec_button.mSurfaceValue, selectedTrackChannel.mValue.mMute).setTypeToggle()
-    page.makeValueBinding(surfaceElements.channelControls[6].rec_button.mSurfaceValue, selectedTrackChannel.mValue.mSolo).setTypeToggle()
-    page.makeValueBinding(surfaceElements.channelControls[7].rec_button.mSurfaceValue, selectedTrackChannel.mValue.mRecordEnable).setTypeToggle()
+    page.makeActionBinding(surfaceElements.channelControls[0].rec_button.mSurfaceValue, subPageSendsQC.mAction.mActivate).setSubPage(subPageSendsQC)
+    page.makeActionBinding(surfaceElements.channelControls[1].rec_button.mSurfaceValue, subPageEQ.mAction.mActivate).setSubPage(subPageSendsQC)
+    page.makeActionBinding(surfaceElements.channelControls[2].rec_button.mSurfaceValue, subPagePreFilter.mAction.mActivate).setSubPage(subPageSendsQC)
+    page.makeActionBinding(surfaceElements.channelControls[3].rec_button.mSurfaceValue, subPageCueSends.mAction.mActivate).setSubPage(subPageSendsQC)
+
+    // EQ Subpage
+    const eqBand = []
+    eqBand[0] = selectedTrackChannel.mChannelEQ.mBand1
+    eqBand[1] = selectedTrackChannel.mChannelEQ.mBand2
+    eqBand[2] = selectedTrackChannel.mChannelEQ.mBand3
+    eqBand[3] = selectedTrackChannel.mChannelEQ.mBand4
+    for (var idx = 0; idx < 4; ++idx) {
+        var knobSurfaceValue = surfaceElements.channelControls[idx].pushEncoder.mEncoderValue;
+        var knob2SurfaceValue = surfaceElements.channelControls[idx+4].pushEncoder.mEncoderValue;
+        var knobPushValue = surfaceElements.channelControls[idx].pushEncoder.mPushValue;
+        var knob2PushValue = surfaceElements.channelControls[idx+4].pushEncoder.mPushValue;
+        var faderSurfaceValue = surfaceElements.channelControls[idx].fader.mSurfaceValue;
+        var fader2SurfaceValue = surfaceElements.channelControls[idx + 4].fader.mSurfaceValue;
+
+        page.makeValueBinding(knobSurfaceValue, eqBand[idx].mFilterType).setSubPage(subPageEQ)
+        page.makeValueBinding(knob2SurfaceValue, eqBand[idx].mQ).setSubPage(subPageEQ)
+        page.makeValueBinding(knobPushValue, eqBand[idx].mOn).setTypeToggle().setSubPage(subPageEQ)
+        page.makeValueBinding(knob2PushValue, eqBand[idx].mOn).setTypeToggle().setSubPage(subPageEQ)
+        page.makeValueBinding(faderSurfaceValue, eqBand[idx].mGain).setSubPage(subPageEQ)
+        page.makeValueBinding(fader2SurfaceValue, eqBand[idx].mFreq).setSubPage(subPageEQ)
+    }
+
+    /// CueSends subPage
+    for (var idx = 0; idx < selectedTrackChannel.mCueSends.getSize(); ++idx) {
+        var knobSurfaceValue = surfaceElements.channelControls[idx].pushEncoder.mEncoderValue;
+        var knobPushValue = surfaceElements.channelControls[idx].pushEncoder.mPushValue;
+        var faderSurfaceValue = surfaceElements.channelControls[idx].fader.mSurfaceValue;
+
+        page.makeValueBinding(knobSurfaceValue, selectedTrackChannel.mCueSends.getByIndex(idx).mPan).setSubPage(subPageCueSends)
+        page.makeValueBinding(knobPushValue, selectedTrackChannel.mCueSends.getByIndex(idx).mOn).setTypeToggle().setSubPage(subPageCueSends)
+        page.makeValueBinding(faderSurfaceValue, selectedTrackChannel.mCueSends.getByIndex(idx).mLevel).setSubPage(subPageCueSends)
+
+        page.makeValueBinding(surfaceElements.channelControls[idx].sel_button.mSurfaceValue, selectedTrackChannel.mCueSends.getByIndex(idx).mOn).setTypeToggle().setSubPage(subPageCueSends)
+        page.makeValueBinding(surfaceElements.channelControls[idx].mute_button.mSurfaceValue, selectedTrackChannel.mCueSends.getByIndex(idx).mPrePost).setTypeToggle().setSubPage(subPageCueSends)
+    }
+
+    // PreFilter subPage
+    var knobSurfaceValue = surfaceElements.channelControls[0].pushEncoder.mEncoderValue;
+    var knob2SurfaceValue = surfaceElements.channelControls[1].pushEncoder.mEncoderValue;
+    var knob3SurfaceValue = surfaceElements.channelControls[2].pushEncoder.mEncoderValue;
+
+    var knobPushValue = surfaceElements.channelControls[0].pushEncoder.mPushValue;
+    var knob2PushValue = surfaceElements.channelControls[1].pushEncoder.mPushValue;
+    var knob3PushValue = surfaceElements.channelControls[2].pushEncoder.mPushValue;
+
+    var faderSurfaceValue = surfaceElements.channelControls[0].fader.mSurfaceValue;
+    var fader2SurfaceValue = surfaceElements.channelControls[1].fader.mSurfaceValue;
+    var fader3SurfaceValue = surfaceElements.channelControls[2].fader.mSurfaceValue;
+
+    var preFilter = selectedTrackChannel.mPreFilter
+
+    page.makeValueBinding(surfaceElements.channelControls[0].sel_button.mSurfaceValue, preFilter.mBypass).setTypeToggle().setSubPage(subPagePreFilter)
+    page.makeValueBinding(surfaceElements.channelControls[0].mute_button.mSurfaceValue, preFilter.mPhaseSwitch).setTypeToggle().setSubPage(subPagePreFilter)
+
+    page.makeValueBinding(surfaceElements.channelControls[1].sel_button.mSurfaceValue, preFilter.mHighCutOn).setTypeToggle().setSubPage(subPagePreFilter)
+    page.makeValueBinding(surfaceElements.channelControls[2].sel_button.mSurfaceValue, preFilter.mLowCutOn).setTypeToggle().setSubPage(subPagePreFilter)
+
+    page.makeValueBinding(knob2SurfaceValue, preFilter.mHighCutSlope ).setSubPage(subPagePreFilter)
+    page.makeValueBinding(knob3SurfaceValue, preFilter.mLowCutSlope ).setSubPage(subPagePreFilter)
+    page.makeValueBinding(knobPushValue, preFilter.mBypass ).setTypeToggle().setSubPage(subPagePreFilter)
+    page.makeValueBinding(knob2PushValue, preFilter.mHighCutOn ).setTypeToggle().setSubPage(subPagePreFilter)
+    page.makeValueBinding(knob3PushValue, preFilter.mLowCutOn ).setTypeToggle().setSubPage(subPagePreFilter)
+    page.makeValueBinding(faderSurfaceValue, preFilter.mGain).setSubPage(subPagePreFilter)
+    page.makeValueBinding(fader2SurfaceValue, preFilter.mHighCutFreq ).setSubPage(subPagePreFilter)
+    page.makeValueBinding(fader3SurfaceValue, preFilter.mLowCutFreq ).setSubPage(subPagePreFilter)
 
     return page
 }
