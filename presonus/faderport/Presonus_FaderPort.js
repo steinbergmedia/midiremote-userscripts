@@ -24,9 +24,10 @@ deviceDriver.makeDetectionUnit().detectPortPair(midiInput, midiOutput)
  * 
  */
 
+// Fader
 const const_FaderTouch = 0x68
 
-// Upper
+// Upper Zone
 const const_Solo = 0x08
 const const_Mute = 0x10
 const const_Arm = 0x00
@@ -36,7 +37,7 @@ const const_Touch = 0x4D
 const const_Write = 0x4B
 const const_Read = 0x4A
 
-// Middle
+// Middle Zone
 const const_PrevTrack = 0x2E
 const const_Rotary = 0x10
 const const_RotaryPush = 0x20
@@ -51,13 +52,34 @@ const const_Click = 0x3B
 const const_Section = 0x3C
 const const_Marker = 0x3D
 
-// Transport 
+// Transport  Zone
 const const_Loop = 0x56
 const const_RWD = 0x5B
 const const_FWD = 0x5C
 const const_Stop = 0x5D
 const const_Play = 0x5E
 const const_Record = 0x5F
+
+// Helper Variables
+
+// Saves the last Position of the Knob
+var var_prev_Rotary = -1
+
+// Pages
+const Pages = {
+    c_Page_None: 0x01,
+    c_Page_Pan: 0x02,
+    c_Page_Channel: 0x03,
+    c_Page_Scroll: 0x04,
+    c_Page_Master: 0x05,
+    c_Page_Section: 0x06,
+    c_Page_Marker: 0x07,
+    c_Page_Zoom: 0x08,
+    c_Page_Zoom_Vertical: 0x09
+} 
+
+var var_Active_Page = Pages.c_Page_None
+
 
 /** Help Functions
  * 
@@ -101,18 +123,17 @@ function setColorLED(device, ledID, p_color) {
  * 
  */
 
-
 var clz_ZoneFader = deviceDriver.mSurface.makeControlLayerZone('Fader')
 var cl_fader = clz_ZoneFader.makeControlLayer('Fader')
 
-var clz_UpperButtons = deviceDriver.mSurface.makeControlLayerZone('UpperButtons')
-var cl_upperButtons = clz_UpperButtons.makeControlLayer('UpperButtons')
+var clz_UpperButtons = deviceDriver.mSurface.makeControlLayerZone('Upper Buttons')
+var cl_upperButtons = clz_UpperButtons.makeControlLayer('Upper Buttons')
 
-var clz_MiddleButtons = deviceDriver.mSurface.makeControlLayerZone('MiddleButtons')
-var cl_middleButtons = clz_MiddleButtons.makeControlLayer('MiddleButtons')
+var clz_MiddleButtons = deviceDriver.mSurface.makeControlLayerZone('Middle Buttons')
+var cl_middleButtons = clz_MiddleButtons.makeControlLayer('Middle Buttons')
 
-var clz_TransportButtons = deviceDriver.mSurface.makeControlLayerZone('TransportButtons')
-var cl_TransportButtons = clz_TransportButtons.makeControlLayer('TransportButtons')
+var clz_TransportButtons = deviceDriver.mSurface.makeControlLayerZone('Transport Buttons')
+var cl_TransportButtons = clz_TransportButtons.makeControlLayer('Transport Buttons')
 
 /** FADER
  * 
@@ -300,20 +321,20 @@ function midiBindingUpperButtons(p_upperButtons) {
 
 function hostBindingUpperButtons(p_upperButtonss, p_Page, p_PageShift) {
     var mixerChannel = page.mHostAccess.mTrackSelection.mMixerChannel
-    page.makeValueBinding(p_upperButtonss.btn_Solo.mSurfaceValue, mixerChannel.mValue.mSolo)
+    p_Page.makeValueBinding(p_upperButtonss.btn_Solo.mSurfaceValue, mixerChannel.mValue.mSolo)
         .setTypeToggle()
-    page.makeValueBinding(p_upperButtonss.btn_Mute.mSurfaceValue, mixerChannel.mValue.mMute)
+    p_Page.makeValueBinding(p_upperButtonss.btn_Mute.mSurfaceValue, mixerChannel.mValue.mMute)
         .setTypeToggle()
-    page.makeValueBinding(p_upperButtonss.btn_Arm.mSurfaceValue, mixerChannel.mValue.mRecordEnable)
+    p_Page.makeValueBinding(p_upperButtonss.btn_Arm.mSurfaceValue, mixerChannel.mValue.mRecordEnable)
         .setTypeToggle()
-    page.makeActionBinding(p_upperButtonss.btn_Shift.mSurfaceValue, p_PageShift.mAction.mActivate)
-    page.makeValueBinding(p_upperButtonss.btn_Bypass.mSurfaceValue, mixerChannel.mCueSends.mBypass)
+    p_Page.makeActionBinding(p_upperButtonss.btn_Shift.mSurfaceValue, p_PageShift.mAction.mActivate)
+    
+    p_Page.makeValueBinding(p_upperButtonss.btn_Bypass.mSurfaceValue, mixerChannel.mCueSends.mBypass)
         .setTypeToggle()
-    page.makeValueBinding(p_upperButtonss.btn_Touch.mSurfaceValue, mixerChannel.mValue.mInstrumentOpen)
+    p_Page.makeCommandBinding(p_upperButtonss.btn_Touch.mSurfaceValue, 'Audio Performance', 'Reset Processing Overload Indicator')
+    p_Page.makeValueBinding(p_upperButtonss.btn_Write.mSurfaceValue, mixerChannel.mValue.mAutomationWrite)
         .setTypeToggle()
-    page.makeValueBinding(p_upperButtonss.btn_Write.mSurfaceValue, mixerChannel.mValue.mAutomationWrite)
-        .setTypeToggle()
-    page.makeValueBinding(p_upperButtonss.btn_Read.mSurfaceValue, mixerChannel.mValue.mAutomationRead)
+    p_Page.makeValueBinding(p_upperButtonss.btn_Read.mSurfaceValue, mixerChannel.mValue.mAutomationRead)
         .setTypeToggle()
 
     var mixerChannel_pageShift = p_PageShift.mHostAccess.mTrackSelection.mMixerChannel
@@ -350,7 +371,26 @@ function makeMiddleButtons(p_x, p_y) {
 
     middleButtons.kb_Rotary = deviceDriver.mSurface.makeKnob(x + 1 + 0.25, y, width - 0.2, heigh - 0.2)
         .setControlLayer(cl_middleButtons)
+
+    // Scrolling through Channels doesn't work yet
+    //middleButtons.kb_Rotary_Channel_Left = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_Channel_Left")
+    //middleButtons.kb_Rotary_Channel_Right = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_Channel_Right")   
     
+    middleButtons.kb_Rotary_Scroll_Left = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_Scroll_Left")
+    middleButtons.kb_Rotary_Scroll_Right = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_Scroll_Right")
+
+    middleButtons.kb_Rotary_Section_Left = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_Section_Left")
+    middleButtons.kb_Rotary_Section_Right = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_Section_Right")   
+
+    middleButtons.kb_Rotary_Marker_Left = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_Marker_Left")
+    middleButtons.kb_Rotary_Marker_Right = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_Marker_Right")   
+
+    middleButtons.kb_Rotary_Zoom_Left = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_Zoom_Left")
+    middleButtons.kb_Rotary_Zoom_Right = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_Zoom_Right")   
+
+    middleButtons.kb_Rotary_Zoom_Vertical_Left = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_Zoom_Vertical_Left")
+    middleButtons.kb_Rotary_Zoom_Vertical_Right = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_Zoom_Vertical_Right")   
+
     middleButtons.btn_RotaryPush = deviceDriver.mSurface.makeButton(x + 2.25, y, width - 0.5, heigh - 0.5)
         .setControlLayer(cl_middleButtons)
         .setShapeCircle()
@@ -390,6 +430,105 @@ function makeMiddleButtons(p_x, p_y) {
     middleButtons.kb_Rotary.mSurfaceValue.mOnProcessValueChange = function (context, value) {
         if (var_Debug == true)
             console.log("kb_Rotary.mSurfaceValue.mOnProcessValueChange: " + value.toString())
+        
+        // Evaluate if knob is turned right or left
+        const Direction = {
+            c_Direction_None: 0x00,
+            c_Direction_Left: 0x01,
+            c_Direction_Right: 0x02
+        }
+        var var_Direction = Direction.c_Direction_None
+        
+        if (var_prev_Rotary == -1)
+            var_prev_Rotary = value
+        else {
+            if (var_prev_Rotary == 1 && value == 1) {
+                var_Direction = Direction.c_Direction_Right
+            } else if (var_prev_Rotary == 0 && value == 0) {
+                var_Direction = Direction.c_Direction_Left
+            } else if (var_prev_Rotary < value) {
+                var_Direction = Direction.c_Direction_Right
+            } else if (var_prev_Rotary > value) {
+                var_Direction = Direction.c_Direction_Left
+            } else {
+                var_Direction = Direction.c_Direction_None
+            }
+            var_prev_Rotary = value
+        }
+
+        // Fill the to the page corresponding variables
+        switch (var_Active_Page) {
+            case Pages.c_Page_None:
+                break
+            case Pages.c_Page_Pan:
+                break
+            case Pages.c_Page_Channel:
+                // Scrolling through channels doesn't work yet
+                /**
+                switch (var_Direction) {
+                    case Direction.c_Direction_Left:
+                        middleButtons.kb_Rotary_Channel_Left.setProcessValue(context, 1)  
+                        break
+                    case Direction.c_Direction_Right:
+                        middleButtons.kb_Rotary_Channel_Right.setProcessValue(context, 1)  
+                        break
+                }
+                */
+                break
+            case Pages.c_Page_Scroll:
+                switch (var_Direction) {
+                    case Direction.c_Direction_Left:
+                        middleButtons.kb_Rotary_Scroll_Left.setProcessValue(context, 1)  
+                        break
+                    case Direction.c_Direction_Right:
+                        middleButtons.kb_Rotary_Scroll_Right.setProcessValue(context, 1)  
+                        break
+                }
+                break
+            case Pages.c_Page_Master:
+                break
+            case Pages.c_Page_Section:
+                switch (var_Direction) {
+                    case Direction.c_Direction_Left:
+                        middleButtons.kb_Rotary_Section_Left.setProcessValue(context, 1)  
+                        break
+                    case Direction.c_Direction_Right:
+                        middleButtons.kb_Rotary_Section_Right.setProcessValue(context, 1)  
+                        break
+                }
+                break
+            case Pages.c_Page_Marker:
+                switch (var_Direction) {
+                    case Direction.c_Direction_Left:
+                        middleButtons.kb_Rotary_Marker_Left.setProcessValue(context, 1)  
+                        break
+                    case Direction.c_Direction_Right:
+                        middleButtons.kb_Rotary_Marker_Right.setProcessValue(context, 1)  
+                        break
+                }
+                break
+            case Pages.c_Page_Zoom:
+                switch (var_Direction) {
+                    case Direction.c_Direction_Left:
+                        middleButtons.kb_Rotary_Zoom_Left.setProcessValue(context, 1)  
+                        break
+                    case Direction.c_Direction_Right:
+                        middleButtons.kb_Rotary_Zoom_Right.setProcessValue(context, 1)  
+                        break
+                }
+                break
+            case Pages.c_Page_Zoom_Vertical:
+                switch (var_Direction) {
+                    case Direction.c_Direction_Left:
+                        middleButtons.kb_Rotary_Zoom_Vertical_Left.setProcessValue(context, 1)  
+                        break
+                    case Direction.c_Direction_Right:
+                        middleButtons.kb_Rotary_Zoom_Vertical_Right.setProcessValue(context, 1)  
+                        break
+                }
+                break                
+        }
+
     }
     
     middleButtons.btn_PrevTrack.mSurfaceValue.mOnProcessValueChange = function(context, value) {
@@ -479,9 +618,6 @@ function midiBindingMiddleButtons(p_middleButtons) {
 }
 
 function hostBindingMiddleButtons(p_middleButtons, p_Page, p_PageShift) {
-    p_Page.makeActionBinding(p_middleButtons.btn_PrevTrack.mSurfaceValue, p_Page.mHostAccess.mTrackSelection.mAction.mPrevTrack)
-    p_Page.makeActionBinding(p_middleButtons.btn_NextTrack.mSurfaceValue, p_Page.mHostAccess.mTrackSelection.mAction.mNextTrack)
-
     var sba_SubPageArea = p_Page.makeSubPageArea('Knob Area')
     var subpage_Pan = sba_SubPageArea.makeSubPage('Pan')
     var subpage_Channel = sba_SubPageArea.makeSubPage('Channel')
@@ -490,48 +626,134 @@ function hostBindingMiddleButtons(p_middleButtons, p_Page, p_PageShift) {
     var subpage_Section = sba_SubPageArea.makeSubPage('Section')
     var subpage_Marker = sba_SubPageArea.makeSubPage('Marker')
 
+    var sba_SubPageArea_Shift = p_PageShift.makeSubPageArea('Knob Area Shift')
+    var subpage_Zoom = sba_SubPageArea_Shift.makeSubPage('Zoom')
+    var subpage_Zoom_Vertical = sba_SubPageArea_Shift.makeSubPage('Zoom_Vertical')
+
+    subpage_Pan.mActivate
+
+    /**********************************
+     * Normal page
+     */
     // Pan
-    p_Page.makeValueBinding(p_middleButtons.kb_Rotary.mSurfaceValue, p_Page.mHostAccess.mTrackSelection.mMixerChannel.mValue.mPan)
+    p_Page.makeActionBinding(p_middleButtons.btn_Pan.mSurfaceValue, subpage_Pan.mAction.mActivate)
         .setSubPage(subpage_Pan)
+        .setSubPage(subpage_Channel)
+        .setSubPage(subpage_Scroll)
+        .setSubPage(subpage_Master)
+        .setSubPage(subpage_Section)
+        .setSubPage(subpage_Marker)     
+    p_Page.makeValueBinding(p_middleButtons.kb_Rotary.mSurfaceValue, p_Page.mHostAccess.mTrackSelection.mMixerChannel.mValue.mPan)
+        .setSubPage(subpage_Pan)    
     p_Page.makeValueBinding(p_middleButtons.btn_RotaryPush.mSurfaceValue, p_Page.mHostAccess.mTrackSelection.mMixerChannel.mValue.mMonitorEnable)
         .setSubPage(subpage_Pan)
         .setTypeToggle()
+    p_Page.makeActionBinding(p_middleButtons.btn_PrevTrack.mSurfaceValue, p_Page.mHostAccess.mTrackSelection.mAction.mPrevTrack)    
+        .setSubPage(subpage_Pan)
+    p_Page.makeActionBinding(p_middleButtons.btn_NextTrack.mSurfaceValue, p_Page.mHostAccess.mTrackSelection.mAction.mNextTrack)
+        .setSubPage(subpage_Pan)
 
     // Channel
-    //p_Page.makeValueBinding(p_middleButtons.kb_Rotary.mSurfaceValue, p_Page.mHostAccess.)
-    //    .setSubPage(subpage_Scroll)
+    p_Page.makeActionBinding(p_middleButtons.btn_Channel.mSurfaceValue, subpage_Channel.mAction.mActivate)
+        .setSubPage(subpage_Pan)
+        .setSubPage(subpage_Channel)
+        .setSubPage(subpage_Scroll)
+        .setSubPage(subpage_Master)
+        .setSubPage(subpage_Section)
+        .setSubPage(subpage_Marker)     
+    p_Page.makeValueBinding(p_middleButtons.kb_Rotary.mSurfaceValue, p_Page.mHostAccess.mMouseCursor.mValueUnderMouse)
+        .setSubPage(subpage_Channel)
+    p_Page.makeActionBinding(p_middleButtons.btn_PrevTrack.mSurfaceValue, p_Page.mHostAccess.mTrackSelection.mAction.mPrevTrack)    
+        .setSubPage(subpage_Channel)
+    p_Page.makeActionBinding(p_middleButtons.btn_NextTrack.mSurfaceValue, p_Page.mHostAccess.mTrackSelection.mAction.mNextTrack)
+        .setSubPage(subpage_Channel)        
+    // Scrolling through channels doesn't work yet
+    //p_Page.makeActionBinding(p_middleButtons.kb_Rotary_Channel_Left, p_Page.mHostAccess.mTrackSelection.mAction.mPrevTrack)    
+    //    .setSubPage(subpage_Channel)
+    //p_Page.makeActionBinding(p_middleButtons.kb_Rotary_Channel_Right, p_Page.mHostAccess.mTrackSelection.mAction.mNextTrack)
+    //    .setSubPage(subpage_Channel)
+    //p_Page.makeCommandBinding(p_middleButtons.kb_Rotary_Channel_Left, 'Project', 'Select Track: Prev')
+    //    .setSubPage(subpage_Channel)
+    //p_Page.makeCommandBinding(p_middleButtons.kb_Rotary_Channel_Right, 'Project', 'Select Track: Next')
+    //    .setSubPage(subpage_Channel)
 
     // Scroll
-    p_Page.makeValueBinding(p_middleButtons.kb_Rotary.mSurfaceValue, p_Page.mHostAccess.mMouseCursor.mValueUnderMouse)
+    p_Page.makeActionBinding(p_middleButtons.btn_Scroll.mSurfaceValue, subpage_Scroll.mAction.mActivate)
+        .setSubPage(subpage_Pan)
+        .setSubPage(subpage_Channel)
+        .setSubPage(subpage_Scroll)
+        .setSubPage(subpage_Master)
+        .setSubPage(subpage_Section)
+        .setSubPage(subpage_Marker)     
+    p_Page.makeCommandBinding(p_middleButtons.btn_PrevTrack.mSurfaceValue, 'Transport', 'Nudge Cursor Left')
+        .setSubPage(subpage_Scroll)
+    p_Page.makeCommandBinding(p_middleButtons.btn_NextTrack.mSurfaceValue, 'Transport', 'Nudge Cursor Right')
+        .setSubPage(subpage_Scroll)
+    p_Page.makeCommandBinding(p_middleButtons.kb_Rotary_Scroll_Left, 'Transport', 'Nudge Cursor Left')
+        .setSubPage(subpage_Scroll)
+    p_Page.makeCommandBinding(p_middleButtons.kb_Rotary_Scroll_Right, 'Transport', 'Nudge Cursor Right')
         .setSubPage(subpage_Scroll)
 
     // Master
-    p_Page.makeValueBinding(p_middleButtons.kb_Rotary.mSurfaceValue, p_Page.mHostAccess.mControlRoom.mReferenceLevelValue)
+    p_Page.makeActionBinding(p_middleButtons.btn_Master.mSurfaceValue, subpage_Master.mAction.mActivate)
+        .setSubPage(subpage_Pan)
+        .setSubPage(subpage_Channel)
+        .setSubPage(subpage_Scroll)
+        .setSubPage(subpage_Master)
+        .setSubPage(subpage_Section)
+        .setSubPage(subpage_Marker)     
+    p_Page.makeValueBinding(p_middleButtons.kb_Rotary.mSurfaceValue, p_Page.mHostAccess.mControlRoom.mMainChannel.mLevelValue)
         .setSubPage(subpage_Master)
     
     // Section
+    p_Page.makeActionBinding(p_middleButtons.btn_Section.mSurfaceValue, subpage_Section.mAction.mActivate)
+        .setSubPage(subpage_Pan)
+        .setSubPage(subpage_Channel)
+        .setSubPage(subpage_Scroll)
+        .setSubPage(subpage_Master)
+        .setSubPage(subpage_Section)
+        .setSubPage(subpage_Marker)    
+    p_Page.makeCommandBinding(p_middleButtons.btn_PrevTrack.mSurfaceValue, 'Nudge', 'Left')
+        .setSubPage(subpage_Section)
+    p_Page.makeCommandBinding(p_middleButtons.btn_NextTrack.mSurfaceValue, 'Nudge', 'Right')
+        .setSubPage(subpage_Section)
+    p_Page.makeCommandBinding(p_middleButtons.kb_Rotary_Section_Left, 'Nudge', 'Left')
+        .setSubPage(subpage_Section)
+    p_Page.makeCommandBinding(p_middleButtons.kb_Rotary_Section_Right, 'Nudge', 'Right')
+        .setSubPage(subpage_Section)        
 
     // Marker
+    p_Page.makeActionBinding(p_middleButtons.btn_Marker.mSurfaceValue, subpage_Marker.mAction.mActivate)
+        .setSubPage(subpage_Pan)
+        .setSubPage(subpage_Channel)
+        .setSubPage(subpage_Scroll)
+        .setSubPage(subpage_Master)
+        .setSubPage(subpage_Section)
+        .setSubPage(subpage_Marker)
+    p_Page.makeCommandBinding(p_middleButtons.btn_PrevTrack.mSurfaceValue, 'Transport', 'Locate Previous Marker')
+        .setSubPage(subpage_Marker)
+    p_Page.makeCommandBinding(p_middleButtons.btn_NextTrack.mSurfaceValue, 'Transport', 'Locate Next Marker')
+        .setSubPage(subpage_Marker)
+    p_Page.makeCommandBinding(p_middleButtons.kb_Rotary_Marker_Left, 'Transport', 'Locate Previous Marker')
+        .setSubPage(subpage_Marker)
+    p_Page.makeCommandBinding(p_middleButtons.kb_Rotary_Marker_Right, 'Transport', 'Locate Next Marker')
+        .setSubPage(subpage_Marker)
 
-    //p_Page.makeValueBinding(p_middleButtons.btn_RotaryPush.mSurfaceValue, p_Page.mHostAccess.mMouseCursor.mValueUnderMouse)
-    //    .setSubPage(subpage_Master)
-    //    .setTypeToggle()
-
+    // Open Channel Editor
     p_Page.makeValueBinding(p_middleButtons.btn_Link.mSurfaceValue, p_Page.mHostAccess.mTrackSelection.mMixerChannel.mValue.mEditorOpen)
         .setTypeToggle()
-
-    p_Page.makeActionBinding(p_middleButtons.btn_Pan.mSurfaceValue, subpage_Pan.mAction.mActivate)
-    p_Page.makeActionBinding(p_middleButtons.btn_Channel.mSurfaceValue, subpage_Channel.mAction.mActivate)
-    p_Page.makeActionBinding(p_middleButtons.btn_Scroll.mSurfaceValue, subpage_Scroll.mAction.mActivate)    
-    p_Page.makeActionBinding(p_middleButtons.btn_Master.mSurfaceValue, subpage_Master.mAction.mActivate)
     
+    // Click
     p_Page.makeValueBinding(p_middleButtons.btn_Click.mSurfaceValue, p_Page.mHostAccess.mTransport.mValue.mMetronomeActive)
         .setTypeToggle()
     
-    p_Page.makeActionBinding(p_middleButtons.btn_Section.mSurfaceValue, subpage_Section.mAction.mActivate)
-    p_Page.makeActionBinding(p_middleButtons.btn_Marker.mSurfaceValue, subpage_Marker.mAction.mActivate)
-
+    // Pan Page Handler
     subpage_Pan.mOnActivate = function(context) {
+        setColorLED(context, const_Link, RGB_Colors.c_Blue)
+        setColorLED(context, const_Pan, RGB_Colors.c_Blue)
+        setColorLED(context, const_Channel, RGB_Colors.c_Blue)
+        setColorLED(context, const_Scroll, RGB_Colors.c_Blue)
+
         turnOffLED(context, const_Link)
         turnOnLED(context, const_Pan)
         turnOffLED(context, const_Channel)
@@ -539,12 +761,22 @@ function hostBindingMiddleButtons(p_middleButtons, p_Page, p_PageShift) {
         turnOffLED(context, const_Master)
         turnOffLED(context, const_Section)
         turnOffLED(context, const_Marker)
+
+        var_Active_Page = Pages.c_Page_Pan
     }
     subpage_Pan.mOnDeactivate = function(context) {
         turnOffLED(context, const_Pan)
+
+        var_Active_Page = Pages.c_Page_None
     }
 
+    // Channel Page Handler
     subpage_Channel.mOnActivate = function(context) {
+        setColorLED(context, const_Link, RGB_Colors.c_Blue)
+        setColorLED(context, const_Pan, RGB_Colors.c_Blue)
+        setColorLED(context, const_Channel, RGB_Colors.c_Blue)
+        setColorLED(context, const_Scroll, RGB_Colors.c_Blue)
+
         turnOffLED(context, const_Link)
         turnOffLED(context, const_Pan)
         turnOnLED(context, const_Channel)
@@ -552,12 +784,22 @@ function hostBindingMiddleButtons(p_middleButtons, p_Page, p_PageShift) {
         turnOffLED(context, const_Master)
         turnOffLED(context, const_Section)
         turnOffLED(context, const_Marker)
+
+        var_Active_Page = Pages.c_Page_Channel
     }
     subpage_Channel.mOnDeactivate = function(context) {
         turnOffLED(context, const_Channel)
+
+        var_Active_Page = Pages.c_Page_None
     }
 
+    // Scroll Page Handler
     subpage_Scroll.mOnActivate = function(context) {
+        setColorLED(context, const_Link, RGB_Colors.c_Blue)
+        setColorLED(context, const_Pan, RGB_Colors.c_Blue)
+        setColorLED(context, const_Channel, RGB_Colors.c_Blue)
+        setColorLED(context, const_Scroll, RGB_Colors.c_Blue)
+
         turnOffLED(context, const_Link)
         turnOffLED(context, const_Pan)
         turnOffLED(context, const_Channel)
@@ -565,12 +807,22 @@ function hostBindingMiddleButtons(p_middleButtons, p_Page, p_PageShift) {
         turnOffLED(context, const_Master)
         turnOffLED(context, const_Section)
         turnOffLED(context, const_Marker)
+
+        var_Active_Page = Pages.c_Page_Scroll
     }
     subpage_Scroll.mOnDeactivate = function(context) {
         turnOffLED(context, const_Scroll)
+
+        var_Active_Page = Pages.c_Page_None
     }  
 
+    // Master Page Handler
     subpage_Master.mOnActivate = function(context) {
+        setColorLED(context, const_Link, RGB_Colors.c_Blue)
+        setColorLED(context, const_Pan, RGB_Colors.c_Blue)
+        setColorLED(context, const_Channel, RGB_Colors.c_Blue)
+        setColorLED(context, const_Scroll, RGB_Colors.c_Blue)
+
         turnOffLED(context, const_Link)
         turnOffLED(context, const_Pan)
         turnOffLED(context, const_Channel)
@@ -578,12 +830,22 @@ function hostBindingMiddleButtons(p_middleButtons, p_Page, p_PageShift) {
         turnOnLED(context, const_Master)
         turnOffLED(context, const_Section)
         turnOffLED(context, const_Marker)
+
+        var_Active_Page = Pages.c_Page_Master
     }
     subpage_Master.mOnDeactivate = function(context) {
         turnOffLED(context, const_Master)
+
+        var_Active_Page = Pages.c_Page_None
     }
 
+    // Section Page Handler
     subpage_Section.mOnActivate = function(context) {
+        setColorLED(context, const_Link, RGB_Colors.c_Blue)
+        setColorLED(context, const_Pan, RGB_Colors.c_Blue)
+        setColorLED(context, const_Channel, RGB_Colors.c_Blue)
+        setColorLED(context, const_Scroll, RGB_Colors.c_Blue)
+
         turnOffLED(context, const_Link)
         turnOffLED(context, const_Pan)
         turnOffLED(context, const_Channel)
@@ -591,12 +853,22 @@ function hostBindingMiddleButtons(p_middleButtons, p_Page, p_PageShift) {
         turnOffLED(context, const_Master)
         turnOnLED(context, const_Section)
         turnOffLED(context, const_Marker)
+
+        var_Active_Page = Pages.c_Page_Section
     }
     subpage_Section.mOnDeactivate = function(context) {
         turnOffLED(context, const_Section)
+
+        var_Active_Page = Pages.c_Page_None
     }
 
+    // Marker Page Handler
     subpage_Marker.mOnActivate = function(context) {
+        setColorLED(context, const_Link, RGB_Colors.c_Blue)
+        setColorLED(context, const_Pan, RGB_Colors.c_Blue)
+        setColorLED(context, const_Channel, RGB_Colors.c_Blue)
+        setColorLED(context, const_Scroll, RGB_Colors.c_Blue)
+
         turnOffLED(context, const_Link)
         turnOffLED(context, const_Pan)
         turnOffLED(context, const_Channel)
@@ -604,10 +876,89 @@ function hostBindingMiddleButtons(p_middleButtons, p_Page, p_PageShift) {
         turnOffLED(context, const_Master)
         turnOffLED(context, const_Section)
         turnOnLED(context, const_Marker)
+
+        var_Active_Page = Pages.c_Page_Marker
     }
     subpage_Marker.mOnDeactivate = function(context) {
         turnOffLED(context, const_Marker)
+
+        var_Active_Page = Pages.c_Page_None
     }
+
+    /**********************************
+     * Shift page
+     */
+    var mixerChannel = p_PageShift.mHostAccess.mTrackSelection.mMixerChannel
+    p_PageShift.makeValueBinding(p_middleButtons.btn_Link.mSurfaceValue, mixerChannel.mValue.mInstrumentOpen)
+        .setTypeToggle()
+
+    // Zoom Button
+    p_PageShift.makeActionBinding(p_middleButtons.btn_Scroll.mSurfaceValue, subpage_Zoom.mAction.mActivate)
+        .setSubPage(subpage_Zoom)
+        .setSubPage(subpage_Zoom_Vertical)
+    p_PageShift.makeCommandBinding(p_middleButtons.btn_PrevTrack.mSurfaceValue, 'Zoom', 'Zoom Out')
+        .setSubPage(subpage_Zoom)
+    p_PageShift.makeCommandBinding(p_middleButtons.btn_NextTrack.mSurfaceValue, 'Zoom', 'Zoom In')
+        .setSubPage(subpage_Zoom)
+    p_PageShift.makeCommandBinding(p_middleButtons.kb_Rotary_Zoom_Left, 'Zoom', 'Zoom Out')
+        .setSubPage(subpage_Zoom)
+    p_PageShift.makeCommandBinding(p_middleButtons.kb_Rotary_Zoom_Right, 'Zoom', 'Zoom In')
+        .setSubPage(subpage_Zoom)        
+ 
+    // Zoom Button
+    p_PageShift.makeActionBinding(p_middleButtons.btn_Channel.mSurfaceValue, subpage_Zoom_Vertical.mAction.mActivate)
+        .setSubPage(subpage_Zoom)
+        .setSubPage(subpage_Zoom_Vertical)
+    p_PageShift.makeCommandBinding(p_middleButtons.btn_PrevTrack.mSurfaceValue, 'Zoom', 'Zoom Out Vertically')
+        .setSubPage(subpage_Zoom_Vertical)
+    p_PageShift.makeCommandBinding(p_middleButtons.btn_NextTrack.mSurfaceValue, 'Zoom', 'Zoom In Vertically')
+        .setSubPage(subpage_Zoom_Vertical)
+    p_PageShift.makeCommandBinding(p_middleButtons.kb_Rotary_Zoom_Vertical_Left, 'Zoom', 'Zoom Out Vertically')
+        .setSubPage(subpage_Zoom_Vertical)
+    p_PageShift.makeCommandBinding(p_middleButtons.kb_Rotary_Zoom_Vertical_Right, 'Zoom', 'Zoom In Vertically')
+        .setSubPage(subpage_Zoom_Vertical)        
+
+    // F1 to F4
+    p_PageShift.makeCommandBinding(p_middleButtons.btn_Master.mSurfaceValue, 'Quantize Category', 'Set Quantize to 2th')
+    p_PageShift.makeCommandBinding(p_middleButtons.btn_Click.mSurfaceValue, 'Quantize Category', 'Set Quantize to 4th')
+    p_PageShift.makeCommandBinding(p_middleButtons.btn_Section.mSurfaceValue, 'Quantize Category', 'Set Quantize to 8th')
+    p_PageShift.makeCommandBinding(p_middleButtons.btn_Marker.mSurfaceValue, 'Quantize Category', 'Set Quantize to 16th')
+
+    // Zoom Page Handler
+    subpage_Zoom.mOnActivate = function(context) {
+        turnOffLED(context, const_Link)
+        turnOffLED(context, const_Pan)
+        turnOffLED(context, const_Channel)
+        turnOnLED(context, const_Scroll)
+        turnOffLED(context, const_Master)
+        turnOffLED(context, const_Section)
+        turnOffLED(context, const_Marker)
+
+        var_Active_Page = Pages.c_Page_Zoom
+    }
+    subpage_Zoom.mOnDeactivate = function(context) {
+        turnOnLED(context, const_Scroll)
+
+        var_Active_Page = Pages.c_Page_None
+    }
+
+    // Zoom Vertical Page Handler
+    subpage_Zoom_Vertical.mOnActivate = function(context) {
+        turnOffLED(context, const_Link)
+        turnOffLED(context, const_Pan)
+        turnOnLED(context, const_Channel)
+        turnOffLED(context, const_Scroll)
+        turnOffLED(context, const_Master)
+        turnOffLED(context, const_Section)
+        turnOffLED(context, const_Marker)
+
+        var_Active_Page = Pages.c_Page_Zoom_Vertical
+    }
+    subpage_Zoom_Vertical.mOnDeactivate = function(context) {
+        turnOnLED(context, const_Scroll)
+
+        var_Active_Page = Pages.c_Page_None
+    }   
 }
 
 /** TRANSPORT BUTTONS
