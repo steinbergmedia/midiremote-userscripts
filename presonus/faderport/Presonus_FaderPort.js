@@ -75,7 +75,7 @@ const Pages = {
     c_Page_Section: 0x06,
     c_Page_Marker: 0x07,
     c_Page_Zoom: 0x08,
-    c_Page_Zoom_Vertical: 0x09
+    c_Page_Lock: 0x09
 } 
 
 var var_Active_Page = Pages.c_Page_None
@@ -153,6 +153,9 @@ function makeFader(p_x, p_y, p_heigh) {
         isTouched: false,
         value: 0,
         updateHardware: function(context) {
+            // skip if knob controls value under mouse
+            if (var_Active_Page == Pages.c_Page_Lock)
+                return
             if(!this.isTouched)
                 if (var_Debug == true)
                     console.log("updateHardware: " + this.value.toString())            
@@ -161,6 +164,9 @@ function makeFader(p_x, p_y, p_heigh) {
     }
 
     fader.fd_Volume.mSurfaceValue.mOnProcessValueChange = function (context, value) {
+        // skip if knob controls value under mouse
+        if (var_Active_Page == Pages.c_Page_Lock)
+            return
         if (var_Debug == true)
             console.log("fd_Volume.mSurfaceValue.mOnProcessValueChange: " + value.toString())
         faderState.value = value
@@ -168,6 +174,9 @@ function makeFader(p_x, p_y, p_heigh) {
     }.bind({faderState})
     
     fader.val_FaderTouched.mOnProcessValueChange = function (context, value) {
+        // skip if knob controls value under mouse
+        if (var_Active_Page == Pages.c_Page_Lock)
+            return
         if (var_Debug == true)
             console.log("val_FaderTouched.mOnProcessValueChange")
         faderState.isTouched = value > 0
@@ -340,13 +349,15 @@ function hostBindingUpperButtons(p_upperButtonss, p_Page, p_PageShift) {
     var mixerChannel_pageShift = p_PageShift.mHostAccess.mTrackSelection.mMixerChannel
     p_PageShift.makeActionBinding(p_upperButtonss.btn_Shift.mSurfaceValue, p_Page.mAction.mActivate)
 
-    p_PageShift.makeValueBinding(p_upperButtonss.btn_Solo.mSurfaceValue, mixerChannel_pageShift.mValue.mSolo)
-        .setTypeToggle()
-    p_PageShift.makeValueBinding(p_upperButtonss.btn_Mute.mSurfaceValue, mixerChannel_pageShift.mValue.mMute)
-        .setTypeToggle()
+    p_PageShift.makeCommandBinding(p_upperButtonss.btn_Solo.mSurfaceValue, 'Edit', 'Deactivate All Solo')
+    p_PageShift.makeCommandBinding(p_upperButtonss.btn_Mute.mSurfaceValue, 'Edit', 'Unmute All')
+    p_PageShift.makeCommandBinding(p_upperButtonss.btn_Arm.mSurfaceValue, 'Mixer', 'Arm All Audio Tracks')
 
     p_PageShift.mOnActivate = function(context) {
         turnFlashingLED(context, const_Shift)
+        turnOffLED(context, const_Solo)
+        turnOffLED(context, const_Mute)
+        turnOffLED(context, const_Arm)
     }
 
     p_Page.mOnActivate = function(context) {
@@ -371,11 +382,11 @@ function makeMiddleButtons(p_x, p_y) {
 
     middleButtons.kb_Rotary = deviceDriver.mSurface.makeKnob(x + 1 + 0.25, y, width - 0.2, heigh - 0.2)
         .setControlLayer(cl_middleButtons)
+    middleButtons.kb_Rotary_Val = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_Val")
 
-    // Scrolling through Channels doesn't work yet
-    //middleButtons.kb_Rotary_Channel_Left = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_Channel_Left")
-    //middleButtons.kb_Rotary_Channel_Right = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_Channel_Right")   
-    
+    middleButtons.kb_Rotary_Channel_Left = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_Channel_Left")
+    middleButtons.kb_Rotary_Channel_Right = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_Channel_Right")   
+        
     middleButtons.kb_Rotary_Scroll_Left = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_Scroll_Left")
     middleButtons.kb_Rotary_Scroll_Right = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_Scroll_Right")
 
@@ -388,9 +399,10 @@ function makeMiddleButtons(p_x, p_y) {
     middleButtons.kb_Rotary_Zoom_Left = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_Zoom_Left")
     middleButtons.kb_Rotary_Zoom_Right = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_Zoom_Right")   
 
-    middleButtons.kb_Rotary_Zoom_Vertical_Left = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_Zoom_Vertical_Left")
-    middleButtons.kb_Rotary_Zoom_Vertical_Right = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_Zoom_Vertical_Right")   
-
+    middleButtons.kb_Rotary_Pan = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_Pan")
+    middleButtons.kb_Rotary_ValueUnderMouse = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_ValueUnderMouse")
+    middleButtons.kb_Rotary_CRLevelValue = deviceDriver.mSurface.makeCustomValueVariable("kb_Rotary_CRLevelValue")
+    
     middleButtons.btn_RotaryPush = deviceDriver.mSurface.makeButton(x + 2.25, y, width - 0.5, heigh - 0.5)
         .setControlLayer(cl_middleButtons)
         .setShapeCircle()
@@ -427,10 +439,40 @@ function makeMiddleButtons(p_x, p_y) {
     middleButtons.btn_Marker = deviceDriver.mSurface.makeButton(x, y, width, heigh)
         .setControlLayer(cl_middleButtons)
 
-    middleButtons.kb_Rotary.mSurfaceValue.mOnProcessValueChange = function (context, value) {
+    // Update Hardware....
+    middleButtons.kb_Rotary_Pan.mOnProcessValueChange = function(context, value) {
+        if (var_Debug == true) {
+            console.log("middleButtons.kb_Rotary_Pan.mOnProcessValueChange: " + value)
+        }
+        if (var_Active_Page == Pages.c_Page_Pan) {
+            middleButtons.kb_Rotary_Val.setProcessValue(context, value)
+        }
+    }
+
+    // Update Hardware....
+    middleButtons.kb_Rotary_ValueUnderMouse.mOnProcessValueChange = function(context, value) {
+        if (var_Debug == true) {
+            console.log("middleButtons.kb_Rotary_ValueUnderMouse.mOnProcessValueChange: " + value)
+        }
+        if (var_Active_Page == Pages.c_Page_Lock) {
+            middleButtons.kb_Rotary_Val.setProcessValue(context, value)
+        }
+    }
+
+    // Update Hardware....
+    middleButtons.kb_Rotary_CRLevelValue.mOnProcessValueChange = function(context, value) {
+        if (var_Debug == true) {
+            console.log("middleButtons.kb_Rotary_CRLevelValue.mOnProcessValueChange: " + value)
+        }
+        if (var_Active_Page == Pages.c_Page_Master) {
+            middleButtons.kb_Rotary_Val.setProcessValue(context, value)
+        }
+    }
+
+    middleButtons.kb_Rotary_Val.mOnProcessValueChange = function (context, value) {
         if (var_Debug == true)
-            console.log("kb_Rotary.mSurfaceValue.mOnProcessValueChange: " + value.toString())
-        
+            console.log("middleButtons.kb_Rotary_Val.mOnProcessValueChange: " + value.toString())
+
         // Evaluate if knob is turned right or left
         const Direction = {
             c_Direction_None: 0x00,
@@ -461,10 +503,17 @@ function makeMiddleButtons(p_x, p_y) {
             case Pages.c_Page_None:
                 break
             case Pages.c_Page_Pan:
+                if (var_Debug == true) {
+                    console.log("middleButtons.kb_Rotary_Pan: " + middleButtons.kb_Rotary_Pan.getProcessValue(context))
+                    console.log("middleButtons.kb_Rotary_Val: " + middleButtons.kb_Rotary_Val.getProcessValue(context))
+                    var var_test = Math.abs(middleButtons.kb_Rotary_Pan.getProcessValue(context)  - middleButtons.kb_Rotary_Val.getProcessValue(context))
+                    console.log("Difference: " + var_test)                
+                }
+                if (Math.abs(middleButtons.kb_Rotary_Pan.getProcessValue(context) - middleButtons.kb_Rotary_Val.getProcessValue(context)) > 0.001) {
+                    middleButtons.kb_Rotary_Pan.setProcessValue(context, value)
+                }
                 break
             case Pages.c_Page_Channel:
-                // Scrolling through channels doesn't work yet
-                /**
                 switch (var_Direction) {
                     case Direction.c_Direction_Left:
                         middleButtons.kb_Rotary_Channel_Left.setProcessValue(context, 1)  
@@ -472,8 +521,7 @@ function makeMiddleButtons(p_x, p_y) {
                     case Direction.c_Direction_Right:
                         middleButtons.kb_Rotary_Channel_Right.setProcessValue(context, 1)  
                         break
-                }
-                */
+                }                
                 break
             case Pages.c_Page_Scroll:
                 switch (var_Direction) {
@@ -486,6 +534,9 @@ function makeMiddleButtons(p_x, p_y) {
                 }
                 break
             case Pages.c_Page_Master:
+                if (Math.abs(middleButtons.kb_Rotary_CRLevelValue.getProcessValue(context) - middleButtons.kb_Rotary_Val.getProcessValue(context)) > 0.001) {
+                    middleButtons.kb_Rotary_CRLevelValue.setProcessValue(context, value)
+                }                
                 break
             case Pages.c_Page_Section:
                 switch (var_Direction) {
@@ -517,18 +568,23 @@ function makeMiddleButtons(p_x, p_y) {
                         break
                 }
                 break
-            case Pages.c_Page_Zoom_Vertical:
-                switch (var_Direction) {
-                    case Direction.c_Direction_Left:
-                        middleButtons.kb_Rotary_Zoom_Vertical_Left.setProcessValue(context, 1)  
-                        break
-                    case Direction.c_Direction_Right:
-                        middleButtons.kb_Rotary_Zoom_Vertical_Right.setProcessValue(context, 1)  
-                        break
-                }
+            case Pages.c_Page_Lock:
+                if (var_Debug == true) {
+                    console.log("middleButtons.kb_Rotary_ValueUnderMouse: " + middleButtons.kb_Rotary_ValueUnderMouse.getProcessValue(context))
+                    console.log("middleButtons.kb_Rotary_Val: " + middleButtons.kb_Rotary_Val.getProcessValue(context))
+                    var var_test = Math.abs(middleButtons.kb_Rotary_ValueUnderMouse.getProcessValue(context)  - middleButtons.kb_Rotary_Val.getProcessValue(context))
+                    console.log("Difference: " + var_test)                
+                }                
+                if (Math.abs(middleButtons.kb_Rotary_ValueUnderMouse.getProcessValue(context) - middleButtons.kb_Rotary_Val.getProcessValue(context)) > 0.001) {
+                    middleButtons.kb_Rotary_ValueUnderMouse.setProcessValue(context, value)
+                }                
                 break                
         }
+    }
 
+    middleButtons.kb_Rotary.mSurfaceValue.mOnProcessValueChange = function (context, value) {
+        if (var_Debug == true)
+            console.log("kb_Rotary.mSurfaceValue.mOnProcessValueChange: " + value.toString())
     }
     
     middleButtons.btn_PrevTrack.mSurfaceValue.mOnProcessValueChange = function(context, value) {
@@ -575,6 +631,11 @@ function midiBindingMiddleButtons(p_middleButtons) {
         .setInputPort(midiInput)
         .bindToControlChange(0, const_Rotary)
         .setTypeRelativeSignedBit()
+
+    middleButtons.kb_Rotary_Val.mMidiBinding
+        .setInputPort(midiInput)
+        .bindToControlChange(0, const_Rotary)
+        .setTypeRelativeSignedBit()    
 
     p_middleButtons.btn_RotaryPush.mSurfaceValue.mMidiBinding
         .setInputPort(midiInput)
@@ -628,7 +689,7 @@ function hostBindingMiddleButtons(p_middleButtons, p_Page, p_PageShift) {
 
     var sba_SubPageArea_Shift = p_PageShift.makeSubPageArea('Knob Area Shift')
     var subpage_Zoom = sba_SubPageArea_Shift.makeSubPage('Zoom')
-    var subpage_Zoom_Vertical = sba_SubPageArea_Shift.makeSubPage('Zoom_Vertical')
+    var subpage_Lock = sba_SubPageArea_Shift.makeSubPage('Lock')
 
     subpage_Pan.mActivate
 
@@ -643,8 +704,8 @@ function hostBindingMiddleButtons(p_middleButtons, p_Page, p_PageShift) {
         .setSubPage(subpage_Master)
         .setSubPage(subpage_Section)
         .setSubPage(subpage_Marker)     
-    p_Page.makeValueBinding(p_middleButtons.kb_Rotary.mSurfaceValue, p_Page.mHostAccess.mTrackSelection.mMixerChannel.mValue.mPan)
-        .setSubPage(subpage_Pan)    
+    p_Page.makeValueBinding(p_middleButtons.kb_Rotary_Pan, p_Page.mHostAccess.mTrackSelection.mMixerChannel.mValue.mPan)
+        .setSubPage(subpage_Pan)
     p_Page.makeValueBinding(p_middleButtons.btn_RotaryPush.mSurfaceValue, p_Page.mHostAccess.mTrackSelection.mMixerChannel.mValue.mMonitorEnable)
         .setSubPage(subpage_Pan)
         .setTypeToggle()
@@ -660,22 +721,18 @@ function hostBindingMiddleButtons(p_middleButtons, p_Page, p_PageShift) {
         .setSubPage(subpage_Scroll)
         .setSubPage(subpage_Master)
         .setSubPage(subpage_Section)
-        .setSubPage(subpage_Marker)     
-    p_Page.makeValueBinding(p_middleButtons.kb_Rotary.mSurfaceValue, p_Page.mHostAccess.mMouseCursor.mValueUnderMouse)
+        .setSubPage(subpage_Marker)
+    p_Page.makeCommandBinding(p_middleButtons.kb_Rotary_Channel_Left, 'Project', 'Select Track: Prev')
+        .setSubPage(subpage_Channel)
+    p_Page.makeCommandBinding(p_middleButtons.kb_Rotary_Channel_Right, 'Project', 'Select Track: Next')
         .setSubPage(subpage_Channel)
     p_Page.makeActionBinding(p_middleButtons.btn_PrevTrack.mSurfaceValue, p_Page.mHostAccess.mTrackSelection.mAction.mPrevTrack)    
         .setSubPage(subpage_Channel)
     p_Page.makeActionBinding(p_middleButtons.btn_NextTrack.mSurfaceValue, p_Page.mHostAccess.mTrackSelection.mAction.mNextTrack)
         .setSubPage(subpage_Channel)        
-    // Scrolling through channels doesn't work yet
-    //p_Page.makeActionBinding(p_middleButtons.kb_Rotary_Channel_Left, p_Page.mHostAccess.mTrackSelection.mAction.mPrevTrack)    
-    //    .setSubPage(subpage_Channel)
-    //p_Page.makeActionBinding(p_middleButtons.kb_Rotary_Channel_Right, p_Page.mHostAccess.mTrackSelection.mAction.mNextTrack)
-    //    .setSubPage(subpage_Channel)
-    //p_Page.makeCommandBinding(p_middleButtons.kb_Rotary_Channel_Left, 'Project', 'Select Track: Prev')
-    //    .setSubPage(subpage_Channel)
-    //p_Page.makeCommandBinding(p_middleButtons.kb_Rotary_Channel_Right, 'Project', 'Select Track: Next')
-    //    .setSubPage(subpage_Channel)
+    p_Page.makeValueBinding(p_middleButtons.btn_RotaryPush.mSurfaceValue, p_Page.mHostAccess.mTrackSelection.mMixerChannel.mValue.mMonitorEnable)
+        .setSubPage(subpage_Channel)
+        .setTypeToggle()
 
     // Scroll
     p_Page.makeActionBinding(p_middleButtons.btn_Scroll.mSurfaceValue, subpage_Scroll.mAction.mActivate)
@@ -684,7 +741,7 @@ function hostBindingMiddleButtons(p_middleButtons, p_Page, p_PageShift) {
         .setSubPage(subpage_Scroll)
         .setSubPage(subpage_Master)
         .setSubPage(subpage_Section)
-        .setSubPage(subpage_Marker)     
+        .setSubPage(subpage_Marker)
     p_Page.makeCommandBinding(p_middleButtons.btn_PrevTrack.mSurfaceValue, 'Transport', 'Nudge Cursor Left')
         .setSubPage(subpage_Scroll)
     p_Page.makeCommandBinding(p_middleButtons.btn_NextTrack.mSurfaceValue, 'Transport', 'Nudge Cursor Right')
@@ -693,6 +750,9 @@ function hostBindingMiddleButtons(p_middleButtons, p_Page, p_PageShift) {
         .setSubPage(subpage_Scroll)
     p_Page.makeCommandBinding(p_middleButtons.kb_Rotary_Scroll_Right, 'Transport', 'Nudge Cursor Right')
         .setSubPage(subpage_Scroll)
+    p_Page.makeValueBinding(p_middleButtons.btn_RotaryPush.mSurfaceValue, p_Page.mHostAccess.mTrackSelection.mMixerChannel.mValue.mMonitorEnable)
+        .setSubPage(subpage_Scroll)
+        .setTypeToggle()
 
     // Master
     p_Page.makeActionBinding(p_middleButtons.btn_Master.mSurfaceValue, subpage_Master.mAction.mActivate)
@@ -701,9 +761,16 @@ function hostBindingMiddleButtons(p_middleButtons, p_Page, p_PageShift) {
         .setSubPage(subpage_Scroll)
         .setSubPage(subpage_Master)
         .setSubPage(subpage_Section)
-        .setSubPage(subpage_Marker)     
-    p_Page.makeValueBinding(p_middleButtons.kb_Rotary.mSurfaceValue, p_Page.mHostAccess.mControlRoom.mMainChannel.mLevelValue)
+        .setSubPage(subpage_Marker)   
+    p_Page.makeValueBinding(middleButtons.kb_Rotary_CRLevelValue, p_Page.mHostAccess.mControlRoom.mMainChannel.mLevelValue)
         .setSubPage(subpage_Master)
+    p_Page.makeActionBinding(p_middleButtons.btn_PrevTrack.mSurfaceValue, p_Page.mHostAccess.mTrackSelection.mAction.mPrevTrack)    
+        .setSubPage(subpage_Master)
+    p_Page.makeActionBinding(p_middleButtons.btn_NextTrack.mSurfaceValue, p_Page.mHostAccess.mTrackSelection.mAction.mNextTrack)
+        .setSubPage(subpage_Master)        
+    p_Page.makeValueBinding(p_middleButtons.btn_RotaryPush.mSurfaceValue, p_Page.mHostAccess.mTrackSelection.mMixerChannel.mValue.mMonitorEnable)
+        .setSubPage(subpage_Master)
+        .setTypeToggle()        
     
     // Section
     p_Page.makeActionBinding(p_middleButtons.btn_Section.mSurfaceValue, subpage_Section.mAction.mActivate)
@@ -721,6 +788,9 @@ function hostBindingMiddleButtons(p_middleButtons, p_Page, p_PageShift) {
         .setSubPage(subpage_Section)
     p_Page.makeCommandBinding(p_middleButtons.kb_Rotary_Section_Right, 'Nudge', 'Right')
         .setSubPage(subpage_Section)        
+    p_Page.makeValueBinding(p_middleButtons.btn_RotaryPush.mSurfaceValue, p_Page.mHostAccess.mTrackSelection.mMixerChannel.mValue.mMonitorEnable)
+        .setSubPage(subpage_Section)
+        .setTypeToggle() 
 
     // Marker
     p_Page.makeActionBinding(p_middleButtons.btn_Marker.mSurfaceValue, subpage_Marker.mAction.mActivate)
@@ -737,6 +807,8 @@ function hostBindingMiddleButtons(p_middleButtons, p_Page, p_PageShift) {
     p_Page.makeCommandBinding(p_middleButtons.kb_Rotary_Marker_Left, 'Transport', 'Locate Previous Marker')
         .setSubPage(subpage_Marker)
     p_Page.makeCommandBinding(p_middleButtons.kb_Rotary_Marker_Right, 'Transport', 'Locate Next Marker')
+        .setSubPage(subpage_Marker)
+    p_Page.makeCommandBinding(p_middleButtons.btn_RotaryPush.mSurfaceValue, 'Transport', 'Insert Marker')
         .setSubPage(subpage_Marker)
 
     // Open Channel Editor
@@ -895,28 +967,23 @@ function hostBindingMiddleButtons(p_middleButtons, p_Page, p_PageShift) {
     // Zoom Button
     p_PageShift.makeActionBinding(p_middleButtons.btn_Scroll.mSurfaceValue, subpage_Zoom.mAction.mActivate)
         .setSubPage(subpage_Zoom)
-        .setSubPage(subpage_Zoom_Vertical)
-    p_PageShift.makeCommandBinding(p_middleButtons.btn_PrevTrack.mSurfaceValue, 'Zoom', 'Zoom Out')
+    p_PageShift.makeCommandBinding(p_middleButtons.btn_PrevTrack.mSurfaceValue, 'Zoom', 'Zoom Out Vertically')
         .setSubPage(subpage_Zoom)
-    p_PageShift.makeCommandBinding(p_middleButtons.btn_NextTrack.mSurfaceValue, 'Zoom', 'Zoom In')
+    p_PageShift.makeCommandBinding(p_middleButtons.btn_NextTrack.mSurfaceValue, 'Zoom', 'Zoom In Vertically')
         .setSubPage(subpage_Zoom)
     p_PageShift.makeCommandBinding(p_middleButtons.kb_Rotary_Zoom_Left, 'Zoom', 'Zoom Out')
         .setSubPage(subpage_Zoom)
     p_PageShift.makeCommandBinding(p_middleButtons.kb_Rotary_Zoom_Right, 'Zoom', 'Zoom In')
         .setSubPage(subpage_Zoom)        
  
-    // Zoom Button
-    p_PageShift.makeActionBinding(p_middleButtons.btn_Channel.mSurfaceValue, subpage_Zoom_Vertical.mAction.mActivate)
-        .setSubPage(subpage_Zoom)
-        .setSubPage(subpage_Zoom_Vertical)
-    p_PageShift.makeCommandBinding(p_middleButtons.btn_PrevTrack.mSurfaceValue, 'Zoom', 'Zoom Out Vertically')
-        .setSubPage(subpage_Zoom_Vertical)
-    p_PageShift.makeCommandBinding(p_middleButtons.btn_NextTrack.mSurfaceValue, 'Zoom', 'Zoom In Vertically')
-        .setSubPage(subpage_Zoom_Vertical)
-    p_PageShift.makeCommandBinding(p_middleButtons.kb_Rotary_Zoom_Vertical_Left, 'Zoom', 'Zoom Out Vertically')
-        .setSubPage(subpage_Zoom_Vertical)
-    p_PageShift.makeCommandBinding(p_middleButtons.kb_Rotary_Zoom_Vertical_Right, 'Zoom', 'Zoom In Vertically')
-        .setSubPage(subpage_Zoom_Vertical)        
+    // Lock Buton
+    p_PageShift.makeActionBinding(p_middleButtons.btn_Channel.mSurfaceValue, subpage_Lock.mAction.mActivate)
+        .setSubPage(subpage_Lock)
+    p_PageShift.makeValueBinding(p_middleButtons.btn_RotaryPush.mSurfaceValue, p_PageShift.mHostAccess.mMouseCursor.mValueLocked)
+        .setSubPage(subpage_Lock)
+        .setTypeToggle()
+    p_PageShift.makeValueBinding(p_middleButtons.kb_Rotary_ValueUnderMouse, p_PageShift.mHostAccess.mMouseCursor.mValueUnderMouse)
+        .setSubPage(subpage_Lock)
 
     // F1 to F4
     p_PageShift.makeCommandBinding(p_middleButtons.btn_Master.mSurfaceValue, 'Quantize Category', 'Set Quantize to 2th')
@@ -937,13 +1004,13 @@ function hostBindingMiddleButtons(p_middleButtons, p_Page, p_PageShift) {
         var_Active_Page = Pages.c_Page_Zoom
     }
     subpage_Zoom.mOnDeactivate = function(context) {
-        turnOnLED(context, const_Scroll)
+        turnOffLED(context, const_Scroll)
 
         var_Active_Page = Pages.c_Page_None
     }
 
-    // Zoom Vertical Page Handler
-    subpage_Zoom_Vertical.mOnActivate = function(context) {
+    // Lock Page Handler
+    subpage_Lock.mOnActivate = function(context) {
         turnOffLED(context, const_Link)
         turnOffLED(context, const_Pan)
         turnOnLED(context, const_Channel)
@@ -952,13 +1019,13 @@ function hostBindingMiddleButtons(p_middleButtons, p_Page, p_PageShift) {
         turnOffLED(context, const_Section)
         turnOffLED(context, const_Marker)
 
-        var_Active_Page = Pages.c_Page_Zoom_Vertical
+        var_Active_Page = Pages.c_Page_Lock
     }
-    subpage_Zoom_Vertical.mOnDeactivate = function(context) {
-        turnOnLED(context, const_Scroll)
+    subpage_Lock.mOnDeactivate = function(context) {
+        turnOffLED(context, const_Channel)
 
         var_Active_Page = Pages.c_Page_None
-    }   
+    }
 }
 
 /** TRANSPORT BUTTONS
