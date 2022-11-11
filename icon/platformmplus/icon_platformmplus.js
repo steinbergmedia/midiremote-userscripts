@@ -68,42 +68,6 @@ function makeSurfaceElements() {
 var surfaceElements = makeSurfaceElements()
 
 
-function faderDisplayFeedback() {
-    surfaceElements.channelControls[0].fader.mSurfaceValue.mOnDisplayValueChange = function (context, value, units) {
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(0, 0, makeStringMax6CharectersAndRemoveSpace(value)))
-    }
-
-    surfaceElements.channelControls[1].fader.mSurfaceValue.mOnDisplayValueChange = function (context, value, units) {
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(1, 0, makeStringMax6CharectersAndRemoveSpace(value)))
-    }
-
-    surfaceElements.channelControls[2].fader.mSurfaceValue.mOnDisplayValueChange = function (context, value, units) {
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(2, 0, makeStringMax6CharectersAndRemoveSpace(value)))
-    }
-
-    surfaceElements.channelControls[3].fader.mSurfaceValue.mOnDisplayValueChange = function (context, value, units) {
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(3, 0, makeStringMax6CharectersAndRemoveSpace(value)))
-    }
-
-    surfaceElements.channelControls[4].fader.mSurfaceValue.mOnDisplayValueChange = function (context, value, units) {
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(4, 0, makeStringMax6CharectersAndRemoveSpace(value)))
-    }
-    surfaceElements.channelControls[5].fader.mSurfaceValue.mOnDisplayValueChange = function (context, value, units) {
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(5, 0, makeStringMax6CharectersAndRemoveSpace(value)))
-    }
-    surfaceElements.channelControls[6].fader.mSurfaceValue.mOnDisplayValueChange = function (context, value, units) {
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(6, 0, makeStringMax6CharectersAndRemoveSpace(value)))
-    }
-    surfaceElements.channelControls[7].fader.mSurfaceValue.mOnDisplayValueChange = function (context, value, units) {
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(7, 0, makeStringMax6CharectersAndRemoveSpace(value)))
-    }
-
-    function makeStringMax6CharectersAndRemoveSpace(value) {
-        //return value.length > 6 ? value.replace(/\s/g, '').slice(0, 6) : value
-        return value.replace(/\s/g, '').slice(0, 6)
-    }
-}
-
 //-----------------------------------------------------------------------------
 // 3. HOST MAPPING - create mapping mixerPages and host bindings
 //-----------------------------------------------------------------------------
