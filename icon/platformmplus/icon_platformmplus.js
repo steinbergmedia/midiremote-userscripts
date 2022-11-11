@@ -31,12 +31,12 @@ deviceDriver.mOnActivate = function (activeDevice) {
 
 // define all possible namings the devices MIDI ports could have
 // NOTE: Windows and MacOS handle port naming differently
-// deviceDriver.makeDetectionUnit().detectPortPair(midiInput, midiOutput)
-//     .expectInputNameEquals('Platform M+ V2.15') // Platform M+ v2.15
-//     .expectOutputNameEquals('Platform M+ V2.15') // Platform M+ v2.15
 deviceDriver.makeDetectionUnit().detectPortPair(midiInput, midiOutput)
-    .expectInputNameContains('Platform M+')
-    .expectOutputNameContains('Platform M+')
+    .expectInputNameEquals('Platform M+ V2.15') // Platform M+ v2.15
+    .expectOutputNameEquals('Platform M+ V2.15') // Platform M+ v2.15
+// deviceDriver.makeDetectionUnit().detectPortPair(midiInput, midiOutput)
+//     .expectInputNameContains('Platform M+')
+//     .expectOutputNameContains('Platform M+')
 // ? I wonder if this can be figured out?
 // .expectSysexIdentityResponse(/*vendor id (1 or 3 bytes, here: 3 bytes)*/'00n1n2', /*device family*/'n1n2', /*model number*/'n1n2')
 
@@ -66,6 +66,43 @@ function makeSurfaceElements() {
 }
 
 var surfaceElements = makeSurfaceElements()
+
+
+function faderDisplayFeedback() {
+    surfaceElements.channelControls[0].fader.mSurfaceValue.mOnDisplayValueChange = function (context, value, units) {
+        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(0, 0, makeStringMax6CharectersAndRemoveSpace(value)))
+    }
+
+    surfaceElements.channelControls[1].fader.mSurfaceValue.mOnDisplayValueChange = function (context, value, units) {
+        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(1, 0, makeStringMax6CharectersAndRemoveSpace(value)))
+    }
+
+    surfaceElements.channelControls[2].fader.mSurfaceValue.mOnDisplayValueChange = function (context, value, units) {
+        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(2, 0, makeStringMax6CharectersAndRemoveSpace(value)))
+    }
+
+    surfaceElements.channelControls[3].fader.mSurfaceValue.mOnDisplayValueChange = function (context, value, units) {
+        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(3, 0, makeStringMax6CharectersAndRemoveSpace(value)))
+    }
+
+    surfaceElements.channelControls[4].fader.mSurfaceValue.mOnDisplayValueChange = function (context, value, units) {
+        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(4, 0, makeStringMax6CharectersAndRemoveSpace(value)))
+    }
+    surfaceElements.channelControls[5].fader.mSurfaceValue.mOnDisplayValueChange = function (context, value, units) {
+        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(5, 0, makeStringMax6CharectersAndRemoveSpace(value)))
+    }
+    surfaceElements.channelControls[6].fader.mSurfaceValue.mOnDisplayValueChange = function (context, value, units) {
+        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(6, 0, makeStringMax6CharectersAndRemoveSpace(value)))
+    }
+    surfaceElements.channelControls[7].fader.mSurfaceValue.mOnDisplayValueChange = function (context, value, units) {
+        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(7, 0, makeStringMax6CharectersAndRemoveSpace(value)))
+    }
+
+    function makeStringMax6CharectersAndRemoveSpace(value) {
+        //return value.length > 6 ? value.replace(/\s/g, '').slice(0, 6) : value
+        return value.replace(/\s/g, '').slice(0, 6)
+    }
+}
 
 //-----------------------------------------------------------------------------
 // 3. HOST MAPPING - create mapping mixerPages and host bindings

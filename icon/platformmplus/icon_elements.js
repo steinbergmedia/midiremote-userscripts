@@ -1,3 +1,4 @@
+var helper = require('./helper')
 /**
  * @param {MR_DeviceSurface} surface
  * @param {String} name
@@ -50,6 +51,8 @@ function clearAllLeds(activeDevice, midiOutput) {
   midiOutput.sendMidi(activeDevice, [0x90, 94, 0])
   midiOutput.sendMidi(activeDevice, [0x90, 95, 0])
   midiOutput.sendMidi(activeDevice, [0x90, 86, 0])
+
+  helper.display.reset(activeDevice, midiOutput)
 }
 
 /**
@@ -145,6 +148,28 @@ function bindCommandKnob(pushEncoder, commandIncrease, commandDecrease) {
   channelControl.mute_button = makeLedButton(surface, midiInput, midiOutput, 16 + channelControl.instance, fader_x + 1, fader_y + 5, 1, 1, false)
   channelControl.solo_button = makeLedButton(surface, midiInput, midiOutput, 8 + channelControl.instance, fader_x + 1, fader_y + 6, 1, 1, false)
   channelControl.rec_button = makeLedButton(surface, midiInput, midiOutput, 0 + channelControl.instance, fader_x + 1, fader_y + 7, 1, 1, true)
+
+  // ADDED BY JESPER START
+  var channelIndex = channelControl.instance
+
+  //0xF0 0x00 0x00 0x66 0x14 0x12 ' + pos + ' ' + text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x00-\x7F]/g, "?").split('').map(x => x.charCodeAt(0)).join(' ') + ' 0xF7
+
+
+  // TITLE OF VALUE
+  channelControl.fader.mSurfaceValue.mOnTitleChange = function (context, objectTitle, valueTitle) {
+    midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeStringMax6CharectersAndRemoveSpace(valueTitle)))
+  }
+
+  channelControl.fader.mSurfaceValue.mOnDisplayValueChange = function (context, value, units) {
+    midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeStringMax6CharectersAndRemoveSpace(value)))
+  }
+
+
+  function makeStringMax6CharectersAndRemoveSpace(value) {
+    //return value.length > 6 ? value.replace(/\s/g, '').slice(0, 6) : value
+    return value.replace(/\s/g, '').slice(0, 6)
+  }
+  // ADDED BY JESPER ENDS
 
   return channelControl
 
