@@ -157,19 +157,32 @@ function bindCommandKnob(pushEncoder, commandIncrease, commandDecrease) {
 
   // TITLE OF VALUE
   channelControl.fader.mSurfaceValue.mOnTitleChange = function (context, objectTitle, valueTitle) {
-    midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeStringMax6CharectersAndRemoveSpace(valueTitle)))
+    midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(valueTitle)))
   }
 
   channelControl.fader.mSurfaceValue.mOnDisplayValueChange = function (context, value, units) {
-    midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeStringMax6CharectersAndRemoveSpace(value)))
+    midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(value)))
   }
 
+  function makeLabel(value) {
 
-  function makeStringMax6CharectersAndRemoveSpace(value) {
-    //return value.length > 6 ? value.replace(/\s/g, '').slice(0, 6) : value
-    return value.replace(/\s/g, '').slice(0, 6)
+      var words = value.split(" ");
+      var label = "";
+
+      for(var i = 0 , len = words.length; i < len; i++) {
+
+        var currentStr = words[i];
+
+        var tempStr = currentStr
+
+        // convert first letter to upper case and remove all vowels after first letter
+        tempStr = tempStr.substr(0, 1).toUpperCase() + tempStr.substr(1).replace(/[aeiou]/gi, '');
+
+        label +=tempStr;
+
+      }
+      return label.slice(0, 6); // Remove vowels and shorten to 6 char label
   }
-  // ADDED BY JESPER ENDS
 
   return channelControl
 
