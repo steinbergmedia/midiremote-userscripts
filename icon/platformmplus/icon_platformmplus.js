@@ -185,7 +185,11 @@ function makePageMixer() {
         var rec_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].rec_button.mSurfaceValue;
 
         // Displays
+        // PC
+        // ? There doesn't appear to be a way via relateTo to connect the label surface elements to valueTitle or arbitrarily change them around
+        // ! Ignoring PC side of display for the moment in favour of the D2 displaying what is required
         page.setLabelFieldHostObject(surfaceElements.channelControls[channelIndex].displayTop, hostMixerBankChannel) // For PC display, Platfomr M+ D2 display coded in icon_elements.js
+        // D2
         page.makeValueBinding(surfaceElements.channelControls[channelIndex].faderValueDisplay, hostMixerBankChannel.mValue.mVolume) // for Platform M+ D2 Display
         page.makeValueBinding(surfaceElements.channelControls[channelIndex].panValueDisplay, hostMixerBankChannel.mValue.mPan) // for Platform M+ D2 Display
 
@@ -193,8 +197,7 @@ function makePageMixer() {
         page.makeValueBinding(knobSurfaceValue, hostMixerBankChannel.mValue.mPan).setSubPage(subPageFaderVolume)
         page.makeValueBinding(knobPushValue, hostMixerBankChannel.mValue.mEditorOpen).setTypeToggle().setSubPage(subPageFaderVolume)
         page.makeValueBinding(faderSurfaceValue, hostMixerBankChannel.mValue.mVolume).setValueTakeOverModeJump().setSubPage(subPageFaderVolume)
-        page.makeValueBinding(faderTouchSurfaceValue, hostMixerBankChannel.mValue.mSelected).setTypeToggle().setSubPage(subPageFaderVolume)
-        page.makeValueBinding(sel_buttonSurfaceValue, hostMixerBankChannel.mValue.mMonitorEnable).setTypeToggle().setSubPage(subPageButtonDefaultSet)
+        page.makeValueBinding(sel_buttonSurfaceValue, hostMixerBankChannel.mValue.mSelected).setTypeToggle().setSubPage(subPageButtonDefaultSet)
         page.makeValueBinding(mute_buttonSurfaceValue, hostMixerBankChannel.mValue.mMute).setTypeToggle().setSubPage(subPageButtonDefaultSet)
         page.makeValueBinding(solo_buttonSurfaceValue, hostMixerBankChannel.mValue.mSolo).setTypeToggle().setSubPage(subPageButtonDefaultSet)
         page.makeValueBinding(rec_buttonSurfaceValue, hostMixerBankChannel.mValue.mRecordEnable).setTypeToggle().setSubPage(subPageButtonDefaultSet)

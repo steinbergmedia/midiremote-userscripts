@@ -72,7 +72,7 @@ function makeTouchFader(surface, midiInput, midiOutput, channel, x, y, w, h) {
     .setOutputPort(midiOutput)
     .bindToPitchBend(channel)
 
-  var fader_touch = surface.makeButton(x + 1, y, 1, 1)
+  var fader_touch = surface.makeButton(x + 1, y -1, 1, 1)
   fader_touch.mSurfaceValue.mMidiBinding
     .setInputPort(midiInput)
     .bindToNote(0, 104 + channel)
@@ -130,6 +130,11 @@ function bindCommandKnob(pushEncoder, commandIncrease, commandDecrease) {
 
   channelControl.faderValueDisplay  = channelControl.surface.makeCustomValueVariable('faderValueDisplay');
   channelControl.panValueDisplay  = channelControl.surface.makeCustomValueVariable('panValueDisplay');
+  channelControl.faderObjectTitle = ""
+  channelControl.faderValuteTitle = ""
+  channelControl.faderTouched = 0 // 0 - not touched, 1 - touched
+  channelControl.panObjectTitle = ""
+  channelControl.panValueTitle = ""
 
   // Pot encoder
   channelControl.pushEncoder = channelControl.surface.makePushEncoder(channelControl.x, y+2, 4, 4)
@@ -158,31 +163,46 @@ function bindCommandKnob(pushEncoder, commandIncrease, commandDecrease) {
 
   var channelIndex = channelControl.instance
 
-  // channelControl.fader.mSurfaceValue.mOnTitleChange = function (context, objectTitle, valueTitle) {
-  //   midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(objectTitle)))
-  //   midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(valueTitle)))
-  // }
+  channelControl.fader_touch.mSurfaceValue.mOnProcessValueChange = function (context, touched, value2) {
+    channelControl.faderTouched = touched
+    if(touched) {
+      midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(channelControl.faderValueTitle,6)))
+    }
+    else {
+      midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(channelControl.faderObjectTitle, 6)))
+      midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(channelControl.faderValueTitle, 6)))
+    }
+  }
 
   channelControl.faderValueDisplay.mOnTitleChange = function (context, objectTitle, valueTitle) {
-    midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(objectTitle)))
-    midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(valueTitle)))
+    midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(objectTitle, 6)))
+    midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(valueTitle, 6)))
+    channelControl.faderObjectTitle = objectTitle
+    channelControl.faderValueTitle = valueTitle
   }
 
   channelControl.faderValueDisplay.mOnDisplayValueChange = function (context, value, units) {
-    midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, "|"+makeLabel(value)))
+    // midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(channelControl.faderValueTitle)))
+    midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(value, 6)))
   }
+
+  // ! Can't currently find a way to stop the pan mOnTitleChange being triggered when initialised rather than just when its being changed. This stuffs up the display.
   // channelControl.panValueDisplay.mOnTitleChange = function (context, objectTitle, valueTitle) {
-  //   midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(objectTitle)))
-  //   midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(valueTitle)))
+  //   // midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(objectTitle)))
+  //   // midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(valueTitle)))
+  //   channelControl.panObjectTitle = "objectTitle"
+  //   channelControl.panValueTitle = "valueTitle"
   // }
 
   // channelControl.panValueDisplay.mOnDisplayValueChange = function (context, value, units) {
-  //   midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, "_"+makeLabel(value)))
+  //   midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel("Pan",6)))
+  //   midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(value,6)))
   // }
 
-  function makeLabel(value) {
+  function makeLabel(value, length) {
+    console.log("makeLabel:"+value)
     // Do nothing if the label is already short enough
-    if (value.length <= 6) {
+    if (value.length <= length) {
       return value
     }
 
@@ -202,7 +222,7 @@ function bindCommandKnob(pushEncoder, commandIncrease, commandDecrease) {
       label +=tempStr;
 
     }
-    return label.slice(0, 6); // Remove vowels and shorten to 6 char label
+    return label.slice(0, length); // Remove vowels and shorten to 6 char label
   }
 
   return channelControl
