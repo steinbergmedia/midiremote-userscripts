@@ -31,14 +31,13 @@ deviceDriver.mOnActivate = function (activeDevice) {
 
 // define all possible namings the devices MIDI ports could have
 // NOTE: Windows and MacOS handle port naming differently
-deviceDriver.makeDetectionUnit().detectPortPair(midiInput, midiOutput)
-    .expectInputNameEquals('Platform M+ V2.15') // Platform M+ v2.15
-    .expectOutputNameEquals('Platform M+ V2.15') // Platform M+ v2.15
 // deviceDriver.makeDetectionUnit().detectPortPair(midiInput, midiOutput)
-//     .expectInputNameContains('Platform M+')
-//     .expectOutputNameContains('Platform M+')
-// ? I wonder if this can be figured out?
-// .expectSysexIdentityResponse(/*vendor id (1 or 3 bytes, here: 3 bytes)*/'00n1n2', /*device family*/'n1n2', /*model number*/'n1n2')
+//     .expectInputNameEquals('Platform M+ V2.15') // Platform M+ v2.15
+//     .expectOutputNameEquals('Platform M+ V2.15') // Platform M+ v2.15
+deviceDriver.makeDetectionUnit().detectPortPair(midiInput, midiOutput)
+    .expectInputNameContains('Platform M+')
+    .expectOutputNameContains('Platform M+')
+
 
 var surface = deviceDriver.mSurface
 
@@ -48,19 +47,24 @@ var surface = deviceDriver.mSurface
 function makeSurfaceElements() {
     var surfaceElements = {}
 
+    // Display - 2lines
+    surfaceElements.d2Display  = surface.makeBlindPanel(0,0,56,6)
+    surfaceElements.displayTop = surface.makeLabelField(0,1,56,2)
+    surfaceElements.displayBottom =  surface.makeLabelField(0,3,56,2)
+
     surfaceElements.numStrips = 8
 
     surfaceElements.channelControls = {}
 
     var xKnobStrip = 0
-    var yKnobStrip = 0
+    var yKnobStrip = 5
 
     for (var i = 0; i < surfaceElements.numStrips; ++i) {
         surfaceElements.channelControls[i] = makeChannelControl(surface, midiInput, midiOutput, xKnobStrip, yKnobStrip, i)
     }
 
-    surfaceElements.faderMaster = makeMasterControl(surface, midiInput, midiOutput, xKnobStrip + 1, yKnobStrip, surfaceElements.numStrips)
-    surfaceElements.transport = makeTransport(surface, midiInput, midiOutput, xKnobStrip + 20, yKnobStrip + 3)
+    surfaceElements.faderMaster = makeMasterControl(surface, midiInput, midiOutput, xKnobStrip + 1, yKnobStrip+4, surfaceElements.numStrips)
+    surfaceElements.transport = makeTransport(surface, midiInput, midiOutput, xKnobStrip + 63, yKnobStrip + 4)
 
     return surfaceElements
 }
@@ -315,8 +319,65 @@ function makePageSelectedTrack() {
     return page
 }
 
+function makePageChannelStrip() {
+    var page = makePageWithDefaults('Channelstrip')
+
+    var strip = page.makeSubPageArea('strip')
+    var gatePage = makeSubPage(strip, 'Gate')
+    var compressorPage = makeSubPage(strip, 'Compressor')
+    var toolsPage = makeSubPage(strip, 'Tools')
+    var saturatorPage = makeSubPage(strip, 'Saturator')
+    var limiterPage = makeSubPage(strip, 'Limiter')
+
+
+    var selectedTrackChannel = page.mHostAccess.mTrackSelection.mMixerChannel
+    var stripEffects = selectedTrackChannel.mInsertAndStripEffects.mStripEffects
+
+    for (var idx = 0; idx < surfaceElements.numStrips; ++idx) {
+        var knobSurfaceValue = surfaceElements.channelControls[idx].pushEncoder.mEncoderValue;
+        var knobPushValue = surfaceElements.channelControls[idx].pushEncoder.mPushValue;
+        var faderSurfaceValue = surfaceElements.channelControls[idx].fader.mSurfaceValue;
+
+        page.makeValueBinding(faderSurfaceValue, stripEffects.mGate.mParameterBankZone.makeParameterValue()).setSubPage(gatePage)
+        page.makeValueBinding(faderSurfaceValue, stripEffects.mCompressor.mParameterBankZone.makeParameterValue()).setSubPage(compressorPage)
+        page.makeValueBinding(faderSurfaceValue, stripEffects.mTools.mParameterBankZone.makeParameterValue()).setSubPage(toolsPage)
+        page.makeValueBinding(faderSurfaceValue, stripEffects.mSaturator.mParameterBankZone.makeParameterValue()).setSubPage(saturatorPage)
+        page.makeValueBinding(faderSurfaceValue, stripEffects.mLimiter.mParameterBankZone.makeParameterValue()).setSubPage(limiterPage)
+    }
+
+  for (var idx = 0; idx < 5; ++idx) {
+        var faderStrip = surfaceElements.channelControls[idx]
+        var type = ['mGate', 'mCompressor', 'mTools', 'mSaturator', 'mLimiter'][idx]
+        page.makeValueBinding(faderStrip.rec_button.mSurfaceValue, stripEffects[type].mOn).setTypeToggle()
+        page.makeValueBinding(faderStrip.mute_button.mSurfaceValue, stripEffects[type].mBypass).setTypeToggle()
+    }
+
+    page.makeActionBinding(surfaceElements.channelControls[0].sel_button.mSurfaceValue, gatePage.mAction.mActivate)
+    page.makeActionBinding(surfaceElements.channelControls[1].sel_button.mSurfaceValue, compressorPage.mAction.mActivate)
+    page.makeActionBinding(surfaceElements.channelControls[2].sel_button.mSurfaceValue, toolsPage.mAction.mActivate)
+    page.makeActionBinding(surfaceElements.channelControls[3].sel_button.mSurfaceValue, saturatorPage.mAction.mActivate)
+    page.makeActionBinding(surfaceElements.channelControls[4].sel_button.mSurfaceValue, limiterPage.mAction.mActivate)
+
+    gatePage.mOnActivate = function (device) { setLeds(device, 24, 'Gate') }
+    compressorPage.mOnActivate = function (device) { setLeds(device, 25, 'Compressor') }
+    toolsPage.mOnActivate = function (device) { setLeds(device, 26, 'Tools') }
+    saturatorPage.mOnActivate = function (device) { setLeds(device, 27, 'Saturator') }
+    limiterPage.mOnActivate = function (device) { setLeds(device, 28, 'Limiter') }
+
+    function setLeds(device, value, text) {
+        console.log('from script: Platform M+ subpage "' + text + '" activated')
+        for (var i = 0; i < 5; ++i) {
+            midiOutput.sendMidi(device, [0x90, 24 + i, 0])
+        }
+        midiOutput.sendMidi(device, [0x90, value, 127])
+    }
+
+    return page
+}
+
 var mixerPage = makePageMixer()
 var selectedTrackPage = makePageSelectedTrack()
+var channelStripPage = makePageChannelStrip()
 // var quadPage = makePageQuad()
 
 mixerPage.mOnActivate = function (device) {
@@ -326,5 +387,10 @@ mixerPage.mOnActivate = function (device) {
 
 selectedTrackPage.mOnActivate = function (device) {
     console.log('from script: Platform M+ page "Selected Track" activated')
+    clearAllLeds(device, midiOutput)
+}
+
+channelStripPage.mOnActivate = function (device) {
+    console.log('from script: Platform M+ page "Channel Strip" activated')
     clearAllLeds(device, midiOutput)
 }

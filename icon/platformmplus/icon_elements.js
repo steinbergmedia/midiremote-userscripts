@@ -120,12 +120,12 @@ function bindCommandKnob(pushEncoder, commandIncrease, commandDecrease) {
   channelControl.surface = surface;
   channelControl.midiInput = midiInput;
   channelControl.midiOutput = midiOutput;
-  channelControl.x = x + 2 * instance;
+  channelControl.x = x + 7 * instance;
   channelControl.y = y;
   channelControl.instance = instance; // Channel number, 1-8
 
   // Pot encoder
-  channelControl.pushEncoder = channelControl.surface.makePushEncoder(channelControl.x, y, 2, 2)
+  channelControl.pushEncoder = channelControl.surface.makePushEncoder(channelControl.x, y+2, 4, 4)
 
   channelControl.pushEncoder.mEncoderValue.mMidiBinding
     .setInputPort(midiInput)
@@ -138,50 +138,56 @@ function bindCommandKnob(pushEncoder, commandIncrease, commandDecrease) {
 
   // Fader + Fader Touch
   var fader_x = channelControl.x
-  var fader_y = y + 3
-  var tf = makeTouchFader(surface, midiInput, channelControl.midiOutput, instance, fader_x, fader_y, 1, 8)
+  var fader_y = y + 7
+  var tf = makeTouchFader(surface, midiInput, channelControl.midiOutput, instance, fader_x, fader_y, 3, 18)
   channelControl.fader = tf[0]
   channelControl.fader_touch = tf[1]
 
   // Channel Buttons
-  channelControl.sel_button = makeLedButton(surface, midiInput, midiOutput, 24 + channelControl.instance, fader_x + 1, fader_y + 4, 1, 1, false)
-  channelControl.mute_button = makeLedButton(surface, midiInput, midiOutput, 16 + channelControl.instance, fader_x + 1, fader_y + 5, 1, 1, false)
-  channelControl.solo_button = makeLedButton(surface, midiInput, midiOutput, 8 + channelControl.instance, fader_x + 1, fader_y + 6, 1, 1, false)
-  channelControl.rec_button = makeLedButton(surface, midiInput, midiOutput, 0 + channelControl.instance, fader_x + 1, fader_y + 7, 1, 1, true)
+  channelControl.sel_button = makeLedButton(surface, midiInput, midiOutput, 24 + channelControl.instance, fader_x + 4, fader_y + 6, 3, 3, false)
+  channelControl.mute_button = makeLedButton(surface, midiInput, midiOutput, 16 + channelControl.instance, fader_x + 4, fader_y + 9, 3, 3, false)
+  channelControl.solo_button = makeLedButton(surface, midiInput, midiOutput, 8 + channelControl.instance, fader_x + 4, fader_y + 12, 3, 3, false)
+  channelControl.rec_button = makeLedButton(surface, midiInput, midiOutput, 0 + channelControl.instance, fader_x + 4, fader_y + 15, 3, 3, true)
 
-  // ADDED BY JESPER START
   var channelIndex = channelControl.instance
 
-  //0xF0 0x00 0x00 0x66 0x14 0x12 ' + pos + ' ' + text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x00-\x7F]/g, "?").split('').map(x => x.charCodeAt(0)).join(' ') + ' 0xF7
-
-
-  // TITLE OF VALUE
   channelControl.fader.mSurfaceValue.mOnTitleChange = function (context, objectTitle, valueTitle) {
-    midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(valueTitle)))
+    console.log(objectTitle)
+    midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(objectTitle)))
+    midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(valueTitle)))
   }
 
   channelControl.fader.mSurfaceValue.mOnDisplayValueChange = function (context, value, units) {
     midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(value)))
   }
 
+  // channelControl.fader.mSurfaceValue.mOnProcessValueChange  = function (context, newValue, oldValue) {
+  //   // midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, newValue))
+  // }
+
   function makeLabel(value) {
+    // Do nothing if the label is already short enough
+    if (value.length <= 6) {
+      return value
+    }
 
-      var words = value.split(" ");
-      var label = "";
+    // If to long shorten it by removing vowels and making it CamelCase to remove spaces
+    var words = value.split(" ");
+    var label = "";
 
-      for(var i = 0 , len = words.length; i < len; i++) {
+    for(var i = 0 , len = words.length; i < len; i++) {
 
-        var currentStr = words[i];
+      var currentStr = words[i];
 
-        var tempStr = currentStr
+      var tempStr = currentStr
 
-        // convert first letter to upper case and remove all vowels after first letter
-        tempStr = tempStr.substr(0, 1).toUpperCase() + tempStr.substr(1).replace(/[aeiou]/gi, '');
+      // convert first letter to upper case and remove all vowels after first letter
+      tempStr = tempStr.substr(0, 1).toUpperCase() + tempStr.substr(1).replace(/[aeiou]/gi, '');
 
-        label +=tempStr;
+      label +=tempStr;
 
-      }
-      return label.slice(0, 6); // Remove vowels and shorten to 6 char label
+    }
+    return label.slice(0, 6); // Remove vowels and shorten to 6 char label
   }
 
   return channelControl
@@ -203,7 +209,7 @@ function makeMasterControl(surface, midiInput, midiOutput, x, y, instance) {
   masterControl.surface = surface;
   masterControl.midiInput = midiInput;
   masterControl.midiOutput = midiOutput;
-  masterControl.x = x + 2 * instance;
+  masterControl.x = x + 7 * instance;
   masterControl.y = y;
   masterControl.instance = instance; // 9 - Master
 
@@ -214,14 +220,14 @@ function makeMasterControl(surface, midiInput, midiOutput, x, y, instance) {
   // Fader + Fader Touch
   var fader_x = masterControl.x
   var fader_y = y + 3
-  var tf = makeTouchFader(surface, midiInput, midiOutput, instance, fader_x, fader_y, 1, 8)
+  var tf = makeTouchFader(surface, midiInput, midiOutput, instance, fader_x, fader_y, 3, 18)
   masterControl.fader = tf[0]
   masterControl.fader_touch = tf[1]
 
   // Channel Buttons
-  masterControl.mixer_button = makeLedButton(surface, midiInput, midiOutput, 84, fader_x + 1, fader_y + 4, 1, 1, false)
-  masterControl.read_button = makeLedButton(surface, midiInput, midiOutput, 74, fader_x + 1, fader_y + 5, 1, 1, false)
-  masterControl.write_button = makeLedButton(surface, midiInput, midiOutput, 75, fader_x + 1, fader_y + 6, 1, 1, false)
+  masterControl.mixer_button = makeLedButton(surface, midiInput, midiOutput, 84, fader_x + 3, fader_y + 6, 3, 3, false)
+  masterControl.read_button = makeLedButton(surface, midiInput, midiOutput, 74, fader_x + 3, fader_y + 9, 3, 3, false)
+  masterControl.write_button = makeLedButton(surface, midiInput, midiOutput, 75, fader_x + 3, fader_y + 12, 3, 3, false)
 
   return masterControl
 }
@@ -234,8 +240,8 @@ function makeTransport(surface, midiInput, midiOutput, x, y) {
   transport.x = x;
   transport.y = y;
 
-  var w = 1
-  var h = 1
+  var w = 3
+  var h = 3
 
   transport.ident = function () {
     return ("Class Transport");
@@ -246,31 +252,31 @@ function makeTransport(surface, midiInput, midiOutput, x, y) {
   }
 
   transport.prevChn = makeLedButton(surface, midiInput, midiOutput, 48, x, y, w, h, false)
-  transport.nextChn = makeLedButton(surface, midiInput, midiOutput, 49, x + 1, y, w, h, false)
+  transport.nextChn = makeLedButton(surface, midiInput, midiOutput, 49, x + 3, y, w, h, false)
 
-  transport.prevBnk = makeLedButton(surface, midiInput, midiOutput, 46, x, y + 1, w, h, false)
-  transport.nextBnk = makeLedButton(surface, midiInput, midiOutput, 47, x + 1, y + 1, w, h, false)
+  transport.prevBnk = makeLedButton(surface, midiInput, midiOutput, 46, x, y + 3, w, h, false)
+  transport.nextBnk = makeLedButton(surface, midiInput, midiOutput, 47, x + 3, y + 3, w, h, false)
 
-  transport.btnRewind = makeLedButton(surface, midiInput, midiOutput, 91, x, y + 2, w, h, false)
-  transport.btnForward = makeLedButton(surface, midiInput, midiOutput, 92, x + 1, y + 2, w, h, false)
+  transport.btnRewind = makeLedButton(surface, midiInput, midiOutput, 91, x, y + 6, w, h, false)
+  transport.btnForward = makeLedButton(surface, midiInput, midiOutput, 92, x + 3, y + 6, w, h, false)
 
-  transport.btnStop = makeLedButton(surface, midiInput, midiOutput, 93, x + 1, y + 3, w, h, false)
-  transport.btnStart = makeLedButton(surface, midiInput, midiOutput, 94, x, y + 3, w, h, false)
+  transport.btnStop = makeLedButton(surface, midiInput, midiOutput, 93, x + 3, y + 9, w, h, false)
+  transport.btnStart = makeLedButton(surface, midiInput, midiOutput, 94, x, y + 9, w, h, false)
 
-  transport.btnRecord = makeLedButton(surface, midiInput, midiOutput, 95, x, y + 4, w, h, false)
-  transport.btnCycle = makeLedButton(surface, midiInput, midiOutput, 86, x + 1, y + 4, w, h, false)
+  transport.btnRecord = makeLedButton(surface, midiInput, midiOutput, 95, x, y + 12, w, h, false)
+  transport.btnCycle = makeLedButton(surface, midiInput, midiOutput, 86, x + 3, y + 12, w, h, false)
 
   // The Note on/off events for the special functioans are timestamped at the same time
   // cubase midi remote doesn't show anything on screen though a note is sent
   // Flip - Simultaneous press of Pre Chn+Pre Bank
-  transport.btnFlip = surface.makeButton(x + 3, y + 4, 1, 1)
+  transport.btnFlip = surface.makeButton(x+0.5, y + 15, 2, 2).setShapeCircle()
   bindMidiNote(transport.btnFlip, 0, 50)
 
   // Pressing the Zoom keys simultaneously will toggle on and off a note event. If on
   // either zoom button will send a Note 100 when zoom is activated or deactivated by either button
   // If zoom is active and you simply press then other button the event will not be sent
   //
-  transport.btnZoomOnOff = surface.makeButton(x + 4, y + 4, 1, 1)
+  transport.btnZoomOnOff = surface.makeButton(x + 3.5, y + 15, 2, 2).setShapeCircle()
   bindMidiNote(transport.btnZoomOnOff, 0, 100)
 
   // The Jog wheel will change CC/Note based on which of thte Zoom buttons have been activated
@@ -285,7 +291,7 @@ function makeTransport(surface, midiInput, midiOutput, x, y) {
   // ? One weird side effect of this is the Knob displayed in Cubase will show its "value" in a weird way.
   // todo I wonder if there is a way to change that behaviour?
 
-  transport.jog_wheel = surface.makePushEncoder(x, y + 6, 2, 2)
+  transport.jog_wheel = surface.makePushEncoder(x, y + 17, 6, 6)
   transport.jog_wheel.mEncoderValue.mMidiBinding
     .setInputPort(midiInput)
     .setIsConsuming(true)
@@ -301,15 +307,15 @@ function makeTransport(surface, midiInput, midiOutput, x, y) {
   bindCommandKnob(transport.jog_wheel.mEncoderValue, transport.jogRightVariable, transport.jogLeftVariable);
 
   //Zoom Vertical
-  transport.zoomVertOut = surface.makeButton(x + 3, y + 6, 1, 1).setShapeCircle()
+  transport.zoomVertOut = surface.makeButton(x + 9, y + 8, 2, 2).setShapeCircle()
   bindMidiNote(transport.zoomVertOut, 0, 96)
-  transport.zoomVertIn = surface.makeButton(x + 4, y + 6, 1, 1).setShapeCircle()
+  transport.zoomVertIn = surface.makeButton(x + 11, y + 8, 2, 2).setShapeCircle()
   bindMidiNote(transport.zoomVertIn, 0, 97)
 
   //Zoom Horizontal
-  transport.zoomHorizOut = surface.makeButton(x + 3, y + 7, 1, 1).setShapeCircle()
+  transport.zoomHorizOut = surface.makeButton(x + 9, y + 10, 2, 2).setShapeCircle()
   bindMidiNote(transport.zoomHorizOut, 0, 98)
-  transport.zoomHorizIn = surface.makeButton(x + 4, y + 7, 1, 1).setShapeCircle()
+  transport.zoomHorizIn = surface.makeButton(x + 11, y + 10, 2, 2).setShapeCircle()
   bindMidiNote(transport.zoomHorizIn, 0, 99)
 
   return transport
