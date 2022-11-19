@@ -190,6 +190,7 @@ function makePageMixer() {
         // ! Ignoring PC side of display for the moment in favour of the D2 displaying what is required
         page.setLabelFieldHostObject(surfaceElements.channelControls[channelIndex].displayTop, hostMixerBankChannel) // For PC display, Platfomr M+ D2 display coded in icon_elements.js
         // D2
+        page.makeValueBinding(surfaceElements.channelControls[channelIndex].trackNameDisplay, hostMixerBankChannel.mValue.mVolume)
         page.makeValueBinding(surfaceElements.channelControls[channelIndex].faderValueDisplay, hostMixerBankChannel.mValue.mVolume) // for Platform M+ D2 Display
         page.makeValueBinding(surfaceElements.channelControls[channelIndex].panValueDisplay, hostMixerBankChannel.mValue.mPan) // for Platform M+ D2 Display
 
@@ -228,6 +229,7 @@ function makePageSelectedTrack() {
 
         // Displays
         page.setLabelFieldHostObject(surfaceElements.channelControls[idx].displayTop, page.mHostAccess.mFocusedQuickControls) // For PC display, Platfomr M+ D2 display coded in icon_elements.js
+        page.makeValueBinding(surfaceElements.channelControls[idx].trackNameDisplay, selectedTrackChannel.mValue.mVolume)
         page.makeValueBinding(surfaceElements.channelControls[idx].faderValueDisplay, page.mHostAccess.mFocusedQuickControls.getByIndex(idx)) // for Platform M+ D2 Display
         page.makeValueBinding(surfaceElements.channelControls[idx].panValueDisplay, selectedTrackChannel.mSends.getByIndex(idx).mLevel) // for Platform M+ D2 Display
 
@@ -389,19 +391,22 @@ function makePageChannelStrip() {
 var mixerPage = makePageMixer()
 var selectedTrackPage = makePageSelectedTrack()
 var channelStripPage = makePageChannelStrip()
+var activePage = "Mixer"
 
 mixerPage.mOnActivate = function (device) {
     console.log('from script: Platform M+ page "Mixer" activated')
-
+    activePage="Mixer"
     clearAllLeds(device, midiOutput)
 }
 
 selectedTrackPage.mOnActivate = function (device) {
     console.log('from script: Platform M+ page "Selected Track" activated')
+    activePage="SelectedTrack"
     clearAllLeds(device, midiOutput)
 }
 
 channelStripPage.mOnActivate = function (device) {
     console.log('from script: Platform M+ page "Channel Strip" activated')
+    activePage="ChannelStrip"
     clearAllLeds(device, midiOutput)
 }
