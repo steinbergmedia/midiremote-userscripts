@@ -124,6 +124,13 @@ function bindCommandKnob(pushEncoder, commandIncrease, commandDecrease) {
   channelControl.y = y;
   channelControl.instance = instance; // Channel number, 1-8
 
+  // Channel Displays
+  channelControl.displayTop = channelControl.surface.makeLabelField(channelControl.x,1,7,2)
+  channelControl.displayBottom =  channelControl.surface.makeLabelField(channelControl.x,3,7,2)
+
+  channelControl.faderValueDisplay  = channelControl.surface.makeCustomValueVariable('faderValueDisplay');
+  channelControl.panValueDisplay  = channelControl.surface.makeCustomValueVariable('panValueDisplay');
+
   // Pot encoder
   channelControl.pushEncoder = channelControl.surface.makePushEncoder(channelControl.x, y+2, 4, 4)
 
@@ -151,18 +158,26 @@ function bindCommandKnob(pushEncoder, commandIncrease, commandDecrease) {
 
   var channelIndex = channelControl.instance
 
-  channelControl.fader.mSurfaceValue.mOnTitleChange = function (context, objectTitle, valueTitle) {
-    console.log(objectTitle)
+  // channelControl.fader.mSurfaceValue.mOnTitleChange = function (context, objectTitle, valueTitle) {
+  //   midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(objectTitle)))
+  //   midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(valueTitle)))
+  // }
+
+  channelControl.faderValueDisplay.mOnTitleChange = function (context, objectTitle, valueTitle) {
     midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(objectTitle)))
     midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(valueTitle)))
   }
 
-  channelControl.fader.mSurfaceValue.mOnDisplayValueChange = function (context, value, units) {
-    midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(value)))
+  channelControl.faderValueDisplay.mOnDisplayValueChange = function (context, value, units) {
+    midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, "|"+makeLabel(value)))
   }
+  // channelControl.panValueDisplay.mOnTitleChange = function (context, objectTitle, valueTitle) {
+  //   midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(objectTitle)))
+  //   midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(valueTitle)))
+  // }
 
-  // channelControl.fader.mSurfaceValue.mOnProcessValueChange  = function (context, newValue, oldValue) {
-  //   // midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, newValue))
+  // channelControl.panValueDisplay.mOnDisplayValueChange = function (context, value, units) {
+  //   midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, "_"+makeLabel(value)))
   // }
 
   function makeLabel(value) {

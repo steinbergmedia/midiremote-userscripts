@@ -49,8 +49,6 @@ function makeSurfaceElements() {
 
     // Display - 2lines
     surfaceElements.d2Display  = surface.makeBlindPanel(0,0,56,6)
-    surfaceElements.displayTop = surface.makeLabelField(0,1,56,2)
-    surfaceElements.displayBottom =  surface.makeLabelField(0,3,56,2)
 
     surfaceElements.numStrips = 8
 
@@ -186,6 +184,11 @@ function makePageMixer() {
         var solo_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].solo_button.mSurfaceValue;
         var rec_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].rec_button.mSurfaceValue;
 
+        // Displays
+        page.setLabelFieldHostObject(surfaceElements.channelControls[channelIndex].displayTop, hostMixerBankChannel) // For PC display, Platfomr M+ D2 display coded in icon_elements.js
+        page.makeValueBinding(surfaceElements.channelControls[channelIndex].faderValueDisplay, hostMixerBankChannel.mValue.mVolume) // for Platform M+ D2 Display
+        page.makeValueBinding(surfaceElements.channelControls[channelIndex].panValueDisplay, hostMixerBankChannel.mValue.mPan) // for Platform M+ D2 Display
+
         // FaderKnobs - Volume, Pan, Editor Open
         page.makeValueBinding(knobSurfaceValue, hostMixerBankChannel.mValue.mPan).setSubPage(subPageFaderVolume)
         page.makeValueBinding(knobPushValue, hostMixerBankChannel.mValue.mEditorOpen).setTypeToggle().setSubPage(subPageFaderVolume)
@@ -219,6 +222,11 @@ function makePageSelectedTrack() {
         var knobSurfaceValue = surfaceElements.channelControls[idx].pushEncoder.mEncoderValue;
         var knobPushValue = surfaceElements.channelControls[idx].pushEncoder.mPushValue;
         var faderSurfaceValue = surfaceElements.channelControls[idx].fader.mSurfaceValue;
+
+        // Displays
+        page.setLabelFieldHostObject(surfaceElements.channelControls[idx].displayTop, page.mHostAccess.mFocusedQuickControls) // For PC display, Platfomr M+ D2 display coded in icon_elements.js
+        page.makeValueBinding(surfaceElements.channelControls[idx].faderValueDisplay, page.mHostAccess.mFocusedQuickControls.getByIndex(idx)) // for Platform M+ D2 Display
+        page.makeValueBinding(surfaceElements.channelControls[idx].panValueDisplay, selectedTrackChannel.mSends.getByIndex(idx).mLevel) // for Platform M+ D2 Display
 
         page.makeValueBinding(knobSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mLevel).setSubPage(subPageSendsQC)
         page.makeValueBinding(knobPushValue, selectedTrackChannel.mSends.getByIndex(idx).mOn).setTypeToggle().setSubPage(subPageSendsQC)
@@ -378,10 +386,10 @@ function makePageChannelStrip() {
 var mixerPage = makePageMixer()
 var selectedTrackPage = makePageSelectedTrack()
 var channelStripPage = makePageChannelStrip()
-// var quadPage = makePageQuad()
 
 mixerPage.mOnActivate = function (device) {
     console.log('from script: Platform M+ page "Mixer" activated')
+
     clearAllLeds(device, midiOutput)
 }
 
