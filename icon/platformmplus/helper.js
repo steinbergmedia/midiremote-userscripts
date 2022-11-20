@@ -16,9 +16,9 @@ function displaySetTextOfLine(rowIndex, textString) {
     var data = [0xf0, 0x00, 0x00, 0x66, 0x14, 0x12,
         rowIndex * 56]
     var blank = Array(56).join(" ")
-    var text = (textString + blank).slice(0, 50) // ensure to always clear the entire row
+    var text = (textString + blank).slice(0, 56) // ensure to always clear the entire row
     // console.log("display:" + text)
-    for (var i = 0; i < 50; ++i)
+    for (var i = 0; i < 56; ++i)
         data.push(text.charCodeAt(i))
     data.push(0xf7)
 

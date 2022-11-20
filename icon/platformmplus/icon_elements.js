@@ -168,9 +168,9 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance) {
   var channelIndex = channelControl.instance
 
   channelControl.fader_touch.mSurfaceValue.mOnProcessValueChange = function (context, touched, value2) {
+    channelControl.faderTouched = touched
     switch (activePage) {
       case "Mixer":
-        channelControl.faderTouched = touched
         if (touched) {
           midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(channelControl.faderValueTitle, 6)))
         }
@@ -180,9 +180,8 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance) {
         }
         break;
       case "SelectedTrack":
-        channelControl.faderTouched = touched
         if (touched) {
-          midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(channelControl.faderValueTitle, 6)))
+          midiOutput.sendMidi(context, helper.sysex.displaySetTextOfLine(1, makeLabel(channelControl.faderValueTitle, 56)))
         }
         else {
           midiOutput.sendMidi(context, helper.sysex.displaySetTextOfLine(1, makeLabel(channelControl.trackObjectTitle, 56)))
@@ -191,13 +190,13 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance) {
         break;
       default:
         console.error("No page specific binding defined")
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfLine(1, makeLabel(activePage, 56)))
+        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfLine(1, makeLabel("No "+activePage+" specific binding defined", 56)))
         break;
     }
   }
 
   channelControl.trackNameDisplay.mOnTitleChange = function (context, objectTitle, valueTitle) {
-    console.log("Track Title Changed:"+objectTitle)
+    // console.log("Track Title Changed:"+objectTitle)
     channelControl.trackObjectTitle = objectTitle
     channelControl.trackValueTitle = valueTitle
     switch (activePage) {
@@ -211,7 +210,7 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance) {
         break;
       default:
         console.error("No page specific binding defined")
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfLine(1, makeLabel(activePage, 56)))
+        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfLine(1, makeLabel("No "+activePage+" specific binding defined", 56)))
         break;
     }
   }
@@ -230,7 +229,7 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance) {
         break;
       default:
         console.error("No page specific binding defined")
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfLine(1, makeLabel(activePage, 56)))
+        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfLine(1, makeLabel("No "+activePage+" specific binding defined", 56)))
         break;
     }
   }
@@ -245,7 +244,7 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance) {
         break;
       default:
         console.error("No page specific binding defined")
-        // midiOutput.sendMidi(context, helper.sysex.displaySetTextOfLine(0, makeLabel(activePage, 56)))
+        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfLine(1, makeLabel("No "+activePage+" specific binding defined", 56)))
         break;
     }
   }
@@ -339,7 +338,7 @@ function makeTransport(surface, midiInput, midiOutput, x, y) {
   transport.btnRecord = makeLedButton(surface, midiInput, midiOutput, 95, x, y + 12, w, h, false)
   transport.btnCycle = makeLedButton(surface, midiInput, midiOutput, 86, x + 3, y + 12, w, h, false)
 
-  // The Note on/off events for the special functioans are timestamped at the same time
+  // The Note on/off events for the special functions are timestamped at the same time
   // cubase midi remote doesn't show anything on screen though a note is sent
   // Flip - Simultaneous press of Pre Chn+Pre Bank
   transport.btnFlip = surface.makeButton(x + 0.5, y + 15, 2, 2).setShapeCircle()
