@@ -140,7 +140,7 @@ function makePageWithDefaults(name) {
     // Master Fader
     // If there is only One output it will be Main
     // If there is more than one out then this will be the first one - there doesn't appear to be a way to verify this
-    var outputMixerBanks = page.mHostAccess.mMixConsole.makeMixerBankZone().includeOutputChannels()
+    var outputMixerBanks = page.mHostAccess.mMixConsole.makeMixerBankZone("OutputBanks").includeOutputChannels()
     var outputMixerBankChannels = outputMixerBanks.makeMixerBankChannel()
     page.makeValueBinding(surfaceElements.faderMaster.fader.mSurfaceValue, outputMixerBankChannels.mValue.mVolume).setValueTakeOverModeJump().setSubPage(subPageMasterFaderMain)
     page.makeValueBinding(surfaceElements.faderMaster.fader.mSurfaceValue, page.mHostAccess.mMouseCursor.mValueUnderMouse).setValueTakeOverModeJump().setSubPage(subPageMasterFaderValue)
@@ -168,7 +168,7 @@ function makePageMixer() {
     var ButtonSubPageArea = page.makeSubPageArea('Buttons')
     var subPageButtonDefaultSet = makeSubPage(ButtonSubPageArea, 'DefaultSet')
 
-    var hostMixerBankZone = page.mHostAccess.mMixConsole.makeMixerBankZone()
+    var hostMixerBankZone = page.mHostAccess.mMixConsole.makeMixerBankZone("AudioInstrBanks")
         .includeAudioChannels()
         .includeInstrumentChannels()
 
