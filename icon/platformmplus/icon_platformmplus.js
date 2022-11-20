@@ -38,7 +38,6 @@ deviceDriver.makeDetectionUnit().detectPortPair(midiInput, midiOutput)
     .expectInputNameContains('Platform M+')
     .expectOutputNameContains('Platform M+')
 
-
 var surface = deviceDriver.mSurface
 
 //-----------------------------------------------------------------------------
@@ -171,6 +170,7 @@ function makePageMixer() {
     var hostMixerBankZone = page.mHostAccess.mMixConsole.makeMixerBankZone("AudioInstrBanks")
         .includeAudioChannels()
         .includeInstrumentChannels()
+        .setFollowVisibility(true)
 
     for (var channelIndex = 0; channelIndex < surfaceElements.numStrips; ++channelIndex) {
         var hostMixerBankChannel = hostMixerBankZone.makeMixerBankChannel()
@@ -228,7 +228,7 @@ function makePageSelectedTrack() {
         var faderSurfaceValue = surfaceElements.channelControls[idx].fader.mSurfaceValue;
 
         // Displays
-        page.setLabelFieldHostObject(surfaceElements.channelControls[idx].displayTop, page.mHostAccess.mFocusedQuickControls) // For PC display, Platfomr M+ D2 display coded in icon_elements.js
+        // page.setLabelFieldHostObject(surfaceElements.channelControls[idx].displayTop, page.mHostAccess.mFocusedQuickControls) // For PC display, Platfomr M+ D2 display coded in icon_elements.js
         page.makeValueBinding(surfaceElements.channelControls[idx].trackNameDisplay, selectedTrackChannel.mValue.mVolume)
         page.makeValueBinding(surfaceElements.channelControls[idx].faderValueDisplay, page.mHostAccess.mFocusedQuickControls.getByIndex(idx)) // for Platform M+ D2 Display
         page.makeValueBinding(surfaceElements.channelControls[idx].panValueDisplay, selectedTrackChannel.mSends.getByIndex(idx).mLevel) // for Platform M+ D2 Display
