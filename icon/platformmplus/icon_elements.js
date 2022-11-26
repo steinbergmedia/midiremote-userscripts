@@ -3,6 +3,11 @@ var makeLabel = helper.display.makeLabel
 var flip = false
 
 function updateDisplay(activeDevice) {
+  if(flip) {
+    midiOutput.sendMidi(activeDevice, [0x90, 84, 127]) // Mixer
+  } else {
+    midiOutput.sendMidi(activeDevice, [0x90, 84, 0]) // Mixer
+  }
   switch (activePage) {
     case "Mixer":
       for (var i = 0; i < surfaceElements.numStrips; ++i) {
@@ -86,7 +91,7 @@ function clearAllLeds(activeDevice, midiOutput) {
     midiOutput.sendMidi(activeDevice, [0x90, 0 + i, 0])
   }
   // Master Fader buttons
-  midiOutput.sendMidi(activeDevice, [0x90, 84, 0])
+  midiOutput.sendMidi(activeDevice, [0x90, 84, 0]) // Mixer
   midiOutput.sendMidi(activeDevice, [0x90, 74, 0])
   midiOutput.sendMidi(activeDevice, [0x90, 75, 0])
 
@@ -338,7 +343,6 @@ function makeMasterControl(surface, midiInput, midiOutput, x, y, instance) {
   masterControl.x = x + 7 * instance;
   masterControl.y = y;
   masterControl.instance = instance; // 9 - Master
-
   masterControl.ident = function () {
     return ("Class masterControl");
   }
@@ -354,7 +358,18 @@ function makeMasterControl(surface, midiInput, midiOutput, x, y, instance) {
   masterControl.mixer_button = makeLedButton(surface, midiInput, midiOutput, 84, fader_x + 3, fader_y + 6, 3, 3, false)
   masterControl.read_button = makeLedButton(surface, midiInput, midiOutput, 74, fader_x + 3, fader_y + 9, 3, 3, false)
   masterControl.write_button = makeLedButton(surface, midiInput, midiOutput, 75, fader_x + 3, fader_y + 12, 3, 3, false)
-
+  masterControl.mixer_button.mSurfaceValue.mOnProcessValueChange = function (activeDevice) {
+    var value = masterControl.mixer_button.mSurfaceValue.getProcessValue(activeDevice)
+    if (value == 1) {
+      flip = !flip
+      if (flip)
+        midiOutput.sendMidi(activeDevice, [0x90, 84, 127])
+      else {
+        midiOutput.sendMidi(activeDevice, [0x90, 84, 0])
+      }
+      updateDisplay(activeDevice)
+    }
+  }
   return masterControl
 }
 
