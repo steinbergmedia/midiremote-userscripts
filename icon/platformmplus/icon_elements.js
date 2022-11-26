@@ -1,5 +1,53 @@
 var helper = require('./helper')
 var makeLabel = helper.display.makeLabel
+var flip = false
+
+function updateDisplay(activeDevice) {
+  switch (activePage) {
+    case "Mixer":
+      for (var i = 0; i < surfaceElements.numStrips; ++i) {
+        var element = surfaceElements.channelControls[i]
+        if (!flip) {
+          midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 1, makeLabel(element.faderObjectTitle, 6)))
+          midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 0, makeLabel(element.faderValueTitle, 6)))
+        }
+        else {
+          midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 1, makeLabel(element.panObjectTitle, 6)))
+          midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 0, makeLabel(element.panValueTitle, 6)))
+        }
+      }
+      break;
+    case "SelectedTrack":
+      var msg = surfaceElements.channelControls[0].trackObjectTitle
+      if (!flip) {
+        // For selected track all the trackObjectTitle are set to the same value
+        // So send it once to the display and use the entire top line for the title
+
+        midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel('QC-' + msg, 56)))
+        for (var i = 0; i < surfaceElements.numStrips; ++i) {
+          var element = surfaceElements.channelControls[i]
+          midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 0, makeLabel(element.faderValueTitle, 6)))
+        }
+      }
+      else {
+        midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel("Sends-" + msg, 56)))
+        for (var i = 0; i < surfaceElements.numStrips; ++i) {
+          var element = surfaceElements.channelControls[i]
+          if (element.panPushValue == "On") {
+            midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 0, makeLabel(element.panObjectTitle, 6)))
+          } else {
+            midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 0, makeLabel("Off", 6)))
+          }
+        }
+      }
+      break;
+    default:
+      console.error("No page specific binding defined")
+      midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel("No " + activePage + " specific binding defined", 56)))
+      break;
+  }
+}
+
 /**
  * @param {MR_DeviceSurface} surface
  * @param {String} name
@@ -18,6 +66,7 @@ function makeLedButton(surface, midiInput, midiOutput, note, x, y, w, h, circle)
     button.setShapeCircle()
   }
   button.mSurfaceValue.mOnProcessValueChange = function (activeDevice) {
+    // console.log("LedButton ProcessValue Change:"+button.mSurfaceValue.getProcessValue(activeDevice))
     if (button.mSurfaceValue.getProcessValue(activeDevice) > 0)
       midiOutput.sendMidi(activeDevice, [0x90, note, 127])
     else {
@@ -126,19 +175,19 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance) {
   channelControl.instance = instance; // Channel number, 1-8
 
   // Channel Displays
-  channelControl.displayTop = channelControl.surface.makeLabelField(channelControl.x, 1, 7, 2)
-  channelControl.displayBottom = channelControl.surface.makeLabelField(channelControl.x, 3, 7, 2)
-
   channelControl.trackNameDisplay = channelControl.surface.makeCustomValueVariable('trackNameDisplay');
   channelControl.trackObjectTitle = ""
   channelControl.trackValueTitle = ""
-  channelControl.faderValueDisplay = channelControl.surface.makeCustomValueVariable('faderValueDisplay');
-  channelControl.panValueDisplay = channelControl.surface.makeCustomValueVariable('panValueDisplay');
+  channelControl.faderTitlesDisplay = channelControl.surface.makeCustomValueVariable('faderTitlesDisplay');
+  channelControl.panTitlesDisplay = channelControl.surface.makeCustomValueVariable('panTitlesDisplay');
   channelControl.faderObjectTitle = ""
   channelControl.faderValueTitle = ""
+  channelControl.faderValue = ""
   channelControl.faderTouched = 0 // 0 - not touched, 1 - touched
   channelControl.panObjectTitle = ""
   channelControl.panValueTitle = ""
+  channelControl.panValue = ""
+  channelControl.panPushValue = ""
 
   // Pot encoder
   channelControl.pushEncoder = channelControl.surface.makePushEncoder(channelControl.x, y + 2, 4, 4)
@@ -167,100 +216,105 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance) {
 
   var channelIndex = channelControl.instance
 
-  channelControl.fader_touch.mSurfaceValue.mOnProcessValueChange = function (context, touched, value2) {
+  channelControl.trackNameDisplay.mOnTitleChange = function (activeDevice, objectTitle, valueTitle) {
+    channelControl.trackObjectTitle = objectTitle
+    channelControl.trackValueTitle = valueTitle
+    // console.log("Track Title Changed:"+objectTitle+":"+valueTitle)
+    updateDisplay(activeDevice)
+  }
+
+  channelControl.faderTitlesDisplay.mOnTitleChange = function (activeDevice, objectTitle, valueTitle) {
+    channelControl.faderObjectTitle = objectTitle
+    channelControl.faderValueTitle = valueTitle
+    console.log("Fader Title Changed:" + objectTitle + ":" + valueTitle)
+    updateDisplay(activeDevice)
+  }
+
+  channelControl.fader_touch.mSurfaceValue.mOnProcessValueChange = function (activeDevice, touched, value2) {
     channelControl.faderTouched = touched
     switch (activePage) {
       case "Mixer":
         if (touched) {
-          midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(channelControl.faderValueTitle, 6)))
+          midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(channelControl.faderValueTitle, 6)))
         }
         else {
-          midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(channelControl.faderObjectTitle, 6)))
-          midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(channelControl.faderValueTitle, 6)))
+          updateDisplay(activeDevice)
         }
         break;
       case "SelectedTrack":
         if (touched) {
-          midiOutput.sendMidi(context, helper.sysex.displaySetTextOfLine(1, makeLabel(channelControl.faderValueTitle, 56)))
+          midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel(channelControl.faderValueTitle, 56)))
         }
         else {
-          midiOutput.sendMidi(context, helper.sysex.displaySetTextOfLine(1, makeLabel(channelControl.trackObjectTitle, 56)))
-          midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(channelControl.faderValueTitle, 6)))
+          updateDisplay(activeDevice)
         }
         break;
       default:
-        console.error("No page specific binding defined")
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfLine(1, makeLabel("No "+activePage+" specific binding defined", 56)))
+        console.log("No page specific binding defined")
+        midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel("No " + activePage + " specific binding defined", 56)))
         break;
     }
   }
 
-  channelControl.trackNameDisplay.mOnTitleChange = function (context, objectTitle, valueTitle) {
-    // console.log("Track Title Changed:"+objectTitle)
-    channelControl.trackObjectTitle = objectTitle
-    channelControl.trackValueTitle = valueTitle
+  channelControl.faderTitlesDisplay.mOnDisplayValueChange = function (activeDevice, value, units) {
+    console.log("Fader Value Change: " + value + ":" + units)
+    channelControl.faderValue = value
     switch (activePage) {
       case "Mixer":
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(objectTitle, 6)))
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(valueTitle, 6)))
+        midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(value, 6)))
         break;
       case "SelectedTrack":
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfLine(1, makeLabel(channelControl.trackObjectTitle, 56)))
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(channelControl.faderValueTitle, 6)))
+        midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(value, 6)))
         break;
       default:
-        console.error("No page specific binding defined")
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfLine(1, makeLabel("No "+activePage+" specific binding defined", 56)))
+        console.log("No page specific binding defined")
+        midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel("No " + activePage + " specific binding defined", 56)))
         break;
     }
   }
 
-  channelControl.faderValueDisplay.mOnTitleChange = function (context, objectTitle, valueTitle) {
-    channelControl.faderObjectTitle = objectTitle
-    channelControl.faderValueTitle = valueTitle
+  channelControl.panTitlesDisplay.mOnTitleChange = function (activeDevice, objectTitle, valueTitle) {
+    channelControl.panObjectTitle = objectTitle
+    channelControl.panValueTitle = valueTitle
+    console.log("Pan Title Changed:" + objectTitle + ":" + valueTitle)
+
+    switch (activePage) {
+      case "SelectedTrack":
+        // For selected track trime the send channel number since it's lined up with the Platform M+ numbering anyway
+        channelControl.panObjectTitle = channelControl.panObjectTitle.slice(3)
+        break;
+      default:
+        console.log("No page specific binding defined")
+        // do nothing
+        break;
+    }
+    updateDisplay(activeDevice)
+  }
+
+  channelControl.panTitlesDisplay.mOnDisplayValueChange = function (activeDevice, value, units) {
+    console.log("Pan Value Change: " + value + ":" + units)
+    channelControl.panValue = value
     switch (activePage) {
       case "Mixer":
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(objectTitle, 6)))
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(valueTitle, 6)))
+        midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(value, 6)))
         break;
       case "SelectedTrack":
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfLine(1, makeLabel(channelControl.trackObjectTitle, 56)))
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(channelControl.faderValueTitle, 6)))
+        midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel('Sends-'+channelControl.trackObjectTitle +"-" +channelControl.panObjectTitle, 56)))
+        midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(value, 6)))
         break;
       default:
-        console.error("No page specific binding defined")
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfLine(1, makeLabel("No "+activePage+" specific binding defined", 56)))
+        console.log("No page specific binding defined")
+        midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel("No " + activePage + " specific binding defined", 56)))
         break;
     }
   }
 
-  channelControl.faderValueDisplay.mOnDisplayValueChange = function (context, value, units) {
-    switch (activePage) {
-      case "Mixer":
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(value, 6)))
-        break;
-      case "SelectedTrack":
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(value, 6)))
-        break;
-      default:
-        console.error("No page specific binding defined")
-        midiOutput.sendMidi(context, helper.sysex.displaySetTextOfLine(1, makeLabel("No "+activePage+" specific binding defined", 56)))
-        break;
-    }
+  // ! Hmm, I wonder if my use of the *TitlesDisplay custom variables is unnecessary based on this one
+  channelControl.pushEncoder.mPushValue.mOnDisplayValueChange = function (activeDevice, value, units) {
+    console.log("Pan push Value Change: " + value + ":" + units)
+    channelControl.panPushValue = value
+    updateDisplay(activeDevice)
   }
-
-  // ! Can't currently find a way to stop the pan mOnTitleChange being triggered when initialised rather than just when its being changed. This stuffs up the display.
-  // channelControl.panValueDisplay.mOnTitleChange = function (context, objectTitle, valueTitle) {
-  //   // midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(objectTitle)))
-  //   // midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(valueTitle)))
-  //   channelControl.panObjectTitle = "objectTitle"
-  //   channelControl.panValueTitle = "valueTitle"
-  // }
-
-  // channelControl.panValueDisplay.mOnDisplayValueChange = function (context, value, units) {
-  //   midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel("Pan",6)))
-  //   midiOutput.sendMidi(context, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(value,6)))
-  // }
 
   return channelControl
 
@@ -344,12 +398,50 @@ function makeTransport(surface, midiInput, midiOutput, x, y) {
   transport.btnFlip = surface.makeButton(x + 0.5, y + 15, 2, 2).setShapeCircle()
   bindMidiNote(transport.btnFlip, 0, 50)
 
+  transport.btnFlip.mSurfaceValue.mOnProcessValueChange = function (activeDevice, number1, number2) {
+    flip = !flip
+    updateDisplay(activeDevice)
+    console.log("transport flip: " + flip)
+  }
+
   // Pressing the Zoom keys simultaneously will toggle on and off a note event. If on
   // either zoom button will send a Note 100 when zoom is activated or deactivated by either button
   // If zoom is active and you simply press then other button the event will not be sent
   //
   transport.btnZoomOnOff = surface.makeButton(x + 3.5, y + 15, 2, 2).setShapeCircle()
-  bindMidiNote(transport.btnZoomOnOff, 0, 100)
+  // bindMidiNote(transport.btnZoomOnOff, 0, 100)
+  transport.zoomState = surface.makeCustomValueVariable('ZoomState');
+  transport.zoomState.mMidiBinding.setInputPort(midiInput).bindToNote(0, 100)
+  transport.zoomState.mOnProcessValueChange = function (activeDevice, number1, number2) {
+
+    console.log("zoomState: " + number1 + ":" + number2)
+    // switch (activePage) {
+    //   case "Mixer":
+    //     if (touched) {
+    //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(channelControl.faderValueTitle, 6)))
+    //     }
+    //     else {
+    //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(channelControl.faderObjectTitle, 6)))
+    //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(channelControl.faderValueTitle, 6)))
+    //     }
+    //     break;
+    //   case "SelectedTrack":
+    //     if (touched) {
+    //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel(channelControl.faderValueTitle, 56)))
+    //     }
+    //     else {
+    //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel(channelControl.trackObjectTitle, 56)))
+    //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(channelControl.faderValueTitle, 6)))
+    //     }
+    //     break;
+    //   default:
+    //     console.error("No page specific binding defined")
+    //     midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel("No "+activePage+" specific binding defined", 56)))
+    //     break;
+    // }
+
+  }
+
 
   // The Jog wheel will change CC/Note based on which of thte Zoom buttons have been activated
   // None - CC 60
@@ -400,5 +492,6 @@ module.exports = {
   makeLedButton,
   makeTouchFader,
   bindCommandKnob,
-  clearAllLeds
+  clearAllLeds,
+  updateDisplay
 }

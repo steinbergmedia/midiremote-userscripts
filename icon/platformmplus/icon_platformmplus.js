@@ -9,6 +9,7 @@ var makeChannelControl = iconElements.makeChannelControl
 var makeMasterControl = iconElements.makeMasterControl
 var makeTransport = iconElements.makeTransport
 var clearAllLeds = iconElements.clearAllLeds
+var updateDisplay = iconElements.updateDisplay
 
 //-----------------------------------------------------------------------------
 // 1. DRIVER SETUP - create driver object, midi ports and detection information
@@ -79,6 +80,14 @@ function makeSubPage(subPageArea, name) {
     var msgText = 'sub page ' + name + ' activated'
     subPage.mOnActivate = function (activeDevice) {
         console.log(msgText)
+        switch (name) {
+            case "MF_MainOut":
+                midiOutput.sendMidi(activeDevice, [0x90, 84, 127])
+                break;
+            case "MF_ValueUnderCursor":
+                midiOutput.sendMidi(activeDevice, [0x90, 84, 0])
+                break;
+        }
     }
     return subPage
 }
@@ -119,6 +128,7 @@ function makePageWithDefaults(name) {
     page.makeCommandBinding(surfaceElements.transport.zoomHorizOut.mSurfaceValue, 'Transport', 'Locate Previous Event').setSubPage(subPageJobNav)
     // Switch Zoom and Nav via simultaneous press of Zoom buttons
     page.makeActionBinding(surfaceElements.transport.btnZoomOnOff.mSurfaceValue, zoomSubPageArea.mAction.mNext)
+    // page.makeActionBinding(surfaceElements.transport.zoomState.mSurfaceValue, zoomSubPageArea.mAction.mNext)
 
     // Jog Pages - when Zoom lights are off
     // Nudge
@@ -131,21 +141,19 @@ function makePageWithDefaults(name) {
     page.makeActionBinding(surfaceElements.transport.jog_wheel.mPushValue, jogSubPageArea.mAction.mNext)
 
     var MasterFaderSubPageArea = page.makeSubPageArea('MasterFader')
-    var subPageMasterFaderMain = makeSubPage(MasterFaderSubPageArea, 'MF_MainOut')
-    var subPageMasterFaderHeadphone = makeSubPage(MasterFaderSubPageArea, 'MF_HeadphoneOut')
-    var subPageMasterCMain = makeSubPage(MasterFaderSubPageArea, 'MF_CMain')
     var subPageMasterFaderValue = makeSubPage(MasterFaderSubPageArea, 'MF_ValueUnderCursor')
+    var subPageMasterFaderMain = makeSubPage(MasterFaderSubPageArea, 'MF_MainOut')
+
 
     // Master Fader
     // If there is only One output it will be Main
     // If there is more than one out then this will be the first one - there doesn't appear to be a way to verify this
     var outputMixerBanks = page.mHostAccess.mMixConsole.makeMixerBankZone("OutputBanks").includeOutputChannels()
     var outputMixerBankChannels = outputMixerBanks.makeMixerBankChannel()
-    page.makeValueBinding(surfaceElements.faderMaster.fader.mSurfaceValue, outputMixerBankChannels.mValue.mVolume).setValueTakeOverModeJump().setSubPage(subPageMasterFaderMain)
     page.makeValueBinding(surfaceElements.faderMaster.fader.mSurfaceValue, page.mHostAccess.mMouseCursor.mValueUnderMouse).setValueTakeOverModeJump().setSubPage(subPageMasterFaderValue)
-    page.makeValueBinding(surfaceElements.faderMaster.fader.mSurfaceValue, page.mHostAccess.mControlRoom.getPhonesChannelByIndex(0).mLevelValue).setValueTakeOverModeJump().setSubPage(subPageMasterFaderHeadphone)
-    page.makeValueBinding(surfaceElements.faderMaster.fader.mSurfaceValue, page.mHostAccess.mControlRoom.mMainChannel.mLevelValue).setValueTakeOverModeJump().setSubPage(subPageMasterCMain)
-    // Switch Master Fader to Main Out->Headphone->Value Under Cursor (AI)
+    page.makeValueBinding(surfaceElements.faderMaster.fader.mSurfaceValue, outputMixerBankChannels.mValue.mVolume).setValueTakeOverModeJump().setSubPage(subPageMasterFaderMain)
+
+    // Switch Master Fader to Main Out<->Value Under Cursor (AI)
     page.makeActionBinding(surfaceElements.faderMaster.mixer_button.mSurfaceValue, MasterFaderSubPageArea.mAction.mNext)
 
     // Automation for selected tracks
@@ -185,14 +193,10 @@ function makePageMixer() {
         var rec_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].rec_button.mSurfaceValue;
 
         // Displays
-        // PC
-        // ? There doesn't appear to be a way via relateTo to connect the label surface elements to valueTitle or arbitrarily change them around
-        // ! Ignoring PC side of display for the moment in favour of the D2 displaying what is required
-        page.setLabelFieldHostObject(surfaceElements.channelControls[channelIndex].displayTop, hostMixerBankChannel) // For PC display, Platfomr M+ D2 display coded in icon_elements.js
         // D2
         page.makeValueBinding(surfaceElements.channelControls[channelIndex].trackNameDisplay, hostMixerBankChannel.mValue.mVolume)
-        page.makeValueBinding(surfaceElements.channelControls[channelIndex].faderValueDisplay, hostMixerBankChannel.mValue.mVolume) // for Platform M+ D2 Display
-        page.makeValueBinding(surfaceElements.channelControls[channelIndex].panValueDisplay, hostMixerBankChannel.mValue.mPan) // for Platform M+ D2 Display
+        page.makeValueBinding(surfaceElements.channelControls[channelIndex].faderTitlesDisplay, hostMixerBankChannel.mValue.mVolume) // for Platform M+ D2 Display
+        page.makeValueBinding(surfaceElements.channelControls[channelIndex].panTitlesDisplay, hostMixerBankChannel.mValue.mPan) // for Platform M+ D2 Display
 
         // FaderKnobs - Volume, Pan, Editor Open
         page.makeValueBinding(knobSurfaceValue, hostMixerBankChannel.mValue.mPan).setSubPage(subPageFaderVolume)
@@ -228,10 +232,9 @@ function makePageSelectedTrack() {
         var faderSurfaceValue = surfaceElements.channelControls[idx].fader.mSurfaceValue;
 
         // Displays
-        // page.setLabelFieldHostObject(surfaceElements.channelControls[idx].displayTop, page.mHostAccess.mFocusedQuickControls) // For PC display, Platfomr M+ D2 display coded in icon_elements.js
         page.makeValueBinding(surfaceElements.channelControls[idx].trackNameDisplay, selectedTrackChannel.mValue.mVolume)
-        page.makeValueBinding(surfaceElements.channelControls[idx].faderValueDisplay, page.mHostAccess.mFocusedQuickControls.getByIndex(idx)) // for Platform M+ D2 Display
-        page.makeValueBinding(surfaceElements.channelControls[idx].panValueDisplay, selectedTrackChannel.mSends.getByIndex(idx).mLevel) // for Platform M+ D2 Display
+        page.makeValueBinding(surfaceElements.channelControls[idx].faderTitlesDisplay, page.mHostAccess.mFocusedQuickControls.getByIndex(idx)) // for Platform M+ D2 Display
+        page.makeValueBinding(surfaceElements.channelControls[idx].panTitlesDisplay, selectedTrackChannel.mSends.getByIndex(idx).mLevel) // for Platform M+ D2 Display
 
         page.makeValueBinding(knobSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mLevel).setSubPage(subPageSendsQC)
         page.makeValueBinding(knobPushValue, selectedTrackChannel.mSends.getByIndex(idx).mOn).setTypeToggle().setSubPage(subPageSendsQC)
@@ -392,21 +395,41 @@ var mixerPage = makePageMixer()
 var selectedTrackPage = makePageSelectedTrack()
 var channelStripPage = makePageChannelStrip()
 var activePage = "Mixer"
+var activeSubPage = "Nudge"
 
+// Function to clear out the Channel State for the display titles/values
+// the OnDisplayChange callback is not called if the Channel doesn't have an updated
+// Title. So swtiching to QC would leave the old Mixer Page "Volume" title kicking around
+// in the state. By clearing state on the page activation it will update all that are changing.
+function clearChannelState() {
+    for (var i = 0; i < surfaceElements.numStrips; ++i) {
+        surfaceElements.channelControls[i].faderObjectTitle = ""
+        surfaceElements.channelControls[i].faderValueTitle = ""
+        surfaceElements.channelControls[i].faderValue = ""
+        surfaceElements.channelControls[i].panObjectTitle = ""
+        surfaceElements.channelControls[i].panValueTitle = ""
+        surfaceElements.channelControls[i].panValue = ""
+        surfaceElements.channelControls[i].panPushValue = ""
+    }
+}
 mixerPage.mOnActivate = function (device) {
     console.log('from script: Platform M+ page "Mixer" activated')
     activePage="Mixer"
     clearAllLeds(device, midiOutput)
+    clearChannelState()
 }
 
 selectedTrackPage.mOnActivate = function (device) {
     console.log('from script: Platform M+ page "Selected Track" activated')
     activePage="SelectedTrack"
     clearAllLeds(device, midiOutput)
+    clearChannelState()
 }
 
 channelStripPage.mOnActivate = function (device) {
     console.log('from script: Platform M+ page "Channel Strip" activated')
     activePage="ChannelStrip"
     clearAllLeds(device, midiOutput)
+    clearChannelState()
 }
+
