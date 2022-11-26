@@ -48,7 +48,7 @@ function makeSurfaceElements() {
     var surfaceElements = {}
 
     // Display - 2lines
-    surfaceElements.d2Display  = surface.makeBlindPanel(0,0,56,6)
+    surfaceElements.d2Display = surface.makeBlindPanel(0, 0, 56, 6)
 
     surfaceElements.numStrips = 8
 
@@ -61,7 +61,7 @@ function makeSurfaceElements() {
         surfaceElements.channelControls[i] = makeChannelControl(surface, midiInput, midiOutput, xKnobStrip, yKnobStrip, i)
     }
 
-    surfaceElements.faderMaster = makeMasterControl(surface, midiInput, midiOutput, xKnobStrip + 1, yKnobStrip+4, surfaceElements.numStrips)
+    surfaceElements.faderMaster = makeMasterControl(surface, midiInput, midiOutput, xKnobStrip + 1, yKnobStrip + 4, surfaceElements.numStrips)
     surfaceElements.transport = makeTransport(surface, midiInput, midiOutput, xKnobStrip + 63, yKnobStrip + 4)
 
     return surfaceElements
@@ -274,9 +274,9 @@ function makePageSelectedTrack() {
     eqBand[3] = selectedTrackChannel.mChannelEQ.mBand4
     for (var idx = 0; idx < 4; ++idx) {
         var knobSurfaceValue = surfaceElements.channelControls[idx].pushEncoder.mEncoderValue;
-        var knob2SurfaceValue = surfaceElements.channelControls[idx+4].pushEncoder.mEncoderValue;
+        var knob2SurfaceValue = surfaceElements.channelControls[idx + 4].pushEncoder.mEncoderValue;
         var knobPushValue = surfaceElements.channelControls[idx].pushEncoder.mPushValue;
-        var knob2PushValue = surfaceElements.channelControls[idx+4].pushEncoder.mPushValue;
+        var knob2PushValue = surfaceElements.channelControls[idx + 4].pushEncoder.mPushValue;
         var faderSurfaceValue = surfaceElements.channelControls[idx].fader.mSurfaceValue;
         var fader2SurfaceValue = surfaceElements.channelControls[idx + 4].fader.mSurfaceValue;
 
@@ -323,14 +323,14 @@ function makePageSelectedTrack() {
     page.makeValueBinding(surfaceElements.channelControls[1].sel_button.mSurfaceValue, preFilter.mHighCutOn).setTypeToggle().setSubPage(subPagePreFilter)
     page.makeValueBinding(surfaceElements.channelControls[2].sel_button.mSurfaceValue, preFilter.mLowCutOn).setTypeToggle().setSubPage(subPagePreFilter)
 
-    page.makeValueBinding(knob2SurfaceValue, preFilter.mHighCutSlope ).setSubPage(subPagePreFilter)
-    page.makeValueBinding(knob3SurfaceValue, preFilter.mLowCutSlope ).setSubPage(subPagePreFilter)
-    page.makeValueBinding(knobPushValue, preFilter.mBypass ).setTypeToggle().setSubPage(subPagePreFilter)
-    page.makeValueBinding(knob2PushValue, preFilter.mHighCutOn ).setTypeToggle().setSubPage(subPagePreFilter)
-    page.makeValueBinding(knob3PushValue, preFilter.mLowCutOn ).setTypeToggle().setSubPage(subPagePreFilter)
+    page.makeValueBinding(knob2SurfaceValue, preFilter.mHighCutSlope).setSubPage(subPagePreFilter)
+    page.makeValueBinding(knob3SurfaceValue, preFilter.mLowCutSlope).setSubPage(subPagePreFilter)
+    page.makeValueBinding(knobPushValue, preFilter.mBypass).setTypeToggle().setSubPage(subPagePreFilter)
+    page.makeValueBinding(knob2PushValue, preFilter.mHighCutOn).setTypeToggle().setSubPage(subPagePreFilter)
+    page.makeValueBinding(knob3PushValue, preFilter.mLowCutOn).setTypeToggle().setSubPage(subPagePreFilter)
     page.makeValueBinding(faderSurfaceValue, preFilter.mGain).setSubPage(subPagePreFilter)
-    page.makeValueBinding(fader2SurfaceValue, preFilter.mHighCutFreq ).setSubPage(subPagePreFilter)
-    page.makeValueBinding(fader3SurfaceValue, preFilter.mLowCutFreq ).setSubPage(subPagePreFilter)
+    page.makeValueBinding(fader2SurfaceValue, preFilter.mHighCutFreq).setSubPage(subPagePreFilter)
+    page.makeValueBinding(fader3SurfaceValue, preFilter.mLowCutFreq).setSubPage(subPagePreFilter)
 
     return page
 }
@@ -361,7 +361,7 @@ function makePageChannelStrip() {
         page.makeValueBinding(faderSurfaceValue, stripEffects.mLimiter.mParameterBankZone.makeParameterValue()).setSubPage(limiterPage)
     }
 
-  for (var idx = 0; idx < 5; ++idx) {
+    for (var idx = 0; idx < 5; ++idx) {
         var faderStrip = surfaceElements.channelControls[idx]
         var type = ['mGate', 'mCompressor', 'mTools', 'mSaturator', 'mLimiter'][idx]
         page.makeValueBinding(faderStrip.rec_button.mSurfaceValue, stripEffects[type].mOn).setTypeToggle()
@@ -414,21 +414,21 @@ function clearChannelState() {
 }
 mixerPage.mOnActivate = function (device) {
     console.log('from script: Platform M+ page "Mixer" activated')
-    activePage="Mixer"
+    activePage = "Mixer"
     clearAllLeds(device, midiOutput)
     clearChannelState()
 }
 
 selectedTrackPage.mOnActivate = function (device) {
     console.log('from script: Platform M+ page "Selected Track" activated')
-    activePage="SelectedTrack"
+    activePage = "SelectedTrack"
     clearAllLeds(device, midiOutput)
     clearChannelState()
 }
 
 channelStripPage.mOnActivate = function (device) {
     console.log('from script: Platform M+ page "Channel Strip" activated')
-    activePage="ChannelStrip"
+    activePage = "ChannelStrip"
     clearAllLeds(device, midiOutput)
     clearChannelState()
 }

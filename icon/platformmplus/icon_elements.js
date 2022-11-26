@@ -299,7 +299,7 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance) {
         midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(value, 6)))
         break;
       case "SelectedTrack":
-        midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel('Sends-'+channelControl.trackObjectTitle +"-" +channelControl.panObjectTitle, 56)))
+        midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel('Sends-' + channelControl.trackObjectTitle + "-" + channelControl.panObjectTitle, 56)))
         midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(value, 6)))
         break;
       default:
