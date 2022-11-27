@@ -45,7 +45,7 @@ function updateDisplay(activeDevice) {
       }
       break;
     default:
-      console.error("No page specific binding defined")
+      console.log("No page specific binding defined")
       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel("No " + activePage + " specific binding defined", 56)))
       break;
   }
@@ -448,7 +448,7 @@ function makeTransport(surface, midiInput, midiOutput, x, y) {
     //     }
     //     break;
     //   default:
-    //     console.error("No page specific binding defined")
+    //     console.log("No page specific binding defined")
     //     midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel("No "+activePage+" specific binding defined", 56)))
     //     break;
     // }
