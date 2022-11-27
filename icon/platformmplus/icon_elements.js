@@ -3,11 +3,6 @@ var makeLabel = helper.display.makeLabel
 var flip = false
 
 function updateDisplay(activeDevice) {
-  if(flip) {
-    midiOutput.sendMidi(activeDevice, [0x90, 84, 127]) // Mixer
-  } else {
-    midiOutput.sendMidi(activeDevice, [0x90, 84, 0]) // Mixer
-  }
   switch (activePage) {
     case "Mixer":
       for (var i = 0; i < surfaceElements.numStrips; ++i) {
@@ -15,19 +10,21 @@ function updateDisplay(activeDevice) {
         if (!flip) {
           midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 1, makeLabel(element.faderObjectTitle, 6)))
           midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 0, makeLabel(element.faderValueTitle, 6)))
+          midiOutput.sendMidi(activeDevice, [0x90, 84, 0]) // Mixer
         }
         else {
           midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 1, makeLabel(element.panObjectTitle, 6)))
           midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 0, makeLabel(element.panValueTitle, 6)))
+          midiOutput.sendMidi(activeDevice, [0x90, 84, 127]) // Mixer
         }
       }
       break;
     case "SelectedTrack":
       var msg = surfaceElements.channelControls[0].trackObjectTitle
       if (!flip) {
+        midiOutput.sendMidi(activeDevice, [0x90, 84, 0]) // Mixer
         // For selected track all the trackObjectTitle are set to the same value
         // So send it once to the display and use the entire top line for the title
-
         midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel('QC-' + msg, 56)))
         for (var i = 0; i < surfaceElements.numStrips; ++i) {
           var element = surfaceElements.channelControls[i]
@@ -35,6 +32,7 @@ function updateDisplay(activeDevice) {
         }
       }
       else {
+        midiOutput.sendMidi(activeDevice, [0x90, 84, 127]) // Mixer
         midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel("Sends-" + msg, 56)))
         for (var i = 0; i < surfaceElements.numStrips; ++i) {
           var element = surfaceElements.channelControls[i]

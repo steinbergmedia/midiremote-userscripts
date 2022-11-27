@@ -145,16 +145,8 @@ function makePageWithDefaults(name) {
     // var subPageMasterFaderMain = makeSubPage(MasterFaderSubPageArea, 'MF_MainOut')
 
 
-    // Master Fader
-    // If there is only One output it will be Main
-    // If there is more than one out then this will be the first one - there doesn't appear to be a way to verify this
-    // var outputMixerBanks = page.mHostAccess.mMixConsole.makeMixerBankZone("OutputBanks").includeOutputChannels()
-    // var outputMixerBankChannels = outputMixerBanks.makeMixerBankChannel()
+    // Master Fader changes display detail
     page.makeValueBinding(surfaceElements.faderMaster.fader.mSurfaceValue, page.mHostAccess.mMouseCursor.mValueUnderMouse).setValueTakeOverModeJump().setSubPage(subPageMasterFaderValue)
-    // page.makeValueBinding(surfaceElements.faderMaster.fader.mSurfaceValue, outputMixerBankChannels.mValue.mVolume).setValueTakeOverModeJump().setSubPage(subPageMasterFaderMain)
-
-    // Switch Master Fader to Main Out<->Value Under Cursor (AI)
-    // page.makeActionBinding(surfaceElements.faderMaster.mixer_button.mSurfaceValue, MasterFaderSubPageArea.mAction.mNext)
 
     // Automation for selected tracks
     var selectedTrackChannel = page.mHostAccess.mTrackSelection.mMixerChannel
