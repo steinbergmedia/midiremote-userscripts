@@ -275,6 +275,7 @@ function makePageSelectedTrack() {
     page.makeActionBinding(surfaceElements.channelControls[2].rec_button.mSurfaceValue, subPagePreFilter.mAction.mActivate).setSubPage(subPageSendsQC)
     page.makeActionBinding(surfaceElements.channelControls[3].rec_button.mSurfaceValue, subPageCueSends.mAction.mActivate).setSubPage(subPageSendsQC)
 
+    // WIP Add Subpage Displays to Selected channel
     // EQ Subpage
     const eqBand = []
     eqBand[0] = selectedTrackChannel.mChannelEQ.mBand1
