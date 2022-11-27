@@ -422,38 +422,38 @@ function makeTransport(surface, midiInput, midiOutput, x, y) {
   // If zoom is active and you simply press then other button the event will not be sent
   //
   transport.btnZoomOnOff = surface.makeButton(x + 3.5, y + 15, 2, 2).setShapeCircle()
-  // bindMidiNote(transport.btnZoomOnOff, 0, 100)
-  transport.zoomState = surface.makeCustomValueVariable('ZoomState');
-  transport.zoomState.mMidiBinding.setInputPort(midiInput).bindToNote(0, 100)
-  transport.zoomState.mOnProcessValueChange = function (activeDevice, number1, number2) {
+  bindMidiNote(transport.btnZoomOnOff, 0, 100)
+  // transport.zoomState = surface.makeCustomValueVariable('ZoomState');
+  // transport.zoomState.mMidiBinding.setInputPort(midiInput).bindToNote(0, 100)
+  // transport.zoomState.mOnProcessValueChange = function (activeDevice, number1, number2) {
 
-    console.log("zoomState: " + number1 + ":" + number2)
-    // switch (activePage) {
-    //   case "Mixer":
-    //     if (touched) {
-    //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(channelControl.faderValueTitle, 6)))
-    //     }
-    //     else {
-    //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(channelControl.faderObjectTitle, 6)))
-    //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(channelControl.faderValueTitle, 6)))
-    //     }
-    //     break;
-    //   case "SelectedTrack":
-    //     if (touched) {
-    //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel(channelControl.faderValueTitle, 56)))
-    //     }
-    //     else {
-    //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel(channelControl.trackObjectTitle, 56)))
-    //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(channelControl.faderValueTitle, 6)))
-    //     }
-    //     break;
-    //   default:
-    //     console.log("No page specific binding defined")
-    //     midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel("No "+activePage+" specific binding defined", 56)))
-    //     break;
-    // }
+  //   console.log("zoomState: " + number1 + ":" + number2)
+  //   // switch (activePage) {
+  //   //   case "Mixer":
+  //   //     if (touched) {
+  //   //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(channelControl.faderValueTitle, 6)))
+  //   //     }
+  //   //     else {
+  //   //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(channelControl.faderObjectTitle, 6)))
+  //   //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(channelControl.faderValueTitle, 6)))
+  //   //     }
+  //   //     break;
+  //   //   case "SelectedTrack":
+  //   //     if (touched) {
+  //   //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel(channelControl.faderValueTitle, 56)))
+  //   //     }
+  //   //     else {
+  //   //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel(channelControl.trackObjectTitle, 56)))
+  //   //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(channelControl.faderValueTitle, 6)))
+  //   //     }
+  //   //     break;
+  //   //   default:
+  //   //     console.log("No page specific binding defined")
+  //   //     midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel("No "+activePage+" specific binding defined", 56)))
+  //   //     break;
+  //   // }
 
-  }
+  // }
 
 
   // The Jog wheel will change CC/Note based on which of thte Zoom buttons have been activated

@@ -80,6 +80,30 @@ function makeSubPage(subPageArea, name) {
     var msgText = 'sub page ' + name + ' activated'
     subPage.mOnActivate = function (activeDevice) {
         console.log(msgText)
+        var data = [0xf0, 0x00, 0x00, 0x66, 0x14, 0x12,
+        ]
+        switch (name) {
+            case "Scrub":
+                var out = data.concat(55, "S".charCodeAt(0))
+                out.push(0xf7)
+                midiOutput.sendMidi(activeDevice, out)
+                break;
+            case "Nudge":
+                var out = data.concat(55, "N".charCodeAt(0))
+                out.push(0xf7)
+                midiOutput.sendMidi(activeDevice, out)
+                break;
+            case "Nav":
+                var out = data.concat(111, "N".charCodeAt(0))
+                out.push(0xf7)
+                midiOutput.sendMidi(activeDevice, out)
+                break;
+            case "Zoom":
+                var out = data.concat(111, "Z".charCodeAt(0))
+                out.push(0xf7)
+                midiOutput.sendMidi(activeDevice, out)
+                break;
+        }
     }
     return subPage
 }
