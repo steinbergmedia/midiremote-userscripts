@@ -83,6 +83,7 @@ function makeSubPage(subPageArea, name) {
         var data = [0xf0, 0x00, 0x00, 0x66, 0x14, 0x12,
         ]
         switch (name) {
+            // WIP This should probably be handled by state variables and made part of update display
             case "Scrub":
                 var out = data.concat(55, "S".charCodeAt(0))
                 out.push(0xf7)
