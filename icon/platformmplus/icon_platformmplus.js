@@ -80,14 +80,6 @@ function makeSubPage(subPageArea, name) {
     var msgText = 'sub page ' + name + ' activated'
     subPage.mOnActivate = function (activeDevice) {
         console.log(msgText)
-        switch (name) {
-            case "MF_MainOut":
-                midiOutput.sendMidi(activeDevice, [0x90, 84, 127])
-                break;
-            case "MF_ValueUnderCursor":
-                midiOutput.sendMidi(activeDevice, [0x90, 84, 0])
-                break;
-        }
     }
     return subPage
 }
