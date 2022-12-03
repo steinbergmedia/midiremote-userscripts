@@ -58,11 +58,11 @@ function makeSurfaceElements() {
     var yKnobStrip = 5
 
     for (var i = 0; i < surfaceElements.numStrips; ++i) {
-        surfaceElements.channelControls[i] = makeChannelControl(surface, midiInput, midiOutput, xKnobStrip, yKnobStrip, i)
+        surfaceElements.channelControls[i] = makeChannelControl(surface, midiInput, midiOutput, xKnobStrip, yKnobStrip, i, surfaceElements)
     }
 
-    surfaceElements.faderMaster = makeMasterControl(surface, midiInput, midiOutput, xKnobStrip + 1, yKnobStrip + 4, surfaceElements.numStrips)
-    surfaceElements.transport = makeTransport(surface, midiInput, midiOutput, xKnobStrip + 63, yKnobStrip + 4)
+    surfaceElements.faderMaster = makeMasterControl(surface, midiInput, midiOutput, xKnobStrip + 1, yKnobStrip + 4, surfaceElements.numStrips, surfaceElements)
+    surfaceElements.transport = makeTransport(surface, midiInput, midiOutput, xKnobStrip + 63, yKnobStrip + 4, surfaceElements)
 
     return surfaceElements
 }
@@ -404,8 +404,6 @@ function makePageChannelStrip() {
 var mixerPage = makePageMixer()
 var selectedTrackPage = makePageSelectedTrack()
 var channelStripPage = makePageChannelStrip()
-var activePage = "Mixer"
-var activeSubPage = "Nudge"
 
 // Function to clear out the Channel State for the display titles/values
 // the OnDisplayChange callback is not called if the Channel doesn't have an updated
@@ -422,24 +420,24 @@ function clearChannelState() {
         surfaceElements.channelControls[i].panPushValue = ""
     }
 }
-mixerPage.mOnActivate = function (device) {
+mixerPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeDevice) {
     console.log('from script: Platform M+ page "Mixer" activated')
-    activePage = "Mixer"
-    clearAllLeds(device, midiOutput)
+    activeDevice.setState("activePage","Mixer")
+    clearAllLeds(activeDevice, midiOutput)
     clearChannelState()
-}
+}).bind({ midiOutput })
 
-selectedTrackPage.mOnActivate = function (device) {
+selectedTrackPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeDevice) {
     console.log('from script: Platform M+ page "Selected Track" activated')
-    activePage = "SelectedTrack"
-    clearAllLeds(device, midiOutput)
+     activeDevice.setState("activePage","SelectedTrack")
+    clearAllLeds(activeDevice, midiOutput)
     clearChannelState()
-}
+}).bind({ midiOutput })
 
-channelStripPage.mOnActivate = function (device) {
+channelStripPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeDevice) {
     console.log('from script: Platform M+ page "Channel Strip" activated')
-    activePage = "ChannelStrip"
-    clearAllLeds(device, midiOutput)
+     activeDevice.setState("activePage","ChannelStrip")
+    clearAllLeds(activeDevice, midiOutput)
     clearChannelState()
-}
+}).bind({ midiOutput })
 

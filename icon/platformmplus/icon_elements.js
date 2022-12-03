@@ -2,7 +2,8 @@ var helper = require('./helper')
 var makeLabel = helper.display.makeLabel
 var flip = false
 
-function updateDisplay(activeDevice) {
+function updateDisplay(/** @type {MR_ActiveDevice} */activeDevice, /** @type {MR_DeviceMidiOutput} */midiOutput, /** @type {Object} */surfaceElements) {
+  var activePage = activeDevice.getState("activePage")
   switch (activePage) {
     case "Mixer":
       for (var i = 0; i < surfaceElements.numStrips; ++i) {
@@ -53,9 +54,9 @@ function updateDisplay(activeDevice) {
 
 /**
  * @param {MR_DeviceSurface} surface
- * @param {String} name
+ * @param {MR_DeviceMidiInput} midiInput
+ * @param {MR_DeviceMidiOutput} midiOutput
  * @param {number} note
- * @param {Boolean} toggle
  * @param {number} x
  * @param {number} y
  * @param {number} w
@@ -68,18 +69,18 @@ function makeLedButton(surface, midiInput, midiOutput, note, x, y, w, h, circle)
   if (circle) {
     button.setShapeCircle()
   }
-  button.mSurfaceValue.mOnProcessValueChange = function (activeDevice) {
+  button.mSurfaceValue.mOnProcessValueChange = (function (/** @type {MR_ActiveDevice} */activeDevice) {
     // console.log("LedButton ProcessValue Change:"+button.mSurfaceValue.getProcessValue(activeDevice))
     if (button.mSurfaceValue.getProcessValue(activeDevice) > 0)
-      midiOutput.sendMidi(activeDevice, [0x90, note, 127])
+      this.midiOutput.sendMidi(activeDevice, [0x90, note, 127])
     else {
-      midiOutput.sendMidi(activeDevice, [0x90, note, 0])
+      this.midiOutput.sendMidi(activeDevice, [0x90, note, 0])
     }
-  }
+  }).bind({ midiOutput })
   return button
 }
 
-function clearAllLeds(activeDevice, midiOutput) {
+function clearAllLeds(/** @type {MR_ActiveDevice} */activeDevice, /** @type {MR_DeviceMidiOutput} */midiOutput) {
   console.log('Clear All Leds')
   // Mixer buttons
   for (var i = 0; i < 8; ++i) {
@@ -163,12 +164,12 @@ function bindCommandKnob(pushEncoder, commandIncrease, commandDecrease) {
  * @param {MR_DeviceMidiInput} midiInput
  * @param {MR_DeviceMidiOutput} midiOutput
  * @param {number} x           - x location of the push encoder in the gui
- * @param {Number} y           - y location of the push encoder in the gui
- * @param {Number} w           - width of the push encoder.
- * @param {Number} h           - height of the push encoder.
- * @param {Number} instance    - instance of the push encoder.
+ * @param {number} y           - y location of the push encoder in the gui
+ * @param {number} instance    - instance of the push encoder.
+ * @param {Object} surfaceElements
+ * @returns {Object}
  */
-function makeChannelControl(surface, midiInput, midiOutput, x, y, instance) {
+function makeChannelControl(surface, midiInput, midiOutput, x, y, instance, surfaceElements) {
   var channelControl = {}
   channelControl.surface = surface;
   channelControl.midiInput = midiInput;
@@ -219,29 +220,30 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance) {
 
   var channelIndex = channelControl.instance
 
-  channelControl.trackNameDisplay.mOnTitleChange = function (activeDevice, objectTitle, valueTitle) {
+  channelControl.trackNameDisplay.mOnTitleChange = (function (activeDevice, objectTitle, valueTitle) {
     channelControl.trackObjectTitle = objectTitle
     channelControl.trackValueTitle = valueTitle
     // console.log("Track Title Changed:"+objectTitle+":"+valueTitle)
-    updateDisplay(activeDevice)
-  }
+    updateDisplay(activeDevice,midiOutput,surfaceElements)
+  }).bind({ midiOutput })
 
-  channelControl.faderTitlesDisplay.mOnTitleChange = function (activeDevice, objectTitle, valueTitle) {
+  channelControl.faderTitlesDisplay.mOnTitleChange = (function (activeDevice, objectTitle, valueTitle) {
     channelControl.faderObjectTitle = objectTitle
     channelControl.faderValueTitle = valueTitle
     console.log("Fader Title Changed:" + objectTitle + ":" + valueTitle)
-    updateDisplay(activeDevice)
-  }
+    updateDisplay(activeDevice,midiOutput,surfaceElements)
+  }).bind({ midiOutput })
 
-  channelControl.fader_touch.mSurfaceValue.mOnProcessValueChange = function (activeDevice, touched, value2) {
+  channelControl.fader_touch.mSurfaceValue.mOnProcessValueChange = (function (activeDevice, touched, value2) {
     channelControl.faderTouched = touched
+    var activePage = activeDevice.getState("activePage")
     switch (activePage) {
       case "Mixer":
         if (touched) {
           midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(channelControl.faderValueTitle, 6)))
         }
         else {
-          updateDisplay(activeDevice)
+          updateDisplay(activeDevice,midiOutput,surfaceElements)
         }
         break;
       case "SelectedTrack":
@@ -249,7 +251,7 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance) {
           midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel(channelControl.faderValueTitle, 56)))
         }
         else {
-          updateDisplay(activeDevice)
+          updateDisplay(activeDevice,midiOutput,surfaceElements)
         }
         break;
       default:
@@ -257,11 +259,12 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance) {
         midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel("No " + activePage + " specific binding defined", 56)))
         break;
     }
-  }
+  }).bind({ midiOutput })
 
-  channelControl.faderTitlesDisplay.mOnDisplayValueChange = function (activeDevice, value, units) {
+  channelControl.faderTitlesDisplay.mOnDisplayValueChange = (function (activeDevice, value, units) {
     console.log("Fader Value Change: " + value + ":" + units)
     channelControl.faderValue = value
+    var activePage = activeDevice.getState("activePage")
     switch (activePage) {
       case "Mixer":
         midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(value, 6)))
@@ -274,13 +277,13 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance) {
         midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel("No " + activePage + " specific binding defined", 56)))
         break;
     }
-  }
+  }).bind({ midiOutput })
 
-  channelControl.panTitlesDisplay.mOnTitleChange = function (activeDevice, objectTitle, valueTitle) {
+  channelControl.panTitlesDisplay.mOnTitleChange = (function (activeDevice, objectTitle, valueTitle) {
     channelControl.panObjectTitle = objectTitle
     channelControl.panValueTitle = valueTitle
     console.log("Pan Title Changed:" + objectTitle + ":" + valueTitle)
-
+    var activePage = activeDevice.getState("activePage")
     switch (activePage) {
       case "SelectedTrack":
         // For selected track trime the send channel number since it's lined up with the Platform M+ numbering anyway
@@ -291,12 +294,13 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance) {
         // do nothing
         break;
     }
-    updateDisplay(activeDevice)
-  }
+    updateDisplay(activeDevice,midiOutput,surfaceElements)
+  }).bind({ midiOutput })
 
-  channelControl.panTitlesDisplay.mOnDisplayValueChange = function (activeDevice, value, units) {
+  channelControl.panTitlesDisplay.mOnDisplayValueChange = (function (activeDevice, value, units) {
     console.log("Pan Value Change: " + value + ":" + units)
     channelControl.panValue = value
+    var activePage = activeDevice.getState("activePage")
     switch (activePage) {
       case "Mixer":
         midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(value, 6)))
@@ -310,14 +314,14 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance) {
         midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel("No " + activePage + " specific binding defined", 56)))
         break;
     }
-  }
+  }).bind({ midiOutput })
 
   // ! Hmm, I wonder if my use of the *TitlesDisplay custom variables is unnecessary based on this one
-  channelControl.pushEncoder.mPushValue.mOnDisplayValueChange = function (activeDevice, value, units) {
+  channelControl.pushEncoder.mPushValue.mOnDisplayValueChange = (function (activeDevice, value, units) {
     console.log("Pan push Value Change: " + value + ":" + units)
     channelControl.panPushValue = value
-    updateDisplay(activeDevice)
-  }
+    updateDisplay(activeDevice,midiOutput,surfaceElements)
+  }).bind({ midiOutput })
 
   return channelControl
 
@@ -328,12 +332,12 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance) {
  * @param {MR_DeviceMidiInput} midiInput
  * @param {MR_DeviceMidiOutput} midiOutput
  * @param {number} x           - x location of the push encoder in the gui
- * @param {Number} y           - y location of the push encoder in the gui
- * @param {Number} w           - width of the push encoder.
- * @param {Number} h           - height of the push encoder.
- * @param {Number} instance    - instance of the push encoder.
+ * @param {number} y           - y location of the push encoder in the gui
+ * @param {number} instance    - instance of the push encoder.
+ * @param {Object} surfaceElements
+ * @returns {Object}
  */
-function makeMasterControl(surface, midiInput, midiOutput, x, y, instance) {
+function makeMasterControl(surface, midiInput, midiOutput, x, y, instance, surfaceElements) {
   var masterControl = {}
   masterControl.surface = surface;
   masterControl.midiInput = midiInput;
@@ -365,13 +369,22 @@ function makeMasterControl(surface, midiInput, midiOutput, x, y, instance) {
       else {
         midiOutput.sendMidi(activeDevice, [0x90, 84, 0])
       }
-      updateDisplay(activeDevice)
+      updateDisplay(activeDevice,midiOutput,surfaceElements)
     }
   }
   return masterControl
 }
 
-function makeTransport(surface, midiInput, midiOutput, x, y) {
+/**
+ * @param {MR_DeviceSurface} surface
+ * @param {MR_DeviceMidiInput} midiInput
+ * @param {MR_DeviceMidiOutput} midiOutput
+ * @param {number} x
+ * @param {number} y
+ * @param {Object} surfaceElements
+ * @returns {Object}
+ */
+function makeTransport(surface, midiInput, midiOutput, x, y, surfaceElements) {
   var transport = {}
   transport.surface = surface;
   transport.midiInput = midiInput;
@@ -413,7 +426,7 @@ function makeTransport(surface, midiInput, midiOutput, x, y) {
 
   transport.btnFlip.mSurfaceValue.mOnProcessValueChange = function (activeDevice, number1, number2) {
     flip = !flip
-    updateDisplay(activeDevice)
+    updateDisplay(activeDevice,midiOutput,surfaceElements)
     console.log("transport flip: " + flip)
   }
 
