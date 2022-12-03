@@ -19,7 +19,7 @@ var updateDisplay = iconElements.updateDisplay
 var midiremote_api = require('midiremote_api_v1')
 
 // create the device driver main object
-var deviceDriver = midiremote_api.makeDeviceDriver('Icon', 'Platform Mplus', 'Big Fat Wombats')
+var deviceDriver = midiremote_api.makeDeviceDriver('Icon', 'Platform Mplus', 'Big Fat Wombat')
 
 // create objects representing the hardware's MIDI ports
 var midiInput = deviceDriver.mPorts.makeMidiInput()
@@ -28,7 +28,7 @@ var midiOutput = deviceDriver.mPorts.makeMidiOutput()
 deviceDriver.mOnActivate = function (activeDevice) {
     console.log('Icon Platform M+ Activated');
     clearAllLeds(activeDevice, midiOutput)
-};
+}
 
 // define all possible namings the devices MIDI ports could have
 // NOTE: Windows and MacOS handle port naming differently
@@ -78,34 +78,27 @@ var surfaceElements = makeSurfaceElements()
 function makeSubPage(subPageArea, name) {
     var subPage = subPageArea.makeSubPage(name)
     var msgText = 'sub page ' + name + ' activated'
-    subPage.mOnActivate = function (activeDevice) {
+    subPage.mOnActivate = (function (activeDevice) {
         console.log(msgText)
+        activeDevice.setState("activeSubPage",name)
         var data = [0xf0, 0x00, 0x00, 0x66, 0x14, 0x12,
         ]
         switch (name) {
-            // WIP This should probably be handled by state variables and made part of update display
             case "Scrub":
-                var out = data.concat(55, "S".charCodeAt(0))
-                out.push(0xf7)
-                midiOutput.sendMidi(activeDevice, out)
+                activeDevice.setState("indicator2","S")
                 break;
             case "Nudge":
-                var out = data.concat(55, "N".charCodeAt(0))
-                out.push(0xf7)
-                midiOutput.sendMidi(activeDevice, out)
+                activeDevice.setState("indicator2","N")
                 break;
             case "Nav":
-                var out = data.concat(111, "N".charCodeAt(0))
-                out.push(0xf7)
-                midiOutput.sendMidi(activeDevice, out)
+                activeDevice.setState("indicator1","N")
                 break;
             case "Zoom":
-                var out = data.concat(111, "Z".charCodeAt(0))
-                out.push(0xf7)
-                midiOutput.sendMidi(activeDevice, out)
+                activeDevice.setState("indicator1","Z")
                 break;
         }
-    }
+        updateDisplay(activeDevice, midiOutput, surfaceElements)
+    }).bind({ subPage, name })
     return subPage
 }
 /**
@@ -161,8 +154,6 @@ function makePageWithDefaults(name) {
     var subPageMasterFaderValue = makeSubPage(MasterFaderSubPageArea, 'MF_ValueUnderCursor')
     // var subPageMasterFaderMain = makeSubPage(MasterFaderSubPageArea, 'MF_MainOut')
 
-
-    // Master Fader changes display detail
     page.makeValueBinding(surfaceElements.faderMaster.fader.mSurfaceValue, page.mHostAccess.mMouseCursor.mValueUnderMouse).setValueTakeOverModeJump().setSubPage(subPageMasterFaderValue)
 
     // Automation for selected tracks
@@ -264,7 +255,7 @@ function makePageSelectedTrack() {
     page.makeValueBinding(surfaceElements.channelControls[6].rec_button.mSurfaceValue, selectedTrackChannel.mValue.mSolo).setTypeToggle().setSubPage(subPageSendsQC)
     page.makeValueBinding(surfaceElements.channelControls[7].rec_button.mSurfaceValue, selectedTrackChannel.mValue.mRecordEnable).setTypeToggle().setSubPage(subPageSendsQC)
 
-    // EQ Related but on Sends page so you know have EQ activated...not sure the best option but hey, more buttons and lights is cool!
+    // EQ Related but on Sends page so you know EQ activated...not sure the best option but hey, more buttons and lights is cool!
     page.makeValueBinding(surfaceElements.channelControls[0].solo_button.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand1.mOn).setTypeToggle().setSubPage(subPageSendsQC)
     page.makeValueBinding(surfaceElements.channelControls[1].solo_button.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand2.mOn).setTypeToggle().setSubPage(subPageSendsQC)
     page.makeValueBinding(surfaceElements.channelControls[2].solo_button.mSurfaceValue, selectedTrackChannel.mChannelEQ.mBand3.mOn).setTypeToggle().setSubPage(subPageSendsQC)
@@ -422,21 +413,21 @@ function clearChannelState() {
 }
 mixerPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeDevice) {
     console.log('from script: Platform M+ page "Mixer" activated')
-    activeDevice.setState("activePage","Mixer")
+    activeDevice.setState("activePage", "Mixer")
     clearAllLeds(activeDevice, midiOutput)
     clearChannelState()
 }).bind({ midiOutput })
 
 selectedTrackPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeDevice) {
     console.log('from script: Platform M+ page "Selected Track" activated')
-     activeDevice.setState("activePage","SelectedTrack")
+    activeDevice.setState("activePage", "SelectedTrack")
     clearAllLeds(activeDevice, midiOutput)
     clearChannelState()
 }).bind({ midiOutput })
 
 channelStripPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeDevice) {
     console.log('from script: Platform M+ page "Channel Strip" activated')
-     activeDevice.setState("activePage","ChannelStrip")
+    activeDevice.setState("activePage", "ChannelStrip")
     clearAllLeds(activeDevice, midiOutput)
     clearChannelState()
 }).bind({ midiOutput })
