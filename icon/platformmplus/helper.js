@@ -12,6 +12,24 @@ function displaySetTextOfColumn(columnIndex, rowIndex, textString) {
     return data
 }
 
+
+function setTextOfColumn(columnIndex, col_text, original_text) {
+    var col = columnIndex * 7
+    var text = (col_text + '       ').slice(0, 7) // ensure to always clear a column
+
+    //  original_text must be the full width of the display when setting a column
+    // so pad with spaces if it isn't
+    var new_text = original_text.slice(0, 56)
+    var length = new_text.length
+    while (length++ < 56)
+        new_text = new_text.concat(" ")
+
+    new_text = new_text.substring(0, col) + text + new_text.substring(col + 7, new_text.length);
+
+    return new_text
+}
+
+
 function displaySetTextOfLine(rowIndex, textString) {
     var data = [0xf0, 0x00, 0x00, 0x66, 0x14, 0x12,
         rowIndex * 56]
@@ -70,6 +88,7 @@ module.exports = {
     },
     display: {
         reset: resetDisplay,
-        makeLabel: makeLabel
+        makeLabel: makeLabel,
+        setTextOfColumn: setTextOfColumn
     }
 }

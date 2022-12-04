@@ -1,6 +1,43 @@
 var helper = require('./helper')
 var makeLabel = helper.display.makeLabel
-var flip = false
+var setTextOfColumn = helper.display.setTextOfColumn
+var flip = false // WIP delete me...
+var fader_view = true
+
+function Helper_updateDisplay(/** @type {string} */idRow1, /** @type {string} */idRow2, /** @type {MR_ActiveDevice} */activeDevice, /** @type {MR_DeviceMidiOutput} */midiOutput) {
+  // console.log("Helper Update Display")
+  var displayRow1 = activeDevice.getState(idRow1)
+  var displayRow2 = activeDevice.getState(idRow2)
+
+  activeDevice.setState('Row1', displayRow1)
+  activeDevice.setState('Row2', displayRow2)
+
+  var lenRow1 = displayRow1.length < 56 ? displayRow1.length : 56
+  var lenRow2 = displayRow2.length < 56 ? displayRow2.length : 56
+
+  var data = [0xf0, 0x00, 0x00, 0x66, 0x14, 0x12]
+
+  // Row 1
+  var out = data.concat(56) // Row 1 offset
+
+  for (var i = 0; i < lenRow1; ++i)
+    out.push(displayRow1.charCodeAt(i))
+  while (lenRow1++ < 56)
+    out.push(0x20) // spaces for the rest
+  out.push(0xf7)
+  midiOutput.sendMidi(activeDevice, out)
+
+  // Row 2
+  out = data.concat(0) // Row 2 offset
+
+  for (var i = 0; i < lenRow2; ++i)
+    out.push(displayRow2.charCodeAt(i))
+  while (lenRow2++ < 56)
+    out.push(0x20) // spaces for the rest
+  out.push(0xf7)
+  midiOutput.sendMidi(activeDevice, out)
+}
+
 
 function updateDisplay(/** @type {MR_ActiveDevice} */activeDevice, /** @type {MR_DeviceMidiOutput} */midiOutput, /** @type {Object} */surfaceElements) {
   var activePage = activeDevice.getState("activePage")
@@ -53,24 +90,26 @@ function updateDisplay(/** @type {MR_ActiveDevice} */activeDevice, /** @type {MR
       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel("No " + activePage + " specific binding defined", 56)))
       break;
   }
+
   // Update indicator characters - last char of each row
   function display_indicator(row, indicator) {
     var data = [0xf0, 0x00, 0x00, 0x66, 0x14, 0x12,
     ]
-    if (row===0) {
+    if (row === 0) {
       data.push(55)
     } else {
       data.push(111)
     }
-    data.push( indicator.charCodeAt(0))
+    data.push(indicator.charCodeAt(0))
     data.push(0xf7)
     midiOutput.sendMidi(activeDevice, data)
   }
+
   var indicator1 = activeDevice.getState("indicator1")
   var indicator2 = activeDevice.getState("indicator2")
+
   display_indicator(1, indicator1)
   display_indicator(0, indicator2)
-
 }
 
 /**
@@ -241,18 +280,33 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance, surf
 
   var channelIndex = channelControl.instance
 
+  function _updateDisplay(activeDevice, midiOutput ) {
+    if (fader_view) {
+      Helper_updateDisplay('Mixer - Fader - Title','Mixer - Fader - Values', activeDevice, midiOutput )
+    } else {
+      Helper_updateDisplay('Mixer - Pan - Title','Mixer - Pan - Values', activeDevice, midiOutput )
+    }
+  }
+
   channelControl.trackNameDisplay.mOnTitleChange = (function (activeDevice, objectTitle, valueTitle) {
-    channelControl.trackObjectTitle = objectTitle
-    channelControl.trackValueTitle = valueTitle
-    // console.log("Track Title Changed:"+objectTitle+":"+valueTitle)
-    updateDisplay(activeDevice, midiOutput, surfaceElements)
+    channelControl.trackObjectTitle = objectTitle // WIP Delete me
+    channelControl.trackValueTitle = valueTitle // WIP Delete me
+    var trackTitles= activeDevice.getState('Mixer - Track - Title')
+    var trackValues = activeDevice.getState('Mixer - Track - Values')
+    activeDevice.setState('Mixer - Track - Title', setTextOfColumn(channelIndex, makeLabel(objectTitle,6), trackTitles))
+    activeDevice.setState('Mixer - Track - Values', setTextOfColumn(channelIndex, makeLabel(valueTitle,6), trackValues))
+    _updateDisplay(activeDevice, midiOutput )
   }).bind({ midiOutput })
 
   channelControl.faderTitlesDisplay.mOnTitleChange = (function (activeDevice, objectTitle, valueTitle) {
-    channelControl.faderObjectTitle = objectTitle
-    channelControl.faderValueTitle = valueTitle
-    console.log("Fader Title Changed:" + objectTitle + ":" + valueTitle)
-    updateDisplay(activeDevice, midiOutput, surfaceElements)
+    channelControl.faderObjectTitle = objectTitle // WIP Delete me
+    channelControl.faderValueTitle = valueTitle // WIP Delete me
+
+    var faderTitles= activeDevice.getState('Mixer - Fader - Title')
+    var faderValues = activeDevice.getState('Mixer - Fader - Values')
+    activeDevice.setState('Mixer - Fader - Title', setTextOfColumn(channelIndex, makeLabel(objectTitle,6), faderTitles))
+    activeDevice.setState('Mixer - Fader - Values', setTextOfColumn(channelIndex, makeLabel(valueTitle,6), faderValues))
+    _updateDisplay(activeDevice, midiOutput )
   }).bind({ midiOutput })
 
   channelControl.fader_touch.mSurfaceValue.mOnProcessValueChange = (function (activeDevice, touched, value2) {
@@ -261,6 +315,7 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance, surf
     switch (activePage) {
       case "Mixer":
         if (touched) {
+          setTextOfColumn(channelIndex, makeLabel(channelControl.faderValueTitle,6), "")
           midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(channelControl.faderValueTitle, 6)))
         }
         else {
@@ -268,7 +323,6 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance, surf
         }
         break;
       case "SelectedTrack":
-        switch
         if (touched) {
           midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel(channelControl.faderValueTitle, 56)))
         }
