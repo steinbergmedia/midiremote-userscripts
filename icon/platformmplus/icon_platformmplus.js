@@ -66,8 +66,8 @@ function makeSurfaceElements() {
 
     // Track the selected track name
     surfaceElements.selectedTrack = surface.makeCustomValueVariable('selectedTrack');
-    surfaceElements.selectedTrack.mOnTitleChange = function(activeDevice, objectTitle, valueTitle) {
-        console.log('selectedTrack title change:'+objectTitle)
+    surfaceElements.selectedTrack.mOnTitleChange = function (activeDevice, objectTitle, valueTitle) {
+        console.log('selectedTrack title change:' + objectTitle)
         activeDevice.setState('selectedTrackName', objectTitle)
     }
 
@@ -85,7 +85,7 @@ var surfaceElements = makeSurfaceElements()
 function makeSubPage(subPageArea, name) {
     var subPage = subPageArea.makeSubPage(name)
     var msgText = 'sub page ' + name + ' activated'
-    subPage.mOnActivate = (function (activeDevice) {
+    subPage.mOnActivate = (function (/** @type {MR_ActiveDevice} **/activeDevice) {
         console.log(msgText)
         activeDevice.setState("activeSubPage", name)
         var data = [0xf0, 0x00, 0x00, 0x66, 0x14, 0x12,
@@ -103,6 +103,39 @@ function makeSubPage(subPageArea, name) {
             case "Zoom":
                 activeDevice.setState("indicator1", "Z")
                 break;
+            case "SendsQC":
+                // An action binding cannot be set to ta Toggle type button so manually adjust the rec button lights
+                // based on the subpage selection.
+                midiOutput.sendMidi(activeDevice, [0x90, 0, 127])
+                midiOutput.sendMidi(activeDevice, [0x90, 1, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 2, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 3, 0])
+                break;
+            case "EQ":
+                // An action binding cannot be set to ta Toggle type button so manually adjust the rec button lights
+                // based on the subpage selection.
+                midiOutput.sendMidi(activeDevice, [0x90, 0, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 1, 127])
+                midiOutput.sendMidi(activeDevice, [0x90, 2, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 3, 0])
+                break;
+            case "PreFilter":
+                // An action binding cannot be set to ta Toggle type button so manually adjust the rec button lights
+                // based on the subpage selection.
+                midiOutput.sendMidi(activeDevice, [0x90, 0, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 1, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 2, 127])
+                midiOutput.sendMidi(activeDevice, [0x90, 3, 0])
+                break;
+            case "CueSends":
+                // An action binding cannot be set to ta Toggle type button so manually adjust the rec button lights
+                // based on the subpage selection.
+                midiOutput.sendMidi(activeDevice, [0x90, 0, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 1, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 2, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 3, 127])
+                break;
+
         }
         Helper_updateDisplay('Row1', 'Row2', 'AltRow1', 'AltRow2', activeDevice, midiOutput)
     }).bind({ subPage, name })
@@ -263,7 +296,6 @@ function makePageSelectedTrack() {
     page.makeActionBinding(surfaceElements.channelControls[2].rec_button.mSurfaceValue, subPagePreFilter.mAction.mActivate).setSubPage(subPageSendsQC)
     page.makeActionBinding(surfaceElements.channelControls[3].rec_button.mSurfaceValue, subPageCueSends.mAction.mActivate).setSubPage(subPageSendsQC)
 
-    // WIP Add Subpage Displays to Selected channel
     // EQ Subpage
     const eqBand = []
     eqBand[0] = selectedTrackChannel.mChannelEQ.mBand1
@@ -424,6 +456,12 @@ selectedTrackPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeD
     activeDevice.setState("activePage", "SelectedTrack")
     clearAllLeds(activeDevice, midiOutput)
     clearChannelState(activeDevice)
+    // Set the Rec leds which correspond to the different subages to their starting state
+    activeDevice.setState("activeSubPage", "SendsQC")
+    midiOutput.sendMidi(activeDevice, [0x90, 0, 127])
+    midiOutput.sendMidi(activeDevice, [0x90, 1, 0])
+    midiOutput.sendMidi(activeDevice, [0x90, 2, 0])
+    midiOutput.sendMidi(activeDevice, [0x90, 3, 0])
 }).bind({ midiOutput })
 
 // WIP Add Channel Strip Page

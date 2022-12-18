@@ -265,17 +265,30 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance, surf
   channelControl.pushEncoder.mEncoderValue.mOnTitleChange = (function (activeDevice, objectTitle, valueTitle) {
     // console.log("Pan Title Changed:" + objectTitle + ":" + valueTitle)
     var activePage = activeDevice.getState("activePage")
+    var activeSubPage = activeDevice.getState("activeSubPage")
     var panTitles = activeDevice.getState(activePage + ' - Pan - Title')
     var panValueTitles = activeDevice.getState(activePage + ' - Pan - ValueTitles')
 
     switch (activePage) {
       case "SelectedTrack":
-        var title = objectTitle.slice(2)
-        if (title.length === 0) {
-          title = "None"
+        switch (activeSubPage) {
+          case "SendsQC":
+            var title = objectTitle.slice(2)
+            if (title.length === 0) {
+              title = "None"
+            }
+            activeDevice.setState(activePage + ' - Pan - ValueTitles', setTextOfColumn(channelIndex, makeLabel(title, 6), panValueTitles))
+            Helper_updateDisplay(activePage + ' - Fader - ValueTitles', activePage + ' - Fader - Values', activePage + ' - Pan - ValueTitles', activePage + ' - Pan - Values', activeDevice, midiOutput)
+            break;
+          default:
+            var title = valueTitle
+            if (title.length === 0) {
+              title = "None"
+            }
+            activeDevice.setState(activePage + ' - Pan - ValueTitles', setTextOfColumn(channelIndex, makeLabel(title, 6), panValueTitles))
+            Helper_updateDisplay(activePage + ' - Fader - ValueTitles', activePage + ' - Fader - Values', activePage + ' - Pan - ValueTitles', activePage + ' - Pan - Values', activeDevice, midiOutput)
+            break;
         }
-        activeDevice.setState(activePage + ' - Pan - ValueTitles', setTextOfColumn(channelIndex, makeLabel(title, 6), panValueTitles))
-        Helper_updateDisplay(activePage + ' - Fader - ValueTitles', activePage + ' - Fader - Values', activePage + ' - Pan - ValueTitles', activePage + ' - Pan - Values', activeDevice, midiOutput)
         break;
       default:
         activeDevice.setState(activePage + ' - Pan - Title', setTextOfColumn(channelIndex, makeLabel(objectTitle, 6), panTitles))
