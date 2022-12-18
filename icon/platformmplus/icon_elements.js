@@ -43,7 +43,8 @@ function Helper_updateDisplay(/** @type {string} */idRow1, /** @type {string} */
   } else {
     // Update display if it has changed
     if ((newRow1 !== prevRow1) || (newRow2 !== prevRow2) || (activeDisplayType !== displayType)) {
-       console.log("Rows Display update" + newRow1+"::"+newRow2)
+      // console.log("Rows Display update" + idRow1+"::"+idRow2)
+      // console.log("Rows Display update" + newRow1+"::"+newRow2)
       _sendDisplayData(1, newRow1, activeDevice, midiOutput)
       _sendDisplayData(0, newRow2, activeDevice, midiOutput)
     }
@@ -234,12 +235,18 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance, surf
   var channelIndex = channelControl.instance
 
   channelControl.fader.mSurfaceValue.mOnTitleChange = (function (activeDevice, objectTitle, valueTitle) {
-    console.log("Fader Title Change: " + channelIndex + "::" + objectTitle + ":" + valueTitle)
+    // console.log("Fader Title Change: " + channelIndex + "::" + objectTitle + ":" + valueTitle)
     var activePage = activeDevice.getState("activePage")
     var faderTitles = activeDevice.getState(activePage + ' - Fader - Title')
     var faderValueTitles = activeDevice.getState(activePage + ' - Fader - ValueTitles')
 
     switch (activePage) {
+      case "Midi":
+        // MIDI Page is special since it uses a separate midi port and completely separate display and MIDI routing setup
+        // This update of the display is simply to ensure that should this event be received (which it is during init for example) then
+        // the Midi display state values won't be overwritten as they are handed by the custom onValueChange call in the page
+        Helper_updateDisplay(activePage + ' - Fader - ValueTitles', activePage + ' - Fader - Values', activePage + ' - Pan - ValueTitles', activePage + ' - Pan - Values', activeDevice, midiOutput)
+        break;
       case "ChannelStrip":
       case "SelectedTrack":
         activeDevice.setState(activePage + ' - Fader - ValueTitles', setTextOfColumn(channelIndex, makeLabel(valueTitle, 6), faderValueTitles))
@@ -254,12 +261,19 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance, surf
   }).bind({ midiOutput })
 
   channelControl.fader.mSurfaceValue.mOnDisplayValueChange = (function (activeDevice, value, units) {
-    // console.log("Fader Display Value Change: " + value + ":" + units)
     var activePage = activeDevice.getState("activePage")
     var faderValues = activeDevice.getState(activePage + ' - Fader - Values')
 
-    activeDevice.setState(activePage + ' - Fader - Values', setTextOfColumn(channelIndex, makeLabel(value, 6), faderValues))
-    Helper_updateDisplay('Row1', activePage + ' - Fader - Values', 'AltRow1', 'AltRow2', activeDevice, midiOutput)
+    // console.log("Fader Display Value Change: " + value + ":" + activePage)
+
+    switch (activePage) {
+      case "Midi":
+        break;
+      default:
+        activeDevice.setState(activePage + ' - Fader - Values', setTextOfColumn(channelIndex, makeLabel(value, 6), faderValues))
+        Helper_updateDisplay('Row1', activePage + ' - Fader - Values', 'AltRow1', 'AltRow2', activeDevice, midiOutput)
+        break;
+    }
 
   }).bind({ midiOutput, channelIndex })
 
@@ -271,6 +285,12 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance, surf
     var panValueTitles = activeDevice.getState(activePage + ' - Pan - ValueTitles')
 
     switch (activePage) {
+      case "Midi":
+        // MIDI Page is special since it uses a separate midi port and completely separate display and MIDI routing setup
+        // This update of the display is simply to ensure that should this event be received (which it is during init for example) then
+        // the Midi display state values won't be overwritten as they are handed by the custom onValueChange call in the page
+        Helper_updateDisplay(activePage + ' - Fader - ValueTitles', activePage + ' - Fader - Values', activePage + ' - Pan - ValueTitles', activePage + ' - Pan - Values', activeDevice, midiOutput)
+        break;
       case "SelectedTrack":
         switch (activeSubPage) {
           case "SendsQC":

@@ -11,6 +11,10 @@ var makeTransport = iconElements.makeTransport
 var clearAllLeds = iconElements.clearAllLeds
 var Helper_updateDisplay = iconElements.Helper_updateDisplay
 
+var helper = require('./helper')
+var makeLabel = helper.display.makeLabel
+var setTextOfColumn = helper.display.setTextOfColumn
+var setTextOfLine = helper.display.setTextOfLine
 //-----------------------------------------------------------------------------
 // 1. DRIVER SETUP - create driver object, midi ports and detection information
 //-----------------------------------------------------------------------------
@@ -22,8 +26,10 @@ var midiremote_api = require('midiremote_api_v1')
 var deviceDriver = midiremote_api.makeDeviceDriver('Icon', 'Platform Mplus', 'Big Fat Wombat')
 
 // create objects representing the hardware's MIDI ports
-var midiInput = deviceDriver.mPorts.makeMidiInput()
-var midiOutput = deviceDriver.mPorts.makeMidiOutput()
+var midiInput = deviceDriver.mPorts.makeMidiInput('Platform M+')
+var midiOutput = deviceDriver.mPorts.makeMidiOutput('Platform M+')
+// var midiPageInput = deviceDriver.mPorts.makeMidiInput('Icon - CC - In')
+var midiPageOutput = deviceDriver.mPorts.makeMidiOutput('Icon - CC - Out')
 
 deviceDriver.mOnActivate = function (activeDevice) {
     console.log('Icon Platform M+ Activated');
@@ -38,6 +44,10 @@ deviceDriver.mOnActivate = function (activeDevice) {
 deviceDriver.makeDetectionUnit().detectPortPair(midiInput, midiOutput)
     .expectInputNameContains('Platform M+')
     .expectOutputNameContains('Platform M+')
+
+// deviceDriver.makeDetectionUnit().detectPortPair(midiPageInput, midiPageOutput)
+//     .expectInputNameEquals('Icon - CC - In')
+//     .expectOutputNameEquals('Icon - CC - Out')
 
 var surface = deviceDriver.mSurface
 
@@ -67,10 +77,9 @@ function makeSurfaceElements() {
     // Track the selected track name
     surfaceElements.selectedTrack = surface.makeCustomValueVariable('selectedTrack');
     surfaceElements.selectedTrack.mOnTitleChange = function (activeDevice, objectTitle, valueTitle) {
-        console.log('selectedTrack title change:' + objectTitle)
+        // console.log('selectedTrack title change:' + objectTitle)
         activeDevice.setState('selectedTrackName', objectTitle)
     }
-
     return surfaceElements
 }
 
@@ -410,7 +419,7 @@ function makePageSelectedTrack() {
 }
 
 function makePageChannelStrip() {
-    var page = makePageWithDefaults('Channelstrip')
+    var page = makePageWithDefaults('ChannelStrip')
 
     var strip = page.makeSubPageArea('Strip')
     var gatePage = makeSubPage(strip, 'Gate')
@@ -479,12 +488,79 @@ function makePageControlRoom() {
     return page
 }
 
+function makePageMidi() {
+    var page = makePageWithDefaults('Midi')
+
+    function makeMidiCCBinding( /** @type {MR_FactoryMappingPage} */page, /** @type {string} */displayName, /** @type {number} */cc, /** @type {number} */fader) {
+        // ? I have no idea what page.mCustom.makeHostValueVariable actually does- all I know is I can make a value binding this way. I can't seem to be able to look it up
+        // ? or access it all once made.
+        page.makeValueBinding(surfaceElements.channelControls[fader].fader.mSurfaceValue, page.mCustom.makeHostValueVariable(displayName)).setValueTakeOverModeJump()
+            .mOnValueChange = function (activeDevice, mapping, value, value2) {
+                // console.log(displayName + ":" + mapping + "::" + value + "::" + value2)
+                var activePage = activeDevice.getState("activePage")
+                var faderValueTitles = activeDevice.getState(activePage + ' - Fader - ValueTitles')
+                var faderValues = activeDevice.getState(activePage + ' - Fader - Values')
+
+                var ccValue = Math.ceil(value * 127)
+                var pitchBendValue = Math.ceil(value * 16383)
+                var value1 = pitchBendValue % 128
+                var value2 = Math.floor(pitchBendValue / 128)
+
+                // this is the value going back to the icon Fader
+                midiOutput.sendMidi(activeDevice, [0xE0 + fader, value1, value2])
+                // this is the value going back to Cubendo
+                midiPageOutput.sendMidi(activeDevice, [0xB0, cc, ccValue])
+                // and this updates the D2 Display
+                activeDevice.setState(activePage + ' - Fader - ValueTitles', setTextOfColumn(fader, makeLabel(displayName, 6), faderValueTitles))
+                activeDevice.setState(activePage + ' - Fader - Values', setTextOfColumn(fader, makeLabel(ccValue.toString(), 6), faderValues))
+                Helper_updateDisplay(activePage + ' - Fader - ValueTitles', activePage + ' - Fader - Values', activePage + ' - Pan - ValueTitles', activePage + ' - Pan - Values', activeDevice, midiOutput)
+            }
+    }
+
+    makeMidiCCBinding(page, "CC1", 1, 0)
+    makeMidiCCBinding(page, "CC11", 11, 1)
+
+    // In order to bind a fader so we can get it's value I'm using a dummy function.
+    // var dummy = page.makeSubPageArea('Dummy')
+    // This fader sends pitchbend
+    // page.makeActionBinding(surfaceElements.channelControls[0].fader.mSurfaceValue, dummy.mAction.mReset).mOnValueChange = function (activeDevice, mapping, value) {
+    //     var faderNumber = 0
+    //     var valueInput = value
+    //     var pitchBendValue = Math.ceil(valueInput * 16383)
+    //     var value1 = pitchBendValue % 128
+    //     var value2 = Math.floor(pitchBendValue / 128)
+    //     midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(0, 1, 'PB'))
+    //     midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(faderNumber, 0, (valueInput * 4 - 2).toFixed(1)))
+    //     midiOutput2.sendMidi(activeDevice, [0xE0, value1, value2])
+    // }
+
+    // // On release we want the pitchbend fader to jump back to the mid position,
+    // //but for some reason I can get it to work with sending the value. that's why I just added it on the page load
+    // // So here I'm just setting the display back to the "middle" value.
+    // page.makeActionBinding(surfaceElements.channelControls[0].fader_touch.mSurfaceValue, dummy.mAction.mReset).mOnValueChange = function (activeDevice, mapping, value) {
+    //     if (value == 0) {
+    //         var faderNumber = 0
+    //         var valueInput = 0.5
+    //         var pitchBendValue = Math.ceil(valueInput * 16383)
+    //         var value1 = pitchBendValue % 128
+    //         var value2 = Math.floor(pitchBendValue / 128)
+    //         midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(faderNumber, 0, (valueInput * 4 - 2).toFixed(1)))
+    //         midiOutput2.sendMidi(activeDevice, [0xE0, value1, value2])
+    //     }
+    // }
+
+    // This sends CC1 feeding back the values to the Icon, in order for the fader to stay where you release it. Definitely not the best way, but at least one way.
+
+
+    return page
+}
+
+
 var mixerPage = makePageMixer()
 var selectedTrackPage = makePageSelectedTrack()
 var channelStripPage = makePageChannelStrip()
-// WIP Add Control Room Page
 var controlRoomPage = makePageControlRoom()
-// WIP Add MIDI CC Page and extra MIDI Port
+var midiPage = makePageMidi()
 
 // Function to clear out the Channel State for the display titles/values
 // the OnDisplayChange callback is not called if the Channel doesn't have an updated
@@ -540,5 +616,21 @@ controlRoomPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeDev
     activeDevice.setState("activePage", "ControlRoom")
     clearAllLeds(activeDevice, midiOutput)
     clearChannelState(activeDevice)
-    console.log("finish cr onactivate")
 }).bind({ midiOutput })
+
+midiPage.mOnActivate = function (/** @type {MR_ActiveDevice} */activeDevice) {
+    console.log('from script: Platform M+ page "Midi" activated')
+    var activePage = "Midi"
+    activeDevice.setState("activePage", activePage)
+    clearAllLeds(activeDevice, midiOutput)
+    // clearChannelState(activeDevice)
+    // On load I'm setting the pitchbend fader to the center position. Whenever you release it it will jump back to this point
+    // midiOutput.sendMidi(activeDevice, [0xE0, 0, 64]) // to put pitchbend in center
+    // ! This init must match the CC bindings create in the makeMidiPage function - it's annoying and needs a refactor
+    // WIP Refactor me
+    var faderValueTitles = activeDevice.getState(activePage + ' - Fader - ValueTitles')
+    faderValueTitles = setTextOfColumn(0, makeLabel("CC1", 6), faderValueTitles)
+    faderValueTitles = setTextOfColumn(1, makeLabel("CC11", 6), faderValueTitles)
+    activeDevice.setState(activePage + ' - Fader - ValueTitles', setTextOfLine(faderValueTitles))
+    Helper_updateDisplay(activePage + ' - Fader - ValueTitles', activePage + ' - Fader - Values', activePage + ' - Pan - ValueTitles', activePage + ' - Pan - Values', activeDevice, midiOutput)
+}
