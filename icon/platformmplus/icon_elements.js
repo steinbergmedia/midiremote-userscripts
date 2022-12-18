@@ -253,7 +253,7 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance, surf
   }).bind({ midiOutput })
 
   channelControl.fader.mSurfaceValue.mOnDisplayValueChange = (function (activeDevice, value, units) {
-    console.log("Fader Display Value Change: " + value + ":" + units)
+    // console.log("Fader Display Value Change: " + value + ":" + units)
     var activePage = activeDevice.getState("activePage")
     var faderValues = activeDevice.getState(activePage + ' - Fader - Values')
 
@@ -263,7 +263,7 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance, surf
   }).bind({ midiOutput, channelIndex })
 
   channelControl.pushEncoder.mEncoderValue.mOnTitleChange = (function (activeDevice, objectTitle, valueTitle) {
-    console.log("Pan Title Changed:" + objectTitle + ":" + valueTitle)
+    // console.log("Pan Title Changed:" + objectTitle + ":" + valueTitle)
     var activePage = activeDevice.getState("activePage")
     var panTitles = activeDevice.getState(activePage + ' - Pan - Title')
     var panValueTitles = activeDevice.getState(activePage + ' - Pan - ValueTitles')
@@ -287,7 +287,7 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance, surf
   }).bind({ midiOutput, channelIndex })
 
   channelControl.pushEncoder.mEncoderValue.mOnDisplayValueChange = (function (activeDevice, value, units) {
-    console.log("Pan Value Change: " + value + ":" + units)
+    // console.log("Pan Value Change: " + value + ":" + units)
     var activePage = activeDevice.getState("activePage")
     var panValues = activeDevice.getState(activePage + ' - Pan - Values')
 
