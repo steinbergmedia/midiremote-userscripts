@@ -1,40 +1,24 @@
+function setTextOfColumn(columnIndex, col_text, original_text) {
+    var col = columnIndex * 7
+    var text = (col_text + '       ').slice(0, 7) // ensure to always clear a column
 
-function displaySetTextOfColumn(columnIndex, rowIndex, textString) {
-    var data = [0xf0, 0x00, 0x00, 0x66, 0x14, 0x12,
-        columnIndex * 7 + rowIndex * 56]
+    //  original_text must be the full width of the display when setting a column
+    // so pad with spaces if it isn't
+    var new_text = original_text.slice(0, 56)
+    var length = new_text.length
+    while (length++ < 56)
+        new_text = new_text.concat(" ")
 
-    var text = (textString + '       ').slice(0, 7) // ensure to always clear a column
-    // console.log("display:" + text)
-    for (var i = 0; i < 7; ++i)
-        data.push(text.charCodeAt(i))
-    data.push(0xf7)
+    new_text = new_text.substring(0, col) + text + new_text.substring(col + 7, new_text.length);
 
-    return data
+    return new_text
 }
 
-function displaySetTextOfLine(rowIndex, textString) {
-    var data = [0xf0, 0x00, 0x00, 0x66, 0x14, 0x12,
-        rowIndex * 56]
+function setTextOfLine(textString) {
     var blank = Array(56).join(" ")
     var text = (textString + blank).slice(0, 56) // ensure to always clear the entire row
-    // console.log("display:" + text)
-    for (var i = 0; i < 56; ++i)
-        data.push(text.charCodeAt(i))
-    data.push(0xf7)
 
-    return data
-}
-
-/**
- * @param {MR_ActiveDevice} activeDevice
- * @param {MR_DeviceMidiOutput} outPort
- */
-function resetDisplay(activeDevice, outPort) {
-    for (var i = 0; i < 8; ++i) {
-        for (var k = 0; k < 2; ++k) {
-            outPort.sendMidi(activeDevice, displaySetTextOfColumn(i, k, "       "))
-        }
-    }
+    return text
 }
 
 function makeLabel(value, length) {
@@ -64,12 +48,10 @@ function makeLabel(value, length) {
 }
 
 module.exports = {
-    sysex: {
-        displaySetTextOfColumn: displaySetTextOfColumn,
-        displaySetTextOfLine: displaySetTextOfLine
-    },
     display: {
-        reset: resetDisplay,
-        makeLabel: makeLabel
+        // reset: resetDisplay,
+        makeLabel: makeLabel,
+        setTextOfColumn: setTextOfColumn,
+        setTextOfLine: setTextOfLine
     }
 }

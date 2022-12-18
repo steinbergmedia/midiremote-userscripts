@@ -1,77 +1,85 @@
 var helper = require('./helper')
 var makeLabel = helper.display.makeLabel
-var flip = false
+var setTextOfColumn = helper.display.setTextOfColumn
+var setTextOfLine = helper.display.setTextOfLine
 
-function updateDisplay(/** @type {MR_ActiveDevice} */activeDevice, /** @type {MR_DeviceMidiOutput} */midiOutput, /** @type {Object} */surfaceElements) {
-  var activePage = activeDevice.getState("activePage")
-  var activeSubPage = activeDevice.getState("activeSubPage")
-  // WIP faderObjectTitle, faderValueTitle - need to be set in the respective OnDisplayUpdate etcs so they are not grabbed from the element
-  // WIP because the element changes with subPage etc.
-  switch (activePage) {
-    case "Mixer":
-      for (var i = 0; i < surfaceElements.numStrips; ++i) {
-        var element = surfaceElements.channelControls[i]
-        if (!flip) {
-          midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 1, makeLabel(element.faderObjectTitle, 6)))
-          midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 0, makeLabel(element.faderValueTitle, 6)))
-          midiOutput.sendMidi(activeDevice, [0x90, 84, 0]) // Mixer
-        }
-        else {
-          midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 1, makeLabel(element.panObjectTitle, 6)))
-          midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 0, makeLabel(element.panValueTitle, 6)))
-          midiOutput.sendMidi(activeDevice, [0x90, 84, 127]) // Mixer
-        }
-      }
-      break;
-    case "SelectedTrack":
-      var msg = surfaceElements.channelControls[0].trackObjectTitle
-      if (!flip) {
-        midiOutput.sendMidi(activeDevice, [0x90, 84, 0]) // Mixer
-        // For selected track all the trackObjectTitle are set to the same value
-        // So send it once to the display and use the entire top line for the title
-        midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel('QC-' + msg, 56)))
-        for (var i = 0; i < surfaceElements.numStrips; ++i) {
-          var element = surfaceElements.channelControls[i]
-          midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 0, makeLabel(element.faderValueTitle, 6)))
-        }
-      }
-      else {
-        midiOutput.sendMidi(activeDevice, [0x90, 84, 127]) // Mixer
-        midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel("Sends-" + msg, 56)))
-        for (var i = 0; i < surfaceElements.numStrips; ++i) {
-          var element = surfaceElements.channelControls[i]
-          if (element.panPushValue == "On") {
-            midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 0, makeLabel(element.panObjectTitle, 6)))
-          } else {
-            midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 0, makeLabel("Off", 6)))
-          }
-        }
-      }
-      break;
-    default:
-      console.log("No page specific binding defined")
-      midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel("No " + activePage + " specific binding defined", 56)))
-      break;
+function _sendDisplayData(row, text, activeDevice, midiOutput) {
+  var lenText = text.length < 56 ? text.length : 56
+  var data = [0xf0, 0x00, 0x00, 0x66, 0x14, 0x12]
+  var out = data.concat(56 * row) // Row 1 offset
+
+  for (var i = 0; i < lenText; ++i)
+    out.push(text.charCodeAt(i))
+  while (lenText++ < 56)
+    out.push(0x20) // spaces for the rest
+  out.push(0xf7)
+  midiOutput.sendMidi(activeDevice, out)
+
+}
+
+function Helper_updateDisplay(/** @type {string} */idRow1, /** @type {string} */idRow2, /** @type {string} */idAltRow1, /** @type {string} */idAltRow2,/** @type {MR_ActiveDevice} */activeDevice, /** @type {MR_DeviceMidiOutput} */midiOutput) {
+  // New values
+  var newRow1 = activeDevice.getState(idRow1)
+  var newRow2 = activeDevice.getState(idRow2)
+  var newAltRow1 = activeDevice.getState(idAltRow1)
+  var newAltRow2 = activeDevice.getState(idAltRow2)
+  // console.log("Helper Update Display...")
+  // Previous values
+  var prevRow1 = activeDevice.getState('Row1')
+  var prevRow2 = activeDevice.getState('Row2')
+  var prevAltRow1 = activeDevice.getState('AltRow1')
+  var prevAltRow2 = activeDevice.getState('AltRow2')
+  var activeDisplayType = activeDevice.getState('activeDisplayType')
+  // Display Fader or Panner values
+  var displayType = activeDevice.getState("displayType")
+
+  if (displayType === "Pan") {
+    // Update display if it has changed
+    if ((newAltRow1 !== prevAltRow1) || (newAltRow2 !== prevAltRow2) || (activeDisplayType !== displayType)) {
+      // console.log("AltRows Display update: " + newAltRow1+"::"+newAltRow2)
+      _sendDisplayData(1, newAltRow1, activeDevice, midiOutput)
+      _sendDisplayData(0, newAltRow2, activeDevice, midiOutput)
+    }
+  } else {
+    // Update display if it has changed
+    if ((newRow1 !== prevRow1) || (newRow2 !== prevRow2) || (activeDisplayType !== displayType)) {
+      // console.log("Rows Display update" + idRow1+"::"+idRow2)
+      // console.log("Rows Display update" + newRow1+"::"+newRow2)
+      _sendDisplayData(1, newRow1, activeDevice, midiOutput)
+      _sendDisplayData(0, newRow2, activeDevice, midiOutput)
+    }
   }
-  // Update indicator characters - last char of each row
+  // Update Active display state
+  activeDevice.setState('Row1', newRow1)
+  activeDevice.setState('Row2', newRow2)
+
+  activeDevice.setState('AltRow1', newAltRow1)
+  activeDevice.setState('AltRow2', newAltRow2)
+
+  activeDevice.setState('activeDisplayType', displayType)
+  // console.log("Helper Update Display...DONE")
+
+  // Indicators for the Zoom and Jog function subpages
   function display_indicator(row, indicator) {
     var data = [0xf0, 0x00, 0x00, 0x66, 0x14, 0x12,
     ]
-    if (row===0) {
+    if (row === 0) {
       data.push(55)
     } else {
       data.push(111)
     }
-    data.push( indicator.charCodeAt(0))
+    data.push(indicator.charCodeAt(0))
     data.push(0xf7)
     midiOutput.sendMidi(activeDevice, data)
   }
+
   var indicator1 = activeDevice.getState("indicator1")
   var indicator2 = activeDevice.getState("indicator2")
+
   display_indicator(1, indicator1)
   display_indicator(0, indicator2)
-
 }
+
 
 /**
  * @param {MR_DeviceSurface} surface
@@ -127,7 +135,7 @@ function clearAllLeds(/** @type {MR_ActiveDevice} */activeDevice, /** @type {MR_
   midiOutput.sendMidi(activeDevice, [0x90, 95, 0])
   midiOutput.sendMidi(activeDevice, [0x90, 86, 0])
 
-  helper.display.reset(activeDevice, midiOutput)
+  // helper.display.reset(activeDevice, midiOutput)
 }
 
 /**
@@ -199,21 +207,6 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance, surf
   channelControl.y = y;
   channelControl.instance = instance; // Channel number, 1-8
 
-  // Channel Displays
-  channelControl.trackNameDisplay = channelControl.surface.makeCustomValueVariable('trackNameDisplay');
-  channelControl.trackObjectTitle = ""
-  channelControl.trackValueTitle = ""
-  channelControl.faderTitlesDisplay = channelControl.surface.makeCustomValueVariable('faderTitlesDisplay');
-  channelControl.panTitlesDisplay = channelControl.surface.makeCustomValueVariable('panTitlesDisplay');
-  channelControl.faderObjectTitle = ""
-  channelControl.faderValueTitle = ""
-  channelControl.faderValue = ""
-  channelControl.faderTouched = 0 // 0 - not touched, 1 - touched
-  channelControl.panObjectTitle = ""
-  channelControl.panValueTitle = ""
-  channelControl.panValue = ""
-  channelControl.panPushValue = ""
-
   // Pot encoder
   channelControl.pushEncoder = channelControl.surface.makePushEncoder(channelControl.x, y + 2, 4, 4)
 
@@ -241,109 +234,101 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance, surf
 
   var channelIndex = channelControl.instance
 
-  channelControl.trackNameDisplay.mOnTitleChange = (function (activeDevice, objectTitle, valueTitle) {
-    channelControl.trackObjectTitle = objectTitle
-    channelControl.trackValueTitle = valueTitle
-    // console.log("Track Title Changed:"+objectTitle+":"+valueTitle)
-    updateDisplay(activeDevice, midiOutput, surfaceElements)
-  }).bind({ midiOutput })
-
-  channelControl.faderTitlesDisplay.mOnTitleChange = (function (activeDevice, objectTitle, valueTitle) {
-    channelControl.faderObjectTitle = objectTitle
-    channelControl.faderValueTitle = valueTitle
-    console.log("Fader Title Changed:" + objectTitle + ":" + valueTitle)
-    updateDisplay(activeDevice, midiOutput, surfaceElements)
-  }).bind({ midiOutput })
-
-  channelControl.fader_touch.mSurfaceValue.mOnProcessValueChange = (function (activeDevice, touched, value2) {
-    channelControl.faderTouched = touched
+  channelControl.fader.mSurfaceValue.mOnTitleChange = (function (activeDevice, objectTitle, valueTitle) {
+    // console.log("Fader Title Change: " + channelIndex + "::" + objectTitle + ":" + valueTitle)
     var activePage = activeDevice.getState("activePage")
+    var faderTitles = activeDevice.getState(activePage + ' - Fader - Title')
+    var faderValueTitles = activeDevice.getState(activePage + ' - Fader - ValueTitles')
+
     switch (activePage) {
-      case "Mixer":
-        if (touched) {
-          midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(channelControl.faderValueTitle, 6)))
-        }
-        else {
-          updateDisplay(activeDevice, midiOutput, surfaceElements)
-        }
+      case "Midi":
+        // MIDI Page is special since it uses a separate midi port and completely separate display and MIDI routing setup
+        // This update of the display is simply to ensure that should this event be received (which it is during init for example) then
+        // the Midi display state values won't be overwritten as they are handed by the custom onValueChange call in the page
+        Helper_updateDisplay(activePage + ' - Fader - ValueTitles', activePage + ' - Fader - Values', activePage + ' - Pan - ValueTitles', activePage + ' - Pan - Values', activeDevice, midiOutput)
         break;
+      case "ChannelStrip":
       case "SelectedTrack":
-        switch
-        if (touched) {
-          midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel(channelControl.faderValueTitle, 56)))
-        }
-        else {
-          updateDisplay(activeDevice, midiOutput, surfaceElements)
-        }
+        activeDevice.setState(activePage + ' - Fader - ValueTitles', setTextOfColumn(channelIndex, makeLabel(valueTitle, 6), faderValueTitles))
+        Helper_updateDisplay(activePage + ' - Fader - ValueTitles', activePage + ' - Fader - Values', activePage + ' - Pan - ValueTitles', activePage + ' - Pan - Values', activeDevice, midiOutput)
         break;
       default:
-        console.log("No page specific binding defined")
-        midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel("No " + activePage + " specific binding defined", 56)))
+        activeDevice.setState(activePage + ' - Fader - Title', setTextOfColumn(channelIndex, makeLabel(objectTitle, 6), faderTitles))
+        activeDevice.setState(activePage + ' - Fader - ValueTitles', setTextOfColumn(channelIndex, makeLabel(valueTitle, 6), faderValueTitles))
+        Helper_updateDisplay(activePage + ' - Fader - Title', activePage + ' - Fader - Values', activePage + ' - Pan - Title', activePage + ' - Pan - Values', activeDevice, midiOutput)
         break;
     }
   }).bind({ midiOutput })
 
-  channelControl.faderTitlesDisplay.mOnDisplayValueChange = (function (activeDevice, value, units) {
-    console.log("Fader Value Change: " + value + ":" + units)
-    channelControl.faderValue = value
+  channelControl.fader.mSurfaceValue.mOnDisplayValueChange = (function (activeDevice, value, units) {
     var activePage = activeDevice.getState("activePage")
+    var faderValues = activeDevice.getState(activePage + ' - Fader - Values')
+
+    // console.log("Fader Display Value Change: " + value + ":" + activePage)
+
     switch (activePage) {
-      case "Mixer":
-        midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(value, 6)))
-        break;
-      case "SelectedTrack":
-        midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(value, 6)))
+      case "Midi":
         break;
       default:
-        console.log("No page specific binding defined")
-        midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel("No " + activePage + " specific binding defined", 56)))
+        activeDevice.setState(activePage + ' - Fader - Values', setTextOfColumn(channelIndex, makeLabel(value, 6), faderValues))
+        Helper_updateDisplay('Row1', activePage + ' - Fader - Values', 'AltRow1', 'AltRow2', activeDevice, midiOutput)
         break;
     }
-  }).bind({ midiOutput })
 
-  channelControl.panTitlesDisplay.mOnTitleChange = (function (activeDevice, objectTitle, valueTitle) {
-    channelControl.panObjectTitle = objectTitle
-    channelControl.panValueTitle = valueTitle
-    console.log("Pan Title Changed:" + objectTitle + ":" + valueTitle)
-    var activePage = activeDevice.getState("activePage")
-    switch (activePage) {
-      case "SelectedTrack":
-        // For selected track trime the send channel number since it's lined up with the Platform M+ numbering anyway
-        channelControl.panObjectTitle = channelControl.panObjectTitle.slice(3)
-        break;
-      default:
-        console.log("No page specific binding defined")
-        // do nothing
-        break;
-    }
-    updateDisplay(activeDevice, midiOutput, surfaceElements)
-  }).bind({ midiOutput })
+  }).bind({ midiOutput, channelIndex })
 
-  channelControl.panTitlesDisplay.mOnDisplayValueChange = (function (activeDevice, value, units) {
-    console.log("Pan Value Change: " + value + ":" + units)
-    channelControl.panValue = value
+  channelControl.pushEncoder.mEncoderValue.mOnTitleChange = (function (activeDevice, objectTitle, valueTitle) {
+    // console.log("Pan Title Changed:" + objectTitle + ":" + valueTitle)
     var activePage = activeDevice.getState("activePage")
+    var activeSubPage = activeDevice.getState("activeSubPage")
+    var panTitles = activeDevice.getState(activePage + ' - Pan - Title')
+    var panValueTitles = activeDevice.getState(activePage + ' - Pan - ValueTitles')
+
     switch (activePage) {
-      case "Mixer":
-        midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(value, 6)))
+      case "Midi":
+        // MIDI Page is special since it uses a separate midi port and completely separate display and MIDI routing setup
+        // This update of the display is simply to ensure that should this event be received (which it is during init for example) then
+        // the Midi display state values won't be overwritten as they are handed by the custom onValueChange call in the page
+        Helper_updateDisplay(activePage + ' - Fader - ValueTitles', activePage + ' - Fader - Values', activePage + ' - Pan - ValueTitles', activePage + ' - Pan - Values', activeDevice, midiOutput)
         break;
       case "SelectedTrack":
-        midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel('Sends-' + channelControl.trackObjectTitle + "-" + channelControl.panObjectTitle, 56)))
-        midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(value, 6)))
+        switch (activeSubPage) {
+          case "SendsQC":
+            var title = objectTitle.slice(2)
+            if (title.length === 0) {
+              title = "None"
+            }
+            activeDevice.setState(activePage + ' - Pan - ValueTitles', setTextOfColumn(channelIndex, makeLabel(title, 6), panValueTitles))
+            Helper_updateDisplay(activePage + ' - Fader - ValueTitles', activePage + ' - Fader - Values', activePage + ' - Pan - ValueTitles', activePage + ' - Pan - Values', activeDevice, midiOutput)
+            break;
+          default:
+            var title = valueTitle
+            if (title.length === 0) {
+              title = "None"
+            }
+            activeDevice.setState(activePage + ' - Pan - ValueTitles', setTextOfColumn(channelIndex, makeLabel(title, 6), panValueTitles))
+            Helper_updateDisplay(activePage + ' - Fader - ValueTitles', activePage + ' - Fader - Values', activePage + ' - Pan - ValueTitles', activePage + ' - Pan - Values', activeDevice, midiOutput)
+            break;
+        }
         break;
       default:
-        console.log("No page specific binding defined")
-        midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel("No " + activePage + " specific binding defined", 56)))
+        activeDevice.setState(activePage + ' - Pan - Title', setTextOfColumn(channelIndex, makeLabel(objectTitle, 6), panTitles))
+        activeDevice.setState(activePage + ' - Pan - ValueTitles', setTextOfColumn(channelIndex, makeLabel(valueTitle, 6), panValueTitles))
+        Helper_updateDisplay(activePage + ' - Fader - Title', activePage + ' - Fader - Values', activePage + ' - Pan - Title', activePage + ' - Pan - Values', activeDevice, midiOutput)
         break;
     }
-  }).bind({ midiOutput })
 
-  // ! Hmm, I wonder if my use of the *TitlesDisplay custom variables is unnecessary based on this one
-  channelControl.pushEncoder.mPushValue.mOnDisplayValueChange = (function (activeDevice, value, units) {
-    console.log("Pan push Value Change: " + value + ":" + units)
-    channelControl.panPushValue = value
-    updateDisplay(activeDevice, midiOutput, surfaceElements)
-  }).bind({ midiOutput })
+  }).bind({ midiOutput, channelIndex })
+
+  channelControl.pushEncoder.mEncoderValue.mOnDisplayValueChange = (function (activeDevice, value, units) {
+    // console.log("Pan Value Change: " + value + ":" + units)
+    var activePage = activeDevice.getState("activePage")
+    var panValues = activeDevice.getState(activePage + ' - Pan - Values')
+
+    activeDevice.setState(activePage + ' - Pan - Values', setTextOfColumn(channelIndex, makeLabel(value, 6), panValues))
+    Helper_updateDisplay('Row1', 'Row2', 'AltRow1', activePage + ' - Pan - Values', activeDevice, midiOutput)
+
+  }).bind({ midiOutput, channelIndex })
 
   return channelControl
 
@@ -385,13 +370,20 @@ function makeMasterControl(surface, midiInput, midiOutput, x, y, instance, surfa
   masterControl.mixer_button.mSurfaceValue.mOnProcessValueChange = function (activeDevice) {
     var value = masterControl.mixer_button.mSurfaceValue.getProcessValue(activeDevice)
     if (value == 1) {
-      flip = !flip
-      if (flip)
+      var displayType = activeDevice.getState("displayType")
+      if (displayType === "Fader") {
+        displayType = "Pan"
+      } else {
+        displayType = "Fader"
+      }
+      activeDevice.setState("displayType", displayType)
+
+      if (displayType === "Pan")
         midiOutput.sendMidi(activeDevice, [0x90, 84, 127])
       else {
         midiOutput.sendMidi(activeDevice, [0x90, 84, 0])
       }
-      updateDisplay(activeDevice, midiOutput, surfaceElements)
+      Helper_updateDisplay('Row1', 'Row2', 'AltRow1', 'AltRow2', activeDevice, midiOutput)
     }
   }
   return masterControl
@@ -446,50 +438,12 @@ function makeTransport(surface, midiInput, midiOutput, x, y, surfaceElements) {
   transport.btnFlip = surface.makeButton(x + 0.5, y + 15, 2, 2).setShapeCircle()
   bindMidiNote(transport.btnFlip, 0, 50)
 
-  transport.btnFlip.mSurfaceValue.mOnProcessValueChange = function (activeDevice, number1, number2) {
-    flip = !flip
-    updateDisplay(activeDevice, midiOutput, surfaceElements)
-    console.log("transport flip: " + flip)
-  }
-
   // Pressing the Zoom keys simultaneously will toggle on and off a note event. If on
   // either zoom button will send a Note 100 when zoom is activated or deactivated by either button
   // If zoom is active and you simply press then other button the event will not be sent
   //
   transport.btnZoomOnOff = surface.makeButton(x + 3.5, y + 15, 2, 2).setShapeCircle()
   bindMidiNote(transport.btnZoomOnOff, 0, 100)
-  // transport.zoomState = surface.makeCustomValueVariable('ZoomState');
-  // transport.zoomState.mMidiBinding.setInputPort(midiInput).bindToNote(0, 100)
-  // transport.zoomState.mOnProcessValueChange = function (activeDevice, number1, number2) {
-
-  //   console.log("zoomState: " + number1 + ":" + number2)
-  //   // switch (activePage) {
-  //   //   case "Mixer":
-  //   //     if (touched) {
-  //   //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(channelControl.faderValueTitle, 6)))
-  //   //     }
-  //   //     else {
-  //   //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(channelControl.faderObjectTitle, 6)))
-  //   //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(channelControl.faderValueTitle, 6)))
-  //   //     }
-  //   //     break;
-  //   //   case "SelectedTrack":
-  //   //     if (touched) {
-  //   //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel(channelControl.faderValueTitle, 56)))
-  //   //     }
-  //   //     else {
-  //   //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel(channelControl.trackObjectTitle, 56)))
-  //   //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(channelControl.faderValueTitle, 6)))
-  //   //     }
-  //   //     break;
-  //   //   default:
-  //   //     console.log("No page specific binding defined")
-  //   //     midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel("No "+activePage+" specific binding defined", 56)))
-  //   //     break;
-  //   // }
-
-  // }
-
 
   // The Jog wheel will change CC/Note based on which of thte Zoom buttons have been activated
   // None - CC 60
@@ -541,5 +495,5 @@ module.exports = {
   makeTouchFader,
   bindCommandKnob,
   clearAllLeds,
-  updateDisplay
+  Helper_updateDisplay
 }
