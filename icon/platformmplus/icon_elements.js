@@ -258,7 +258,7 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance, surf
     var faderValues = activeDevice.getState(activePage + ' - Fader - Values')
 
     activeDevice.setState(activePage + ' - Fader - Values', setTextOfColumn(channelIndex, makeLabel(value, 6), faderValues))
-    Helper_updateDisplay(activePage + ' - Fader - ValueTitles', activePage + ' - Fader - Values', 'AltRow1', 'AltRow2', activeDevice, midiOutput)
+    Helper_updateDisplay('Row1', activePage + ' - Fader - Values', 'AltRow1', 'AltRow2', activeDevice, midiOutput)
 
   }).bind({ midiOutput, channelIndex })
 
@@ -292,14 +292,7 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance, surf
     var panValues = activeDevice.getState(activePage + ' - Pan - Values')
 
     activeDevice.setState(activePage + ' - Pan - Values', setTextOfColumn(channelIndex, makeLabel(value, 6), panValues))
-    switch (activePage) {
-      case "SelectedTrack":
-        Helper_updateDisplay('Row1', 'Row2', activePage + ' - Pan - ValueTitles', activePage + ' - Pan - Values', activeDevice, midiOutput)
-        break;
-      default:
-        Helper_updateDisplay('Row1', 'Row2', activePage + ' - Pan - Title', activePage + ' - Pan - Values', activeDevice, midiOutput)
-        break;
-    }
+    Helper_updateDisplay('Row1', 'Row2', 'AltRow1', activePage + ' - Pan - Values', activeDevice, midiOutput)
 
   }).bind({ midiOutput, channelIndex })
 
