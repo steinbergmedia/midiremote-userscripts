@@ -1,16 +1,16 @@
 
-function displaySetTextOfColumn(columnIndex, rowIndex, textString) {
-    var data = [0xf0, 0x00, 0x00, 0x66, 0x14, 0x12,
-        columnIndex * 7 + rowIndex * 56]
+// function displaySetTextOfColumn(columnIndex, rowIndex, textString) {
+//     var data = [0xf0, 0x00, 0x00, 0x66, 0x14, 0x12,
+//         columnIndex * 7 + rowIndex * 56]
 
-    var text = (textString + '       ').slice(0, 7) // ensure to always clear a column
-    // console.log("display:" + text)
-    for (var i = 0; i < 7; ++i)
-        data.push(text.charCodeAt(i))
-    data.push(0xf7)
+//     var text = (textString + '       ').slice(0, 7) // ensure to always clear a column
+//     // console.log("display:" + text)
+//     for (var i = 0; i < 7; ++i)
+//         data.push(text.charCodeAt(i))
+//     data.push(0xf7)
 
-    return data
-}
+//     return data
+// }
 
 
 function setTextOfColumn(columnIndex, col_text, original_text) {
@@ -29,31 +29,37 @@ function setTextOfColumn(columnIndex, col_text, original_text) {
     return new_text
 }
 
-
-function displaySetTextOfLine(rowIndex, textString) {
-    var data = [0xf0, 0x00, 0x00, 0x66, 0x14, 0x12,
-        rowIndex * 56]
+function setTextOfLine(textString) {
     var blank = Array(56).join(" ")
     var text = (textString + blank).slice(0, 56) // ensure to always clear the entire row
-    // console.log("display:" + text)
-    for (var i = 0; i < 56; ++i)
-        data.push(text.charCodeAt(i))
-    data.push(0xf7)
 
-    return data
+    return text
 }
+
+// function displaySetTextOfLine(rowIndex, textString) {
+//     var data = [0xf0, 0x00, 0x00, 0x66, 0x14, 0x12,
+//         rowIndex * 56]
+//     var blank = Array(56).join(" ")
+//     var text = (textString + blank).slice(0, 56) // ensure to always clear the entire row
+//     // console.log("display:" + text)
+//     for (var i = 0; i < 56; ++i)
+//         data.push(text.charCodeAt(i))
+//     data.push(0xf7)
+
+//     return data
+// }
 
 /**
  * @param {MR_ActiveDevice} activeDevice
  * @param {MR_DeviceMidiOutput} outPort
  */
-function resetDisplay(activeDevice, outPort) {
-    for (var i = 0; i < 8; ++i) {
-        for (var k = 0; k < 2; ++k) {
-            outPort.sendMidi(activeDevice, displaySetTextOfColumn(i, k, "       "))
-        }
-    }
-}
+// function resetDisplay(activeDevice, outPort) {
+//     for (var i = 0; i < 8; ++i) {
+//         for (var k = 0; k < 2; ++k) {
+//             outPort.sendMidi(activeDevice, displaySetTextOfColumn(i, k, "       "))
+//         }
+//     }
+// }
 
 function makeLabel(value, length) {
     // console.log("makeLabel:" + value)
@@ -82,13 +88,14 @@ function makeLabel(value, length) {
 }
 
 module.exports = {
-    sysex: {
-        displaySetTextOfColumn: displaySetTextOfColumn,
-        displaySetTextOfLine: displaySetTextOfLine
-    },
+    // sysex: {
+    //     displaySetTextOfColumn: displaySetTextOfColumn,
+    //     displaySetTextOfLine: displaySetTextOfLine
+    // },
     display: {
-        reset: resetDisplay,
+        // reset: resetDisplay,
         makeLabel: makeLabel,
-        setTextOfColumn: setTextOfColumn
+        setTextOfColumn: setTextOfColumn,
+        setTextOfLine: setTextOfLine
     }
 }
