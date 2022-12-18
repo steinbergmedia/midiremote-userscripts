@@ -135,7 +135,51 @@ function makeSubPage(subPageArea, name) {
                 midiOutput.sendMidi(activeDevice, [0x90, 2, 0])
                 midiOutput.sendMidi(activeDevice, [0x90, 3, 127])
                 break;
-
+            case "Gate":
+                // An action binding cannot be set to ta Toggle type button so manually adjust the sel button lights
+                // based on the subpage selection.
+                midiOutput.sendMidi(activeDevice, [0x90, 24, 127])
+                midiOutput.sendMidi(activeDevice, [0x90, 25, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 26, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 27, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 28, 0])
+                break;
+            case "Compressor":
+                // An action binding cannot be set to ta Toggle type button so manually adjust the sel button lights
+                // based on the subpage selection.
+                midiOutput.sendMidi(activeDevice, [0x90, 24, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 25, 127])
+                midiOutput.sendMidi(activeDevice, [0x90, 26, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 27, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 28, 0])
+                break;
+            case "Tools":
+                // An action binding cannot be set to ta Toggle type button so manually adjust the sel button lights
+                // based on the subpage selection.
+                midiOutput.sendMidi(activeDevice, [0x90, 24, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 25, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 26, 127])
+                midiOutput.sendMidi(activeDevice, [0x90, 27, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 28, 0])
+                break;
+            case "Saturator":
+                // An action binding cannot be set to ta Toggle type button so manually adjust the sel button lights
+                // based on the subpage selection.
+                midiOutput.sendMidi(activeDevice, [0x90, 24, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 25, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 26, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 27, 127])
+                midiOutput.sendMidi(activeDevice, [0x90, 28, 0])
+                break;
+            case "Limiter":
+                // An action binding cannot be set to ta Toggle type button so manually adjust the sel button lights
+                // based on the subpage selection.
+                midiOutput.sendMidi(activeDevice, [0x90, 24, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 25, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 26, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 27, 0])
+                midiOutput.sendMidi(activeDevice, [0x90, 28, 127])
+                break;
         }
         Helper_updateDisplay('Row1', 'Row2', 'AltRow1', 'AltRow2', activeDevice, midiOutput)
     }).bind({ subPage, name })
@@ -365,66 +409,49 @@ function makePageSelectedTrack() {
     return page
 }
 
-// function makePageChannelStrip() {
-//     var page = makePageWithDefaults('Channelstrip')
+function makePageChannelStrip() {
+    var page = makePageWithDefaults('Channelstrip')
 
-//     var strip = page.makeSubPageArea('strip')
-//     var gatePage = makeSubPage(strip, 'Gate')
-//     var compressorPage = makeSubPage(strip, 'Compressor')
-//     var toolsPage = makeSubPage(strip, 'Tools')
-//     var saturatorPage = makeSubPage(strip, 'Saturator')
-//     var limiterPage = makeSubPage(strip, 'Limiter')
+    var strip = page.makeSubPageArea('Strip')
+    var gatePage = makeSubPage(strip, 'Gate')
+    var compressorPage = makeSubPage(strip, 'Compressor')
+    var toolsPage = makeSubPage(strip, 'Tools')
+    var saturatorPage = makeSubPage(strip, 'Saturator')
+    var limiterPage = makeSubPage(strip, 'Limiter')
 
 
-//     var selectedTrackChannel = page.mHostAccess.mTrackSelection.mMixerChannel
-//     var stripEffects = selectedTrackChannel.mInsertAndStripEffects.mStripEffects
+    var selectedTrackChannel = page.mHostAccess.mTrackSelection.mMixerChannel
+    var stripEffects = selectedTrackChannel.mInsertAndStripEffects.mStripEffects
 
-//     for (var idx = 0; idx < surfaceElements.numStrips; ++idx) {
-//         var knobSurfaceValue = surfaceElements.channelControls[idx].pushEncoder.mEncoderValue;
-//         var knobPushValue = surfaceElements.channelControls[idx].pushEncoder.mPushValue;
-//         var faderSurfaceValue = surfaceElements.channelControls[idx].fader.mSurfaceValue;
+    for (var idx = 0; idx < surfaceElements.numStrips; ++idx) {
+        var faderSurfaceValue = surfaceElements.channelControls[idx].fader.mSurfaceValue;
 
-//         page.makeValueBinding(faderSurfaceValue, stripEffects.mGate.mParameterBankZone.makeParameterValue()).setSubPage(gatePage)
-//         page.makeValueBinding(faderSurfaceValue, stripEffects.mCompressor.mParameterBankZone.makeParameterValue()).setSubPage(compressorPage)
-//         page.makeValueBinding(faderSurfaceValue, stripEffects.mTools.mParameterBankZone.makeParameterValue()).setSubPage(toolsPage)
-//         page.makeValueBinding(faderSurfaceValue, stripEffects.mSaturator.mParameterBankZone.makeParameterValue()).setSubPage(saturatorPage)
-//         page.makeValueBinding(faderSurfaceValue, stripEffects.mLimiter.mParameterBankZone.makeParameterValue()).setSubPage(limiterPage)
-//     }
+        page.makeValueBinding(faderSurfaceValue, stripEffects.mGate.mParameterBankZone.makeParameterValue()).setSubPage(gatePage)
+        page.makeValueBinding(faderSurfaceValue, stripEffects.mCompressor.mParameterBankZone.makeParameterValue()).setSubPage(compressorPage)
+        page.makeValueBinding(faderSurfaceValue, stripEffects.mTools.mParameterBankZone.makeParameterValue()).setSubPage(toolsPage)
+        page.makeValueBinding(faderSurfaceValue, stripEffects.mSaturator.mParameterBankZone.makeParameterValue()).setSubPage(saturatorPage)
+        page.makeValueBinding(faderSurfaceValue, stripEffects.mLimiter.mParameterBankZone.makeParameterValue()).setSubPage(limiterPage)
+    }
 
-//     for (var idx = 0; idx < 5; ++idx) {
-//         var faderStrip = surfaceElements.channelControls[idx]
-//         var type = ['mGate', 'mCompressor', 'mTools', 'mSaturator', 'mLimiter'][idx]
-//         page.makeValueBinding(faderStrip.rec_button.mSurfaceValue, stripEffects[type].mOn).setTypeToggle()
-//         page.makeValueBinding(faderStrip.mute_button.mSurfaceValue, stripEffects[type].mBypass).setTypeToggle()
-//     }
+    for (var idx = 0; idx < 5; ++idx) {
+        var faderStrip = surfaceElements.channelControls[idx]
+        var type = ['mGate', 'mCompressor', 'mTools', 'mSaturator', 'mLimiter'][idx]
+        page.makeValueBinding(faderStrip.rec_button.mSurfaceValue, stripEffects[type].mOn).setTypeToggle()
+        page.makeValueBinding(faderStrip.mute_button.mSurfaceValue, stripEffects[type].mBypass).setTypeToggle()
+    }
 
-//     page.makeActionBinding(surfaceElements.channelControls[0].sel_button.mSurfaceValue, gatePage.mAction.mActivate)
-//     page.makeActionBinding(surfaceElements.channelControls[1].sel_button.mSurfaceValue, compressorPage.mAction.mActivate)
-//     page.makeActionBinding(surfaceElements.channelControls[2].sel_button.mSurfaceValue, toolsPage.mAction.mActivate)
-//     page.makeActionBinding(surfaceElements.channelControls[3].sel_button.mSurfaceValue, saturatorPage.mAction.mActivate)
-//     page.makeActionBinding(surfaceElements.channelControls[4].sel_button.mSurfaceValue, limiterPage.mAction.mActivate)
+    page.makeActionBinding(surfaceElements.channelControls[0].sel_button.mSurfaceValue, gatePage.mAction.mActivate)
+    page.makeActionBinding(surfaceElements.channelControls[1].sel_button.mSurfaceValue, compressorPage.mAction.mActivate)
+    page.makeActionBinding(surfaceElements.channelControls[2].sel_button.mSurfaceValue, toolsPage.mAction.mActivate)
+    page.makeActionBinding(surfaceElements.channelControls[3].sel_button.mSurfaceValue, saturatorPage.mAction.mActivate)
+    page.makeActionBinding(surfaceElements.channelControls[4].sel_button.mSurfaceValue, limiterPage.mAction.mActivate)
 
-//     gatePage.mOnActivate = function (device) { setLeds(device, 24, 'Gate') }
-//     compressorPage.mOnActivate = function (device) { setLeds(device, 25, 'Compressor') }
-//     toolsPage.mOnActivate = function (device) { setLeds(device, 26, 'Tools') }
-//     saturatorPage.mOnActivate = function (device) { setLeds(device, 27, 'Saturator') }
-//     limiterPage.mOnActivate = function (device) { setLeds(device, 28, 'Limiter') }
-
-//     function setLeds(device, value, text) {
-//         console.log('from script: Platform M+ subpage "' + text + '" activated')
-//         for (var i = 0; i < 5; ++i) {
-//             midiOutput.sendMidi(device, [0x90, 24 + i, 0])
-//         }
-//         midiOutput.sendMidi(device, [0x90, value, 127])
-//     }
-
-//     return page
-// }
+    return page
+}
 
 var mixerPage = makePageMixer()
 var selectedTrackPage = makePageSelectedTrack()
-// WIP Add Channel Strip Page
-// var channelStripPage = makePageChannelStrip()
+var channelStripPage = makePageChannelStrip()
 // WIP Add Control Room Page
 // WIP Add MIDI CC Page and extra MIDI Port
 
@@ -464,11 +491,16 @@ selectedTrackPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeD
     midiOutput.sendMidi(activeDevice, [0x90, 3, 0])
 }).bind({ midiOutput })
 
-// WIP Add Channel Strip Page
-// channelStripPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeDevice) {
-//     console.log('from script: Platform M+ page "Channel Strip" activated')
-//     activeDevice.setState("activePage", "ChannelStrip")
-//     clearAllLeds(activeDevice, midiOutput)
-//     clearChannelState(activeDevice)
-// }).bind({ midiOutput })
+channelStripPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeDevice) {
+    console.log('from script: Platform M+ page "Channel Strip" activated')
+    activeDevice.setState("activePage", "ChannelStrip")
+    clearAllLeds(activeDevice, midiOutput)
+    clearChannelState(activeDevice)
+    activeDevice.setState("activeSubPage", "Gate")
+    midiOutput.sendMidi(activeDevice, [0x90, 24, 127])
+    midiOutput.sendMidi(activeDevice, [0x90, 25, 0])
+    midiOutput.sendMidi(activeDevice, [0x90, 26, 0])
+    midiOutput.sendMidi(activeDevice, [0x90, 27, 0])
+    midiOutput.sendMidi(activeDevice, [0x90, 28, 0])
+}).bind({ midiOutput })
 

@@ -234,12 +234,16 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance, surf
   var channelIndex = channelControl.instance
 
   channelControl.fader.mSurfaceValue.mOnTitleChange = (function (activeDevice, objectTitle, valueTitle) {
-    // console.log("Fader Title Change: " + channelIndex + "::" + objectTitle + ":" + valueTitle)
+    console.log("Fader Title Change: " + channelIndex + "::" + objectTitle + ":" + valueTitle)
     var activePage = activeDevice.getState("activePage")
     var faderTitles = activeDevice.getState(activePage + ' - Fader - Title')
     var faderValueTitles = activeDevice.getState(activePage + ' - Fader - ValueTitles')
 
     switch (activePage) {
+      case "ChannelStrip":
+        activeDevice.setState(activePage + ' - Fader - ValueTitles', setTextOfColumn(channelIndex, makeLabel(valueTitle, 6), faderValueTitles))
+        Helper_updateDisplay(activePage + ' - Fader - ValueTitles', activePage + ' - Fader - Values', activePage + ' - Pan - ValueTitles', activePage + ' - Pan - Values', activeDevice, midiOutput)
+        break;
       case "SelectedTrack":
         activeDevice.setState(activePage + ' - Fader - ValueTitles', setTextOfColumn(channelIndex, makeLabel(valueTitle, 6), faderValueTitles))
         Helper_updateDisplay(activePage + ' - Fader - ValueTitles', activePage + ' - Fader - Values', activePage + ' - Pan - ValueTitles', activePage + ' - Pan - Values', activeDevice, midiOutput)
