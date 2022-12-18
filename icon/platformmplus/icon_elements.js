@@ -80,77 +80,6 @@ function Helper_updateDisplay(/** @type {string} */idRow1, /** @type {string} */
 }
 
 
-// function updateDisplay(/** @type {MR_ActiveDevice} */activeDevice, /** @type {MR_DeviceMidiOutput} */midiOutput, /** @type {Object} */surfaceElements) {
-//   var activePage = activeDevice.getState("activePage")
-//   var activeSubPage = activeDevice.getState("activeSubPage")
-//   switch (activePage) {
-//     case "Mixer":
-//       for (var i = 0; i < surfaceElements.numStrips; ++i) {
-//         var element = surfaceElements.channelControls[i]
-//         if (!flip) {
-//           midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 1, makeLabel(element.faderObjectTitle, 6)))
-//           midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 0, makeLabel(element.faderValueTitle, 6)))
-//           midiOutput.sendMidi(activeDevice, [0x90, 84, 0]) // Mixer
-//         }
-//         else {
-//           midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 1, makeLabel(element.panObjectTitle, 6)))
-//           midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 0, makeLabel(element.panValueTitle, 6)))
-//           midiOutput.sendMidi(activeDevice, [0x90, 84, 127]) // Mixer
-//         }
-//       }
-//       break;
-//     case "SelectedTrack":
-//       var msg = surfaceElements.channelControls[0].trackObjectTitle
-//       if (!flip) {
-//         midiOutput.sendMidi(activeDevice, [0x90, 84, 0]) // Mixer
-//         // For selected track all the trackObjectTitle are set to the same value
-//         // So send it once to the display and use the entire top line for the title
-//         midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel('QC-' + msg, 56)))
-//         for (var i = 0; i < surfaceElements.numStrips; ++i) {
-//           var element = surfaceElements.channelControls[i]
-//           midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 0, makeLabel(element.faderValueTitle, 6)))
-//         }
-//       }
-//       else {
-//         midiOutput.sendMidi(activeDevice, [0x90, 84, 127]) // Mixer
-//         midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel("Sends-" + msg, 56)))
-//         for (var i = 0; i < surfaceElements.numStrips; ++i) {
-//           var element = surfaceElements.channelControls[i]
-//           if (element.panPushValue == "On") {
-//             midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 0, makeLabel(element.panObjectTitle, 6)))
-//           } else {
-//             midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(i, 0, makeLabel("Off", 6)))
-//           }
-//         }
-//       }
-//       break;
-//     default:
-//       console.log("No page specific binding defined")
-//       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel("No " + activePage + " specific binding defined", 56)))
-//       break;
-//   }
-
-//   // Update indicator characters - last char of each row
-//   function display_indicator(row, indicator) {
-//     var data = [0xf0, 0x00, 0x00, 0x66, 0x14, 0x12,
-//     ]
-//     if (row === 0) {
-//       data.push(55)
-//     } else {
-//       data.push(111)
-//     }
-//     data.push(indicator.charCodeAt(0))
-//     data.push(0xf7)
-//     midiOutput.sendMidi(activeDevice, data)
-//   }
-
-//   var indicator1 = activeDevice.getState("indicator1")
-//   var indicator2 = activeDevice.getState("indicator2")
-
-//   display_indicator(1, indicator1)
-//   display_indicator(0, indicator2)
-// }
-
 /**
  * @param {MR_DeviceSurface} surface
  * @param {MR_DeviceMidiInput} midiInput
@@ -488,38 +417,6 @@ function makeTransport(surface, midiInput, midiOutput, x, y, surfaceElements) {
   //
   transport.btnZoomOnOff = surface.makeButton(x + 3.5, y + 15, 2, 2).setShapeCircle()
   bindMidiNote(transport.btnZoomOnOff, 0, 100)
-  // transport.zoomState = surface.makeCustomValueVariable('ZoomState');
-  // transport.zoomState.mMidiBinding.setInputPort(midiInput).bindToNote(0, 100)
-  // transport.zoomState.mOnProcessValueChange = function (activeDevice, number1, number2) {
-
-  //   console.log("zoomState: " + number1 + ":" + number2)
-  //   // switch (activePage) {
-  //   //   case "Mixer":
-  //   //     if (touched) {
-  //   //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(channelControl.faderValueTitle, 6)))
-  //   //     }
-  //   //     else {
-  //   //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 1, makeLabel(channelControl.faderObjectTitle, 6)))
-  //   //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(channelControl.faderValueTitle, 6)))
-  //   //     }
-  //   //     break;
-  //   //   case "SelectedTrack":
-  //   //     if (touched) {
-  //   //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel(channelControl.faderValueTitle, 56)))
-  //   //     }
-  //   //     else {
-  //   //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel(channelControl.trackObjectTitle, 56)))
-  //   //       midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(channelIndex, 0, makeLabel(channelControl.faderValueTitle, 6)))
-  //   //     }
-  //   //     break;
-  //   //   default:
-  //   //     console.log("No page specific binding defined")
-  //   //     midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfLine(1, makeLabel("No "+activePage+" specific binding defined", 56)))
-  //   //     break;
-  //   // }
-
-  // }
-
 
   // The Jog wheel will change CC/Note based on which of thte Zoom buttons have been activated
   // None - CC 60
