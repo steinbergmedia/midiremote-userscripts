@@ -43,7 +43,7 @@ function Helper_updateDisplay(/** @type {string} */idRow1, /** @type {string} */
   } else {
     // Update display if it has changed
     if ((newRow1 !== prevRow1) || (newRow2 !== prevRow2) || (activeDisplayType !== displayType)) {
-      // console.log("Rows Display update" + newRow1+"::"+newRow2)
+       console.log("Rows Display update" + newRow1+"::"+newRow2)
       _sendDisplayData(1, newRow1, activeDevice, midiOutput)
       _sendDisplayData(0, newRow2, activeDevice, midiOutput)
     }
@@ -241,9 +241,6 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance, surf
 
     switch (activePage) {
       case "ChannelStrip":
-        activeDevice.setState(activePage + ' - Fader - ValueTitles', setTextOfColumn(channelIndex, makeLabel(valueTitle, 6), faderValueTitles))
-        Helper_updateDisplay(activePage + ' - Fader - ValueTitles', activePage + ' - Fader - Values', activePage + ' - Pan - ValueTitles', activePage + ' - Pan - Values', activeDevice, midiOutput)
-        break;
       case "SelectedTrack":
         activeDevice.setState(activePage + ' - Fader - ValueTitles', setTextOfColumn(channelIndex, makeLabel(valueTitle, 6), faderValueTitles))
         Helper_updateDisplay(activePage + ' - Fader - ValueTitles', activePage + ' - Fader - Values', activePage + ' - Pan - ValueTitles', activePage + ' - Pan - Values', activeDevice, midiOutput)

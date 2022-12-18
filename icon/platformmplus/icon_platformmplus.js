@@ -449,10 +449,41 @@ function makePageChannelStrip() {
     return page
 }
 
+function makePageControlRoom() {
+    var page = makePageWithDefaults('ControlRoom')
+
+    var controlRoom = page.mHostAccess.mControlRoom
+
+    // Main
+    page.makeValueBinding(surfaceElements.channelControls[0].fader.mSurfaceValue, controlRoom.mMainChannel.mLevelValue).setValueTakeOverModeJump()
+    page.makeValueBinding(surfaceElements.channelControls[0].mute_button.mSurfaceValue, controlRoom.mMainChannel.mMuteValue).setTypeToggle()
+    page.makeValueBinding(surfaceElements.channelControls[0].sel_button.mSurfaceValue, controlRoom.mMainChannel.mMetronomeClickActiveValue).setTypeToggle()
+    // Phones[0]
+    page.makeValueBinding(surfaceElements.channelControls[1].fader.mSurfaceValue, controlRoom.getPhonesChannelByIndex(0).mLevelValue).setValueTakeOverModeJump()
+    page.makeValueBinding(surfaceElements.channelControls[1].mute_button.mSurfaceValue, controlRoom.getPhonesChannelByIndex(0).mMuteValue).setTypeToggle()
+    page.makeValueBinding(surfaceElements.channelControls[1].sel_button.mSurfaceValue, controlRoom.getPhonesChannelByIndex(0).mMetronomeClickActiveValue).setTypeToggle()
+
+    var maxCueSends = controlRoom.getMaxCueChannels() < 8 ? controlRoom.getMaxCueChannels() : 8
+
+    for (var i = 0; i < maxCueSends; ++i) {
+        var cueSend = controlRoom.getCueChannelByIndex(i)
+
+        var knobSurfaceValue = surfaceElements.channelControls[i].pushEncoder.mEncoderValue;
+        var knobPushValue = surfaceElements.channelControls[i].pushEncoder.mPushValue;
+
+        page.makeValueBinding(knobSurfaceValue, cueSend.mLevelValue)
+        page.makeValueBinding(knobPushValue, cueSend.mMuteValue).setTypeToggle()
+
+    }
+
+    return page
+}
+
 var mixerPage = makePageMixer()
 var selectedTrackPage = makePageSelectedTrack()
 var channelStripPage = makePageChannelStrip()
 // WIP Add Control Room Page
+var controlRoomPage = makePageControlRoom()
 // WIP Add MIDI CC Page and extra MIDI Port
 
 // Function to clear out the Channel State for the display titles/values
@@ -504,3 +535,10 @@ channelStripPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeDe
     midiOutput.sendMidi(activeDevice, [0x90, 28, 0])
 }).bind({ midiOutput })
 
+controlRoomPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeDevice) {
+    console.log('from script: Platform M+ page "ControlRoom" activated')
+    activeDevice.setState("activePage", "ControlRoom")
+    clearAllLeds(activeDevice, midiOutput)
+    clearChannelState(activeDevice)
+    console.log("finish cr onactivate")
+}).bind({ midiOutput })
