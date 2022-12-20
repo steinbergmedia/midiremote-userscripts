@@ -18,7 +18,13 @@ function _sendDisplayData(row, text, activeDevice, midiOutput) {
 }
 
 function Helper_updateDisplay(/** @type {string} */idRow1, /** @type {string} */idRow2, /** @type {string} */idAltRow1, /** @type {string} */idAltRow2,/** @type {MR_ActiveDevice} */activeDevice, /** @type {MR_DeviceMidiOutput} */midiOutput) {
-  // New values
+  // Display ids
+  activeDevice.setState('Display - idRow1', idRow1)
+  activeDevice.setState('Display - idRow2', idRow2)
+  activeDevice.setState('Display - idAltRow1', idAltRow1)
+  activeDevice.setState('Display - idAltRow2', idAltRow2)
+
+  // New display values
   var newRow1 = activeDevice.getState(idRow1)
   var newRow2 = activeDevice.getState(idRow2)
   var newAltRow1 = activeDevice.getState(idAltRow1)
@@ -266,13 +272,18 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance, surf
 
     // console.log("Fader Display Value Change: " + value + ":" + activePage)
 
-    switch (activePage) {
-      case "Midi":
-        break;
-      default:
-        activeDevice.setState(activePage + ' - Fader - Values', setTextOfColumn(channelIndex, makeLabel(value, 6), faderValues))
-        Helper_updateDisplay('Row1', activePage + ' - Fader - Values', 'AltRow1', 'AltRow2', activeDevice, midiOutput)
-        break;
+    // ? When adjusting the AI fader in Mixer mode there is no update to the other fader even if you adjust that fader with the AI control
+    // ? When adjusting the AI fader in SelectedChannel mode there IS an update to the other fader, so...
+    // ! Disable the update if the display in on MasterFader
+    if (activeDevice.getState('Display - idRow1') !== 'MasterFader - Title') {
+      switch (activePage) {
+        case "Midi":
+          break;
+        default:
+          activeDevice.setState(activePage + ' - Fader - Values', setTextOfColumn(channelIndex, makeLabel(value, 6), faderValues))
+          Helper_updateDisplay(activeDevice.getState('Display - idRow1'), activePage + ' - Fader - Values', activeDevice.getState('Display - idAltRow1'), activeDevice.getState('Display - idAltRow2'), activeDevice, midiOutput)
+          break;
+      }
     }
 
   }).bind({ midiOutput, channelIndex })
@@ -326,7 +337,7 @@ function makeChannelControl(surface, midiInput, midiOutput, x, y, instance, surf
     var panValues = activeDevice.getState(activePage + ' - Pan - Values')
 
     activeDevice.setState(activePage + ' - Pan - Values', setTextOfColumn(channelIndex, makeLabel(value, 6), panValues))
-    Helper_updateDisplay('Row1', 'Row2', 'AltRow1', activePage + ' - Pan - Values', activeDevice, midiOutput)
+    Helper_updateDisplay(activeDevice.getState('Display - idRow1'), activeDevice.getState('Display - idRow2'), activeDevice.getState('Display - idAltRow1'), activePage + ' - Pan - Values', activeDevice, midiOutput)
 
   }).bind({ midiOutput, channelIndex })
 
@@ -363,6 +374,48 @@ function makeMasterControl(surface, midiInput, midiOutput, x, y, instance, surfa
   masterControl.fader = tf[0]
   masterControl.fader_touch = tf[1]
 
+  masterControl.fader.mSurfaceValue.mOnTitleChange = (function (activeDevice, objectTitle, valueTitle) {
+    // console.log("Fader Title Change: " + channelIndex + "::" + objectTitle + ":" + valueTitle)
+    var title = objectTitle ? objectTitle + ":" + valueTitle : "No AI Parameter under mouse"
+    activeDevice.setState('MasterFader - Title', title)
+
+  })
+
+  masterControl.fader.mSurfaceValue.mOnDisplayValueChange = (function (activeDevice, value, units) {
+
+    activeDevice.setState('MasterFader - Values', value + units)
+    // console.log("MasterFader Display Value Change: " + value + ":" + units)
+    // Check to see if we are in the correct display mode - otherwise don't display
+    // ! This isn't done via the touch value as the touch onProcessValueChange may be processed after the mOnDisplayValueChange
+    if (activeDevice.getState('Display - idRow1') === 'MasterFader - Title') {
+      Helper_updateDisplay('MasterFader - Title', 'MasterFader - Values', 'MasterFader - Title', 'MasterFader - Values', activeDevice, midiOutput)
+    }
+  }).bind({ midiOutput })
+
+  masterControl.fader_touch.mSurfaceValue.mOnProcessValueChange = (function (activeDevice, touched, value2) {
+    // console.log("masterFader Touch Change: " + touched + ":" + value2)
+    // value===-1 means touch released
+    if (value2 == -1) {
+      // Reset the display to previous values
+      Helper_updateDisplay(activeDevice.getState('MasterFader - stashRow1'),
+        activeDevice.getState('MasterFader - stashRow2'),
+        activeDevice.getState('MasterFader - stashAltRow1'),
+        activeDevice.getState('MasterFader - stashAltRow2'),
+        activeDevice, midiOutput)
+    } else {
+      // Stash previous display state
+      // console.log("masterFader stash: " + activeDevice.getState('Display - idAltRow1') + ":" + activeDevice.getState('Display - idAltRow2'))
+      activeDevice.setState('MasterFader - stashRow1', activeDevice.getState('Display - idRow1'))
+      activeDevice.setState('MasterFader - stashRow2', activeDevice.getState('Display - idRow2'))
+      activeDevice.setState('MasterFader - stashAltRow1', activeDevice.getState('Display - idAltRow1'))
+      activeDevice.setState('MasterFader - stashAltRow2', activeDevice.getState('Display - idAltRow2'))
+      Helper_updateDisplay('MasterFader - Title', 'MasterFader - Values', 'MasterFader - Title', 'MasterFader - Values', activeDevice, midiOutput)
+    }
+  }).bind({ midiOutput })
+
+
+
+
   // Channel Buttons
   masterControl.mixer_button = makeLedButton(surface, midiInput, midiOutput, 84, fader_x + 3, fader_y + 6, 3, 3, false)
   masterControl.read_button = makeLedButton(surface, midiInput, midiOutput, 74, fader_x + 3, fader_y + 9, 3, 3, false)
@@ -383,9 +436,11 @@ function makeMasterControl(surface, midiInput, midiOutput, x, y, instance, surfa
       else {
         midiOutput.sendMidi(activeDevice, [0x90, 84, 0])
       }
-      Helper_updateDisplay('Row1', 'Row2', 'AltRow1', 'AltRow2', activeDevice, midiOutput)
+      Helper_updateDisplay(activeDevice.getState('Display - idRow1'), activeDevice.getState('Display - idRow2'), activeDevice.getState('Display - idAltRow1'), activeDevice.getState('Display - idAltRow2'), activeDevice, midiOutput)
     }
   }
+
+
   return masterControl
 }
 
