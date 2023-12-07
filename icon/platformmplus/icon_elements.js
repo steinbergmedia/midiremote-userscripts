@@ -161,10 +161,17 @@ function makeTouchFader(surface, midiInput, midiOutput, channel, x, y, w, h) {
     .setOutputPort(midiOutput)
     .bindToPitchBend(channel)
 
-  var fader_touch = surface.makeButton(x + 1, y - 1, 1, 1)
-  fader_touch.mSurfaceValue.mMidiBinding
-    .setInputPort(midiInput)
-    .bindToNote(0, 104 + channel)
+  // !!! Important !!!
+  // Test for the existing TouchState feature
+  // to make the script compatible with Cubase 12 as well
+  if(fader.mSurfaceValue.mTouchState) {
+    // create a custom value variable to bind agains the touch state midi message
+    var fader_touch = surface.makeCustomValueVariable('faderTouch'+channel.toString())
+    fader_touch.mMidiBinding.setInputPort(midiInput).bindToNote(0, 104 + channel)
+
+    // bind the custom value variable to the TouchState member. (new in API 1.1)
+    fader.mSurfaceValue.mTouchState.bindTo(fader_touch)
+  }
 
   return [fader, fader_touch]
 }
@@ -392,7 +399,7 @@ function makeMasterControl(surface, midiInput, midiOutput, x, y, instance, surfa
     }
   }).bind({ midiOutput })
 
-  masterControl.fader_touch.mSurfaceValue.mOnProcessValueChange = (function (activeDevice, touched, value2) {
+  masterControl.fader_touch.mOnProcessValueChange = (function (activeDevice, touched, value2) {
     // console.log("masterFader Touch Change: " + touched + ":" + value2)
     // value===-1 means touch released
     if (value2 == -1) {
@@ -412,9 +419,6 @@ function makeMasterControl(surface, midiInput, midiOutput, x, y, instance, surfa
       Helper_updateDisplay('MasterFader - Title', 'MasterFader - Values', 'MasterFader - Title', 'MasterFader - Values', activeDevice, midiOutput)
     }
   }).bind({ midiOutput })
-
-
-
 
   // Channel Buttons
   masterControl.mixer_button = makeLedButton(surface, midiInput, midiOutput, 84, fader_x + 3, fader_y + 6, 3, 3, false)

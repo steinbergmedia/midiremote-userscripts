@@ -278,7 +278,7 @@ function makePageMixer() {
         var knobSurfaceValue = surfaceElements.channelControls[channelIndex].pushEncoder.mEncoderValue;
         var knobPushValue = surfaceElements.channelControls[channelIndex].pushEncoder.mPushValue;
         var faderSurfaceValue = surfaceElements.channelControls[channelIndex].fader.mSurfaceValue;
-        var faderTouchSurfaceValue = surfaceElements.channelControls[channelIndex].fader_touch.mSurfaceValue;
+        var faderTouchValue = surfaceElements.channelControls[channelIndex].fader_touch;
         var sel_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].sel_button.mSurfaceValue;
         var mute_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].mute_button.mSurfaceValue;
         var solo_buttonSurfaceValue = surfaceElements.channelControls[channelIndex].solo_button.mSurfaceValue;
@@ -311,6 +311,7 @@ function makePageSelectedTrack() {
 
     // Custom variable for track the selectedTrack so we can get to it's name
     page.makeValueBinding(surfaceElements.selectedTrack, selectedTrackChannel.mValue.mVolume)
+    page.makeValueBinding(surfaceElements.selectedTrack, selectedTrackChannel.mValue.mVolume) // ! Duplicate to overcome C12.0.60+ bug
     /// SendsQC subPage
     // Sends on PushEncodes and mute button for pre/post
     // Focus QC on Faders
@@ -320,9 +321,13 @@ function makePageSelectedTrack() {
         var knobPushValue = surfaceElements.channelControls[idx].pushEncoder.mPushValue;
         var faderSurfaceValue = surfaceElements.channelControls[idx].fader.mSurfaceValue;
 
-        page.makeValueBinding(knobSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mLevel).setSubPage(subPageSendsQC)
-        page.makeValueBinding(knobPushValue, selectedTrackChannel.mSends.getByIndex(idx).mOn).setTypeToggle().setSubPage(subPageSendsQC)
-        page.makeValueBinding(faderSurfaceValue, page.mHostAccess.mFocusedQuickControls.getByIndex(idx)).setValueTakeOverModeJump().setSubPage(subPageSendsQC)
+        var quickControlValue = page.mHostAccess.mFocusedQuickControls.getByIndex(idx) // ! Weird: If this isn't a var in the line below but a direct call then Cubase will not bind values correctly
+        var sends = selectedTrackChannel.mSends.getByIndex(idx)
+
+        page.makeValueBinding(knobSurfaceValue, sends.mLevel).setSubPage(subPageSendsQC)
+        page.makeValueBinding(knobPushValue, sends.mOn).setTypeToggle().setSubPage(subPageSendsQC)
+        page.makeValueBinding(faderSurfaceValue, quickControlValue).setValueTakeOverModeJump().setSubPage(subPageSendsQC)
+        page.makeValueBinding(faderSurfaceValue, quickControlValue).setValueTakeOverModeJump().setSubPage(subPageSendsQC) // ! Duplicate to overcome C12.0.60+ bug
 
         page.makeValueBinding(surfaceElements.channelControls[idx].sel_button.mSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mOn).setTypeToggle().setSubPage(subPageSendsQC)
         page.makeValueBinding(surfaceElements.channelControls[idx].mute_button.mSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mPrePost).setTypeToggle().setSubPage(subPageSendsQC)
@@ -521,38 +526,6 @@ function makePageMidi() {
     makeMidiCCBinding(page, "CC1", 1, 0)
     makeMidiCCBinding(page, "CC11", 11, 1)
 
-    // In order to bind a fader so we can get it's value I'm using a dummy function.
-    // var dummy = page.makeSubPageArea('Dummy')
-    // This fader sends pitchbend
-    // page.makeActionBinding(surfaceElements.channelControls[0].fader.mSurfaceValue, dummy.mAction.mReset).mOnValueChange = function (activeDevice, mapping, value) {
-    //     var faderNumber = 0
-    //     var valueInput = value
-    //     var pitchBendValue = Math.ceil(valueInput * 16383)
-    //     var value1 = pitchBendValue % 128
-    //     var value2 = Math.floor(pitchBendValue / 128)
-    //     midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(0, 1, 'PB'))
-    //     midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(faderNumber, 0, (valueInput * 4 - 2).toFixed(1)))
-    //     midiOutput2.sendMidi(activeDevice, [0xE0, value1, value2])
-    // }
-
-    // // On release we want the pitchbend fader to jump back to the mid position,
-    // //but for some reason I can get it to work with sending the value. that's why I just added it on the page load
-    // // So here I'm just setting the display back to the "middle" value.
-    // page.makeActionBinding(surfaceElements.channelControls[0].fader_touch.mSurfaceValue, dummy.mAction.mReset).mOnValueChange = function (activeDevice, mapping, value) {
-    //     if (value == 0) {
-    //         var faderNumber = 0
-    //         var valueInput = 0.5
-    //         var pitchBendValue = Math.ceil(valueInput * 16383)
-    //         var value1 = pitchBendValue % 128
-    //         var value2 = Math.floor(pitchBendValue / 128)
-    //         midiOutput.sendMidi(activeDevice, helper.sysex.displaySetTextOfColumn(faderNumber, 0, (valueInput * 4 - 2).toFixed(1)))
-    //         midiOutput2.sendMidi(activeDevice, [0xE0, value1, value2])
-    //     }
-    // }
-
-    // This sends CC1 feeding back the values to the Icon, in order for the fader to stay where you release it. Definitely not the best way, but at least one way.
-
-
     return page
 }
 
@@ -569,6 +542,7 @@ var midiPage = makePageMidi()
 // in the state. By clearing state on the page activation it will update all that are changing.
 function clearChannelState(/** @type {MR_ActiveDevice} */activeDevice) {
     var activePage = activeDevice.getState("activePage")
+    // console.log('from script: clearChannelState'+activePage)
 
     activeDevice.setState(activePage + ' - Fader - Title', "")
     activeDevice.setState(activePage + ' - Fader - ValueTitles', "")
@@ -624,9 +598,6 @@ midiPage.mOnActivate = function (/** @type {MR_ActiveDevice} */activeDevice) {
     var activePage = "Midi"
     activeDevice.setState("activePage", activePage)
     clearAllLeds(activeDevice, midiOutput)
-    // clearChannelState(activeDevice)
-    // On load I'm setting the pitchbend fader to the center position. Whenever you release it it will jump back to this point
-    // midiOutput.sendMidi(activeDevice, [0xE0, 0, 64]) // to put pitchbend in center
     // ! This init must match the CC bindings create in the makeMidiPage function - it's annoying and needs a refactor
     // WIP Refactor me
     var faderValueTitles = activeDevice.getState(activePage + ' - Fader - ValueTitles')
