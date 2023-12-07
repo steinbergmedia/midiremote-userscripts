@@ -459,8 +459,10 @@ function makePageChannelStrip() {
     for (var idx = 0; idx < 5; ++idx) {
         var faderStrip = surfaceElements.channelControls[idx]
         var type = ['mGate', 'mCompressor', 'mTools', 'mSaturator', 'mLimiter'][idx]
-        page.makeValueBinding(faderStrip.rec_button.mSurfaceValue, stripEffects[type].mOn).setTypeToggle()
-        page.makeValueBinding(faderStrip.mute_button.mSurfaceValue, stripEffects[type].mBypass).setTypeToggle()
+        for (var i = 0; i < 2; i++) { // ! Workaround for Cubase 12.0.60+ bug
+            page.makeValueBinding(faderStrip.rec_button.mSurfaceValue, stripEffects[type].mOn).setTypeToggle()
+            page.makeValueBinding(faderStrip.mute_button.mSurfaceValue, stripEffects[type].mBypass).setTypeToggle()
+        }
     }
 
     page.makeActionBinding(surfaceElements.channelControls[0].sel_button.mSurfaceValue, gatePage.mAction.mActivate)
@@ -584,9 +586,9 @@ selectedTrackPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeD
 channelStripPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeDevice) {
     console.log('from script: Platform M+ page "Channel Strip" activated')
     activeDevice.setState("activePage", "ChannelStrip")
+    activeDevice.setState("activeSubPage", "Gate")
     clearAllLeds(activeDevice, midiOutput)
     clearChannelState(activeDevice)
-    activeDevice.setState("activeSubPage", "Gate")
     midiOutput.sendMidi(activeDevice, [0x90, 24, 127])
     midiOutput.sendMidi(activeDevice, [0x90, 25, 0])
     midiOutput.sendMidi(activeDevice, [0x90, 26, 0])
