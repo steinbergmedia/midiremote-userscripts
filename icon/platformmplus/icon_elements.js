@@ -116,7 +116,7 @@ function makeLedButton(surface, midiInput, midiOutput, note, x, y, w, h, circle)
 }
 
 function clearAllLeds(/** @type {MR_ActiveDevice} */activeDevice, /** @type {MR_DeviceMidiOutput} */midiOutput) {
-  console.log('Clear All Leds')
+  // console.log('Clear All Leds')
   // Mixer buttons
   for (var i = 0; i < 8; ++i) {
     midiOutput.sendMidi(activeDevice, [0x90, 24 + i, 0])
