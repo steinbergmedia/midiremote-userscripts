@@ -441,11 +441,19 @@ function makePageChannelStrip() {
     for (var idx = 0; idx < surfaceElements.numStrips; ++idx) {
         var faderSurfaceValue = surfaceElements.channelControls[idx].fader.mSurfaceValue;
 
-        page.makeValueBinding(faderSurfaceValue, stripEffects.mGate.mParameterBankZone.makeParameterValue()).setSubPage(gatePage)
-        page.makeValueBinding(faderSurfaceValue, stripEffects.mCompressor.mParameterBankZone.makeParameterValue()).setSubPage(compressorPage)
-        page.makeValueBinding(faderSurfaceValue, stripEffects.mTools.mParameterBankZone.makeParameterValue()).setSubPage(toolsPage)
-        page.makeValueBinding(faderSurfaceValue, stripEffects.mSaturator.mParameterBankZone.makeParameterValue()).setSubPage(saturatorPage)
-        page.makeValueBinding(faderSurfaceValue, stripEffects.mLimiter.mParameterBankZone.makeParameterValue()).setSubPage(limiterPage)
+        var gate = stripEffects.mGate.mParameterBankZone.makeParameterValue()
+        var compressor = stripEffects.mCompressor.mParameterBankZone.makeParameterValue()
+        var tools = stripEffects.mTools.mParameterBankZone.makeParameterValue()
+        var saturator = stripEffects.mSaturator.mParameterBankZone.makeParameterValue()
+        var limiter = stripEffects.mLimiter.mParameterBankZone.makeParameterValue()
+
+        for (var i = 0; i < 2; i++) { // ! Workaround for Cubase 12.0.60+ bug
+            page.makeValueBinding(faderSurfaceValue, gate).setSubPage(gatePage)
+            page.makeValueBinding(faderSurfaceValue, compressor).setSubPage(compressorPage)
+            page.makeValueBinding(faderSurfaceValue, tools).setSubPage(toolsPage)
+            page.makeValueBinding(faderSurfaceValue, saturator).setSubPage(saturatorPage)
+            page.makeValueBinding(faderSurfaceValue, limiter).setSubPage(limiterPage)
+        }
     }
 
     for (var idx = 0; idx < 5; ++idx) {
