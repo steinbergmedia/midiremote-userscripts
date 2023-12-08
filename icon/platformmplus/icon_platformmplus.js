@@ -34,6 +34,7 @@ var midiPageOutput = deviceDriver.mPorts.makeMidiOutput('Icon - CC - Out')
 deviceDriver.mOnActivate = function (activeDevice) {
     console.log('Icon Platform M+ Activated');
     clearAllLeds(activeDevice, midiOutput)
+    activeDevice.setState('lastTime', Date.now().toString())
 }
 
 // define all possible namings the devices MIDI ports could have
@@ -95,7 +96,7 @@ function makeSubPage(subPageArea, name) {
     var subPage = subPageArea.makeSubPage(name)
     var msgText = 'sub page ' + name + ' activated'
     subPage.mOnActivate = (function (/** @type {MR_ActiveDevice} **/activeDevice) {
-        console.log(msgText)
+        // console.log(msgText)
         activeDevice.setState("activeSubPage", name)
         var data = [0xf0, 0x00, 0x00, 0x66, 0x14, 0x12,
         ]
@@ -331,6 +332,33 @@ function makePageSelectedTrack() {
 
         page.makeValueBinding(surfaceElements.channelControls[idx].sel_button.mSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mOn).setTypeToggle().setSubPage(subPageSendsQC)
         page.makeValueBinding(surfaceElements.channelControls[idx].mute_button.mSurfaceValue, selectedTrackChannel.mSends.getByIndex(idx).mPrePost).setTypeToggle().setSubPage(subPageSendsQC)
+
+        // The use of bind below assures the idx is the correct value for the onTitleChange function
+        const qcOnTitleChange = {
+            idx: idx,
+            onTitleChange: function(activeDevice,activeMapping,objectTitle, valueTitle) {
+                var activePage = activeDevice.getState("activePage")
+                var activeSubPage = activeDevice.getState("activeSubPage")
+                var faderValueTitles = activeDevice.getState(activePage + ' - Fader - ValueTitles')
+                // console.log("QC Title Changed:" +this.idx+":" + objectTitle + ":" + valueTitle)
+                switch (activePage) {
+                case "SelectedTrack":
+                    switch (activeSubPage) {
+                        case "SendsQC":
+                            var title = valueTitle
+                            if (title.length === 0) {
+                                title = "None"
+                            }
+                            activeDevice.setState(activePage + ' - Fader - ValueTitles', setTextOfColumn(this.idx, makeLabel(title, 6), faderValueTitles))
+                            Helper_updateDisplay(activePage + ' - Fader - ValueTitles', activePage + ' - Fader - Values', activePage + ' - Pan - ValueTitles', activePage + ' - Pan - Values', activeDevice, midiOutput)
+                            break;
+                    }
+                    break;
+                }
+            }
+        }
+        quickControlValue.mOnTitleChange = qcOnTitleChange.onTitleChange.bind(qcOnTitleChange)
+
     }
 
     // Handy controls for easy access
@@ -471,6 +499,19 @@ function makePageChannelStrip() {
     page.makeActionBinding(surfaceElements.channelControls[3].sel_button.mSurfaceValue, saturatorPage.mAction.mActivate)
     page.makeActionBinding(surfaceElements.channelControls[4].sel_button.mSurfaceValue, limiterPage.mAction.mActivate)
 
+//     page.mOnIdle = function(activeDevice, activeMapping) {
+//         var now = Date.now()
+//         var lastTime = Number(activeDevice.getState('lastTime'))
+//         if ((now-lastTime) >= 5000) {
+//             activeDevice.setState('lastTime', now.toString())
+//             console.log('PAGE Default ON IDLE A')
+//         } else {
+// // WIP Okay so need to decide what to do here.
+// // WIP And what about making MIXER a SHIFT key?
+//         }
+//         // Your custom idle-time tasks here
+//     }
+
     return page
 }
 
@@ -564,19 +605,19 @@ function clearChannelState(/** @type {MR_ActiveDevice} */activeDevice) {
     activeDevice.setState("displayType", "Fader")
 }
 mixerPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeDevice) {
-    console.log('from script: Platform M+ page "Mixer" activated')
+    // console.log('from script: Platform M+ page "Mixer" activated')
     activeDevice.setState("activePage", "Mixer")
     clearAllLeds(activeDevice, midiOutput)
     clearChannelState(activeDevice)
 }).bind({ midiOutput })
 
 selectedTrackPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeDevice) {
-    console.log('from script: Platform M+ page "Selected Track" activated')
+    // console.log('from script: Platform M+ page "Selected Track" activated')
     activeDevice.setState("activePage", "SelectedTrack")
+    activeDevice.setState("activeSubPage", "SendsQC")
     clearAllLeds(activeDevice, midiOutput)
     clearChannelState(activeDevice)
     // Set the Rec leds which correspond to the different subages to their starting state
-    activeDevice.setState("activeSubPage", "SendsQC")
     midiOutput.sendMidi(activeDevice, [0x90, 0, 127])
     midiOutput.sendMidi(activeDevice, [0x90, 1, 0])
     midiOutput.sendMidi(activeDevice, [0x90, 2, 0])
@@ -584,7 +625,7 @@ selectedTrackPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeD
 }).bind({ midiOutput })
 
 channelStripPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeDevice) {
-    console.log('from script: Platform M+ page "Channel Strip" activated')
+    // console.log('from script: Platform M+ page "Channel Strip" activated')
     activeDevice.setState("activePage", "ChannelStrip")
     activeDevice.setState("activeSubPage", "Gate")
     clearAllLeds(activeDevice, midiOutput)
@@ -597,14 +638,14 @@ channelStripPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeDe
 }).bind({ midiOutput })
 
 controlRoomPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeDevice) {
-    console.log('from script: Platform M+ page "ControlRoom" activated')
+    // console.log('from script: Platform M+ page "ControlRoom" activated')
     activeDevice.setState("activePage", "ControlRoom")
     clearAllLeds(activeDevice, midiOutput)
     clearChannelState(activeDevice)
 }).bind({ midiOutput })
 
 midiPage.mOnActivate = function (/** @type {MR_ActiveDevice} */activeDevice) {
-    console.log('from script: Platform M+ page "Midi" activated')
+    // console.log('from script: Platform M+ page "Midi" activated')
     var activePage = "Midi"
     activeDevice.setState("activePage", activePage)
     clearAllLeds(activeDevice, midiOutput)
