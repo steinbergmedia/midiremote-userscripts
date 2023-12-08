@@ -28,8 +28,8 @@ var deviceDriver = midiremote_api.makeDeviceDriver('Icon', 'Platform Mplus', 'Bi
 // create objects representing the hardware's MIDI ports
 var midiInput = deviceDriver.mPorts.makeMidiInput('Platform M+')
 var midiOutput = deviceDriver.mPorts.makeMidiOutput('Platform M+')
-// var midiPageInput = deviceDriver.mPorts.makeMidiInput('Icon - CC - In')
-var midiPageOutput = deviceDriver.mPorts.makeMidiOutput('Icon - CC - Out')
+var midiPageInput = deviceDriver.mPorts.makeMidiInput('Icon CC')
+var midiPageOutput = deviceDriver.mPorts.makeMidiOutput('Icon CC')
 
 deviceDriver.mOnActivate = function (activeDevice) {
     console.log('Icon Platform M+ Activated');
@@ -46,9 +46,8 @@ deviceDriver.makeDetectionUnit().detectPortPair(midiInput, midiOutput)
     .expectInputNameContains('Platform M+')
     .expectOutputNameContains('Platform M+')
 
-// deviceDriver.makeDetectionUnit().detectPortPair(midiPageInput, midiPageOutput)
-//     .expectInputNameEquals('Icon - CC - In')
-//     .expectOutputNameEquals('Icon - CC - Out')
+deviceDriver.makeDetectionUnit().detectPortPair(midiPageInput, midiPageOutput)
+    .expectOutputNameEquals('Icon CC')
 
 var surface = deviceDriver.mSurface
 
