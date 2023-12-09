@@ -96,102 +96,124 @@ function makeSubPage(subPageArea, name) {
     var msgText = 'sub page ' + name + ' activated'
     subPage.mOnActivate = (function (/** @type {MR_ActiveDevice} **/activeDevice) {
         // console.log(msgText)
-        activeDevice.setState("activeSubPage", name)
-        var data = [0xf0, 0x00, 0x00, 0x66, 0x14, 0x12,
-        ]
-        switch (name) {
-            case "Scrub":
-                activeDevice.setState("indicator2", "S")
+        var activePage = activeDevice.getState("activePage")
+        var activeSubPage = this.name
+        switch(activePage) {
+            case "SelectedTrack":
+                switch (activeSubPage) {
+                    case "SendsQC":
+                        // An action binding cannot be set to a Toggle type button so manually adjust the rec button lights
+                        // based on the subpage selection.
+                        midiOutput.sendMidi(activeDevice, [0x90, 0, 127])
+                        midiOutput.sendMidi(activeDevice, [0x90, 1, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 2, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 3, 0])
+                        activeDevice.setState("activeSubPage", activeSubPage)
+                        break;
+                    case "EQ":
+                        // An action binding cannot be set to a Toggle type button so manually adjust the rec button lights
+                        // based on the subpage selection.
+                        midiOutput.sendMidi(activeDevice, [0x90, 0, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 1, 127])
+                        midiOutput.sendMidi(activeDevice, [0x90, 2, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 3, 0])
+                        activeDevice.setState("activeSubPage", activeSubPage)
+                        break;
+                    case "PreFilter":
+                        // An action binding cannot be set to a Toggle type button so manually adjust the rec button lights
+                        // based on the subpage selection.
+                        midiOutput.sendMidi(activeDevice, [0x90, 0, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 1, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 2, 127])
+                        midiOutput.sendMidi(activeDevice, [0x90, 3, 0])
+                        activeDevice.setState("activeSubPage", activeSubPage)
+                        break;
+                    case "CueSends":
+                        // An action binding cannot be set to a Toggle type button so manually adjust the rec button lights
+                        // based on the subpage selection.
+                        midiOutput.sendMidi(activeDevice, [0x90, 0, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 1, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 2, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 3, 127])
+                        activeDevice.setState("activeSubPage", activeSubPage)
+                        break;
+                }
                 break;
-            case "Nudge":
-                activeDevice.setState("indicator2", "N")
+            case "ChannelStrip":
+                switch (activeSubPage) {
+                    case "Gate":
+                        // An action binding cannot be set to a Toggle type button so manually adjust the sel button lights
+                        // based on the subpage selection.
+                        midiOutput.sendMidi(activeDevice, [0x90, 24, 127])
+                        midiOutput.sendMidi(activeDevice, [0x90, 25, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 26, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 27, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 28, 0])
+                        activeDevice.setState("activeSubPage", activeSubPage)
+                        break;
+                    case "Compressor":
+                        // An action binding cannot be set to a Toggle type button so manually adjust the sel button lights
+                        // based on the subpage selection.
+                        midiOutput.sendMidi(activeDevice, [0x90, 24, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 25, 127])
+                        midiOutput.sendMidi(activeDevice, [0x90, 26, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 27, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 28, 0])
+                        activeDevice.setState("activeSubPage", activeSubPage)
+                        break;
+                    case "Tools":
+                        // An action binding cannot be set to a Toggle type button so manually adjust the sel button lights
+                        // based on the subpage selection.
+                        midiOutput.sendMidi(activeDevice, [0x90, 24, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 25, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 26, 127])
+                        midiOutput.sendMidi(activeDevice, [0x90, 27, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 28, 0])
+                        activeDevice.setState("activeSubPage", activeSubPage)
+                        break;
+                    case "Saturator":
+                        // An action binding cannot be set to a Toggle type button so manually adjust the sel button lights
+                        // based on the subpage selection.
+                        midiOutput.sendMidi(activeDevice, [0x90, 24, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 25, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 26, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 27, 127])
+                        midiOutput.sendMidi(activeDevice, [0x90, 28, 0])
+                        activeDevice.setState("activeSubPage", activeSubPage)
+                        break;
+                    case "Limiter":
+                        // An action binding cannot be set to a Toggle type button so manually adjust the sel button lights
+                        // based on the subpage selection.
+                        midiOutput.sendMidi(activeDevice, [0x90, 24, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 25, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 26, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 27, 0])
+                        midiOutput.sendMidi(activeDevice, [0x90, 28, 127])
+                        activeDevice.setState("activeSubPage", activeSubPage)
+                        break;
+                }
                 break;
-            case "Nav":
-                activeDevice.setState("indicator1", "N")
-                break;
-            case "Zoom":
-                activeDevice.setState("indicator1", "Z")
-                break;
-            case "SendsQC":
-                // An action binding cannot be set to ta Toggle type button so manually adjust the rec button lights
-                // based on the subpage selection.
-                midiOutput.sendMidi(activeDevice, [0x90, 0, 127])
-                midiOutput.sendMidi(activeDevice, [0x90, 1, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 2, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 3, 0])
-                break;
-            case "EQ":
-                // An action binding cannot be set to ta Toggle type button so manually adjust the rec button lights
-                // based on the subpage selection.
-                midiOutput.sendMidi(activeDevice, [0x90, 0, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 1, 127])
-                midiOutput.sendMidi(activeDevice, [0x90, 2, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 3, 0])
-                break;
-            case "PreFilter":
-                // An action binding cannot be set to ta Toggle type button so manually adjust the rec button lights
-                // based on the subpage selection.
-                midiOutput.sendMidi(activeDevice, [0x90, 0, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 1, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 2, 127])
-                midiOutput.sendMidi(activeDevice, [0x90, 3, 0])
-                break;
-            case "CueSends":
-                // An action binding cannot be set to ta Toggle type button so manually adjust the rec button lights
-                // based on the subpage selection.
-                midiOutput.sendMidi(activeDevice, [0x90, 0, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 1, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 2, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 3, 127])
-                break;
-            case "Gate":
-                // An action binding cannot be set to ta Toggle type button so manually adjust the sel button lights
-                // based on the subpage selection.
-                midiOutput.sendMidi(activeDevice, [0x90, 24, 127])
-                midiOutput.sendMidi(activeDevice, [0x90, 25, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 26, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 27, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 28, 0])
-                break;
-            case "Compressor":
-                // An action binding cannot be set to ta Toggle type button so manually adjust the sel button lights
-                // based on the subpage selection.
-                midiOutput.sendMidi(activeDevice, [0x90, 24, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 25, 127])
-                midiOutput.sendMidi(activeDevice, [0x90, 26, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 27, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 28, 0])
-                break;
-            case "Tools":
-                // An action binding cannot be set to ta Toggle type button so manually adjust the sel button lights
-                // based on the subpage selection.
-                midiOutput.sendMidi(activeDevice, [0x90, 24, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 25, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 26, 127])
-                midiOutput.sendMidi(activeDevice, [0x90, 27, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 28, 0])
-                break;
-            case "Saturator":
-                // An action binding cannot be set to ta Toggle type button so manually adjust the sel button lights
-                // based on the subpage selection.
-                midiOutput.sendMidi(activeDevice, [0x90, 24, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 25, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 26, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 27, 127])
-                midiOutput.sendMidi(activeDevice, [0x90, 28, 0])
-                break;
-            case "Limiter":
-                // An action binding cannot be set to ta Toggle type button so manually adjust the sel button lights
-                // based on the subpage selection.
-                midiOutput.sendMidi(activeDevice, [0x90, 24, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 25, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 26, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 27, 0])
-                midiOutput.sendMidi(activeDevice, [0x90, 28, 127])
-                break;
+            default:
+                // WIP activeSubPage for these is non-sensical as they are global
+                switch (activeSubPage) {
+                    case "Scrub":
+                        activeDevice.setState("indicator2", "S")
+                        break;
+                    case "Nudge":
+                        activeDevice.setState("indicator2", "N")
+                        break;
+                    case "Nav":
+                        activeDevice.setState("indicator1", "N")
+                        break;
+                    case "Zoom":
+                        activeDevice.setState("indicator1", "Z")
+                        break;
+                }
+            // ! Do not set activeSubPage for these
+            break;
         }
         Helper_updateDisplay('Row1', 'Row2', 'AltRow1', 'AltRow2', activeDevice, midiOutput)
-    }).bind({ subPage, name })
+    }).bind({ name })
     return subPage
 }
 /**
@@ -254,6 +276,20 @@ function makePageWithDefaults(name) {
     // Automation for selected tracks
     page.makeValueBinding(surfaceElements.faderMaster.read_button.mSurfaceValue, selectedTrackChannel.mValue.mAutomationRead).setTypeToggle()
     page.makeValueBinding(surfaceElements.faderMaster.write_button.mSurfaceValue, selectedTrackChannel.mValue.mAutomationWrite).setTypeToggle()
+
+    // Mixer Button
+    var display_type = page.mCustom.makeHostValueVariable("Mixer - display type")
+    page.makeValueBinding(surfaceElements.faderMaster.mixer_button.mSurfaceValue, display_type).setTypeToggle().mOnValueChange = function (activeDevice, mapping, value, value2) {
+        // console.log("display_type OnValueChange:"+value+":"+value2)
+        if(value===0)
+        {
+            activeDevice.setState("displayType", "Fader")
+        } else {
+            activeDevice.setState("displayType", "Pan")
+        }
+        // Update controller
+        Helper_updateDisplay(activeDevice.getState('Display - idRow1'), activeDevice.getState('Display - idRow2'), activeDevice.getState('Display - idAltRow1'), activeDevice.getState('Display - idAltRow2'), activeDevice, midiOutput)
+    }
 
     return page
 }
@@ -338,7 +374,7 @@ function makePageSelectedTrack() {
             onTitleChange: function(activeDevice,activeMapping,objectTitle, valueTitle) {
                 var activePage = activeDevice.getState("activePage")
                 var activeSubPage = activeDevice.getState("activeSubPage")
-                var faderValueTitles = activeDevice.getState(activePage + ' - Fader - ValueTitles')
+                var faderValueTitles = activeDevice.getState(activePage + "- " + activeSubPage + ' - Fader - ValueTitles')
                 // console.log("QC Title Changed:" +this.idx+":" + objectTitle + ":" + valueTitle)
                 switch (activePage) {
                 case "SelectedTrack":
@@ -348,8 +384,8 @@ function makePageSelectedTrack() {
                             if (title.length === 0) {
                                 title = "None"
                             }
-                            activeDevice.setState(activePage + ' - Fader - ValueTitles', setTextOfColumn(this.idx, makeLabel(title, 6), faderValueTitles))
-                            Helper_updateDisplay(activePage + ' - Fader - ValueTitles', activePage + ' - Fader - Values', activePage + ' - Pan - ValueTitles', activePage + ' - Pan - Values', activeDevice, midiOutput)
+                            activeDevice.setState(activePage + "- " + activeSubPage + ' - Fader - ValueTitles', setTextOfColumn(this.idx, makeLabel(title, 6), faderValueTitles))
+                            Helper_updateDisplay(activePage + "- " + activeSubPage + ' - Fader - ValueTitles', activePage + "- " + activeSubPage + ' - Fader - Values', activePage + "- " + activeSubPage + ' - Pan - ValueTitles', activePage + "- " + activeSubPage + ' - Pan - Values', activeDevice, midiOutput)
                             break;
                     }
                     break;
@@ -554,8 +590,10 @@ function makePageMidi() {
             .mOnValueChange = function (activeDevice, mapping, value, value2) {
                 // console.log(displayName + ":" + mapping + "::" + value + "::" + value2)
                 var activePage = activeDevice.getState("activePage")
-                var faderValueTitles = activeDevice.getState(activePage + ' - Fader - ValueTitles')
-                var faderValues = activeDevice.getState(activePage + ' - Fader - Values')
+                var activeSubPage = activeDevice.getState("activeSubPage")
+
+                var faderValueTitles = activeDevice.getState(activePage + "- " + activeSubPage + ' - Fader - ValueTitles')
+                var faderValues = activeDevice.getState(activePage + "- " + activeSubPage + ' - Fader - Values')
 
                 var ccValue = Math.ceil(value * 127)
                 var pitchBendValue = Math.ceil(value * 16383)
@@ -567,9 +605,9 @@ function makePageMidi() {
                 // this is the value going back to Cubendo
                 midiPageOutput.sendMidi(activeDevice, [0xB0, cc, ccValue])
                 // and this updates the D2 Display
-                activeDevice.setState(activePage + ' - Fader - ValueTitles', setTextOfColumn(fader, makeLabel(displayName, 6), faderValueTitles))
-                activeDevice.setState(activePage + ' - Fader - Values', setTextOfColumn(fader, makeLabel(ccValue.toString(), 6), faderValues))
-                Helper_updateDisplay(activePage + ' - Fader - ValueTitles', activePage + ' - Fader - Values', activePage + ' - Pan - ValueTitles', activePage + ' - Pan - Values', activeDevice, midiOutput)
+                activeDevice.setState(activePage + "- " + activeSubPage + ' - Fader - ValueTitles', setTextOfColumn(fader, makeLabel(displayName, 6), faderValueTitles))
+                activeDevice.setState(activePage + "- " + activeSubPage + ' - Fader - Values', setTextOfColumn(fader, makeLabel(ccValue.toString(), 6), faderValues))
+                Helper_updateDisplay(activePage + "- " + activeSubPage + ' - Fader - ValueTitles', activePage + "- " + activeSubPage + ' - Fader - Values', activePage + "- " + activeSubPage + ' - Pan - ValueTitles', activePage + "- " + activeSubPage + ' - Pan - Values', activeDevice, midiOutput)
             }
     }
 
@@ -592,20 +630,22 @@ var midiPage = makePageMidi()
 // in the state. By clearing state on the page activation it will update all that are changing.
 function clearChannelState(/** @type {MR_ActiveDevice} */activeDevice) {
     var activePage = activeDevice.getState("activePage")
+    var activeSubPage = activeDevice.getState("activeSubPage")
     // console.log('from script: clearChannelState'+activePage)
 
-    activeDevice.setState(activePage + ' - Fader - Title', "")
-    activeDevice.setState(activePage + ' - Fader - ValueTitles', "")
-    activeDevice.setState(activePage + ' - Fader - Values', "")
-    activeDevice.setState(activePage + ' - Pan - Title', "")
-    activeDevice.setState(activePage + ' - Pan - ValueTitles', "")
-    activeDevice.setState(activePage + ' - Pan - Values', "")
+    activeDevice.setState(activePage + "- " + activeSubPage + ' - Fader - Title', "")
+    activeDevice.setState(activePage + "- " + activeSubPage + ' - Fader - ValueTitles', "")
+    activeDevice.setState(activePage + "- " + activeSubPage + ' - Fader - Values', "")
+    activeDevice.setState(activePage + "- " + activeSubPage + ' - Pan - Title', "")
+    activeDevice.setState(activePage + "- " + activeSubPage + ' - Pan - ValueTitles', "")
+    activeDevice.setState(activePage + "- " + activeSubPage + ' - Pan - Values', "")
 
     activeDevice.setState("displayType", "Fader")
 }
 mixerPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeDevice) {
     // console.log('from script: Platform M+ page "Mixer" activated')
     activeDevice.setState("activePage", "Mixer")
+    activeDevice.setState("activeSubPage", "Default")
     clearAllLeds(activeDevice, midiOutput)
     clearChannelState(activeDevice)
 }).bind({ midiOutput })
@@ -634,11 +674,13 @@ channelStripPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeDe
     midiOutput.sendMidi(activeDevice, [0x90, 26, 0])
     midiOutput.sendMidi(activeDevice, [0x90, 27, 0])
     midiOutput.sendMidi(activeDevice, [0x90, 28, 0])
+    // Helper_updateDisplay("ChannelStrip" + "- " + "Gate" + ' - Fader - ValueTitles', "ChannelStrip" + "- " + "Gate" + ' - Fader - Values', "ChannelStrip" + "- " + "Gate" + ' - Pan - ValueTitles', "ChannelStrip" + "- " + "Gate" + ' - Pan - Values', activeDevice, midiOutput)
 }).bind({ midiOutput })
 
 controlRoomPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeDevice) {
     // console.log('from script: Platform M+ page "ControlRoom" activated')
     activeDevice.setState("activePage", "ControlRoom")
+    activeDevice.setState("activeSubPage", "Default")
     clearAllLeds(activeDevice, midiOutput)
     clearChannelState(activeDevice)
 }).bind({ midiOutput })
@@ -646,13 +688,16 @@ controlRoomPage.mOnActivate = (function (/** @type {MR_ActiveDevice} */activeDev
 midiPage.mOnActivate = function (/** @type {MR_ActiveDevice} */activeDevice) {
     // console.log('from script: Platform M+ page "Midi" activated')
     var activePage = "Midi"
+    var activeSubPage = "Default"
     activeDevice.setState("activePage", activePage)
+    activeDevice.setState("activeSubPage", activeSubPage)
     clearAllLeds(activeDevice, midiOutput)
+    clearChannelState(activeDevice)
     // ! This init must match the CC bindings create in the makeMidiPage function - it's annoying and needs a refactor
     // WIP Refactor me
-    var faderValueTitles = activeDevice.getState(activePage + ' - Fader - ValueTitles')
+    var faderValueTitles = activeDevice.getState(activePage + "- " + activeSubPage + ' - Fader - ValueTitles')
     faderValueTitles = setTextOfColumn(0, makeLabel("CC1", 6), faderValueTitles)
     faderValueTitles = setTextOfColumn(1, makeLabel("CC11", 6), faderValueTitles)
-    activeDevice.setState(activePage + ' - Fader - ValueTitles', setTextOfLine(faderValueTitles))
-    Helper_updateDisplay(activePage + ' - Fader - ValueTitles', activePage + ' - Fader - Values', activePage + ' - Pan - ValueTitles', activePage + ' - Pan - Values', activeDevice, midiOutput)
+    activeDevice.setState(activePage + "- " + activeSubPage + ' - Fader - ValueTitles', setTextOfLine(faderValueTitles))
+    Helper_updateDisplay(activePage + "- " + activeSubPage + ' - Fader - ValueTitles', activePage + "- " + activeSubPage + ' - Fader - Values', activePage + "- " + activeSubPage + ' - Pan - ValueTitles', activePage + "- " + activeSubPage + ' - Pan - Values', activeDevice, midiOutput)
 }
