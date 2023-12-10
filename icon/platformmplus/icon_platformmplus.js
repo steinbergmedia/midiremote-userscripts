@@ -304,8 +304,6 @@ function makePageMixer() {
     var subPageButtonDefaultSet = makeSubPage(ButtonSubPageArea, 'DefaultSet')
 
     var hostMixerBankZone = page.mHostAccess.mMixConsole.makeMixerBankZone("AudioInstrBanks")
-        .includeAudioChannels()
-        .includeInstrumentChannels()
         .setFollowVisibility(true)
 
     for (var channelIndex = 0; channelIndex < surfaceElements.numStrips; ++channelIndex) {
